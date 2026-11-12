@@ -1,0 +1,12 @@
+services:
+  nginx:
+    ports:
+      - "8090:80"
+      
+  postgres:
+    ports:
+      - "5435:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

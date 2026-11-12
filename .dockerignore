@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+bootstrap/cache/*.php
+storage/logs/*
+tests
+resources/js/actions
+resources/js/routes
+resources/js/wayfinder
