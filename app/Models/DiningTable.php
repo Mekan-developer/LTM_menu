@@ -22,11 +22,13 @@ class DiningTable extends Model
         return ['is_active' => 'boolean', 'seats' => 'integer', 'sort' => 'integer'];
     }
 
+    /** @return HasMany<Order, $this> */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
+    /** @return HasOne<Order, $this> */
     public function activeOrder(): HasOne
     {
         return $this->hasOne(Order::class)

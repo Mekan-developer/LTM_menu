@@ -29,7 +29,7 @@ class CashierService
     /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null} $data */
     public function pay(Order $order, array $data, User $cashier): Payment
     {
-        $percent = (int) ($data['discount_percent'] ?? 0);
+        $percent = max(0, min(100, $data['discount_percent'] ?? 0));
         $this->assertDiscountAllowed($percent, $cashier);
 
         $payment = DB::transaction(function () use ($order, $data, $percent, $cashier) {
@@ -115,7 +115,11 @@ class CashierService
         $this->realtime->send(new CashierQueueChanged($payment->order_id));
     }
 
-    /** Итог за день: наличными / картой, отменённые оплаты не считаются. */
+    /**
+     * Итог за день: наличными / картой, отменённые оплаты не считаются.
+     *
+     * @return array<string, mixed>
+     */
     public function daySummary(): array
     {
         $payments = $this->payments->validBetween(now()->startOfDay(), now()->endOfDay());
@@ -151,7 +155,11 @@ class CashierService
         }
     }
 
-    /** Наличными — сколько ввёл кассир, картой — остаток автоматически. */
+    /**
+     * Наличными — сколько ввёл кассир, картой — остаток автоматически.
+     *
+     * @return array{int, int}
+     */
     private function splitMixed(int $total, int $cash): array
     {
         if ($cash <= 0 || $cash >= $total) {

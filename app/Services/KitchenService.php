@@ -20,7 +20,11 @@ class KitchenService
         private readonly Realtime $realtime,
     ) {}
 
-    /** Карточка = одна отправка (batch) одного заказа в одном цехе. */
+    /**
+     * Карточка = одна отправка (batch) одного заказа в одном цехе.
+     *
+     * @return array<string, mixed>
+     */
     public function board(Station $station): array
     {
         $tickets = $this->orders->kitchenQueue($station)

@@ -24,6 +24,7 @@ class CashierQueueChanged implements ShouldBroadcastNow
         return 'cashier.changed';
     }
 
+    /** @return array<string, mixed> */
     public function broadcastWith(): array
     {
         return ['order_id' => $this->orderId];

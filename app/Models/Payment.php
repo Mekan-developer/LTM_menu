@@ -24,11 +24,13 @@ class Payment extends Model
         ];
     }
 
+    /** @return BelongsTo<Order, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function cashier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cashier_id');

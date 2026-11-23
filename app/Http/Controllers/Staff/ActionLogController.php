@@ -25,7 +25,7 @@ class ActionLogController extends Controller
                 'user' => $log->user?->name,
                 'subject' => $log->subject_type ? $log->subject_type.' #'.$log->subject_id : null,
                 'payload' => $log->payload,
-                'created_at' => $log->created_at?->toIso8601String(),
+                'created_at' => $log->created_at->toIso8601String(),
             ]),
             'next' => $page->nextPageUrl(),
             'prev' => $page->previousPageUrl(),

@@ -11,6 +11,7 @@ class CategoryRequest extends FormRequest
         return true; // право проверяет middleware permission:menu_prices
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

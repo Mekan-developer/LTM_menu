@@ -86,6 +86,7 @@ class GuestController extends Controller
         return response()->json($this->statusPayload($order));
     }
 
+    /** @return array<string, mixed> */
     private function statusPayload(Order $order): array
     {
         $order->load(['table:id,number', 'items' => fn ($q) => $q->whereIn('status', OrderItemStatus::visibleToGuest())->orderBy('batch')]);

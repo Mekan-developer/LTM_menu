@@ -10,6 +10,7 @@ class SettingsService
 {
     private const CACHE_KEY = 'crm.settings';
 
+    /** @var array<string, mixed>|null */
     private ?array $resolved = null;
 
     public function __construct(private readonly SettingRepository $settings) {}
@@ -37,6 +38,7 @@ class SettingsService
         return $this->all()[$key] ?? null;
     }
 
+    /** @param array<string, mixed> $values */
     public function update(array $values): void
     {
         foreach (array_intersect_key($values, config('restaurant.defaults')) as $key => $value) {

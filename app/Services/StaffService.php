@@ -17,6 +17,7 @@ class StaffService
         private readonly ActionLogger $logger,
     ) {}
 
+    /** @param array<string, mixed> $data */
     public function createUser(array $data, User $actor): User
     {
         $this->assertCanAssignRole((int) $data['role_id'], $actor);
@@ -31,6 +32,7 @@ class StaffService
         ]);
     }
 
+    /** @param array<string, mixed> $data */
     public function updateUser(User $user, array $data, User $actor): User
     {
         $this->assertCanEdit($user, $actor);

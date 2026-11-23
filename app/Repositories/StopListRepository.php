@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StopListRepository
 {
+    /** @return Collection<int, StopListEntry> */
     public function active(): Collection
     {
         return StopListEntry::query()
@@ -37,6 +38,7 @@ class StopListRepository
         return $index;
     }
 
+    /** @param array<string, mixed> $data */
     public function upsert(Model $stoppable, array $data): StopListEntry
     {
         return StopListEntry::updateOrCreate(

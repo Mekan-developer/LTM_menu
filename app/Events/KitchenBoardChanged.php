@@ -25,6 +25,7 @@ class KitchenBoardChanged implements ShouldBroadcastNow
         return 'kitchen.changed';
     }
 
+    /** @return array<string, mixed> */
     public function broadcastWith(): array
     {
         return ['stations' => $this->stations];

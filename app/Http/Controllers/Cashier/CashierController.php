@@ -51,7 +51,7 @@ class CashierController extends Controller
 
     public function pay(PayRequest $request, Order $order): RedirectResponse
     {
-        $payment = $this->cashier->pay($order, $request->validated(), $request->user());
+        $payment = $this->cashier->pay($order, $request->payData(), $request->user());
 
         return redirect()
             ->route('cashier.index', ['paid' => $payment->id])

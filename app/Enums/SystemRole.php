@@ -36,7 +36,11 @@ enum SystemRole: string
         };
     }
 
-    /** Права по умолчанию (раздел 1.3 ТЗ). У владельца права не хранятся — есть всегда. */
+    /**
+     * Права по умолчанию (раздел 1.3 ТЗ). У владельца права не хранятся — есть всегда.
+     *
+     * @return list<Permission>
+     */
     public function defaultPermissions(): array
     {
         return match ($this) {

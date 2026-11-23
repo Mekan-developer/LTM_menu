@@ -10,12 +10,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 class StaffRepository
 {
+    /** @return Collection<int, User> */
     public function users(): Collection
     {
         return User::query()->with('role')->orderBy('name')->get();
     }
 
-    /** Сотрудники для PIN-экрана общего планшета. */
+    /**
+     * Сотрудники для PIN-экрана общего планшета.
+     *
+     * @return Collection<int, User>
+     */
     public function pinUsers(): Collection
     {
         return User::query()
@@ -26,6 +31,7 @@ class StaffRepository
             ->get(['id', 'name', 'role_id']);
     }
 
+    /** @return Collection<int, Role> */
     public function roles(): Collection
     {
         return Role::query()->with('permissions')->withCount('users')
@@ -37,11 +43,13 @@ class StaffRepository
         return Role::where('slug', $role->value)->firstOrFail();
     }
 
+    /** @param array<string, mixed> $data */
     public function createUser(array $data): User
     {
         return User::create($data);
     }
 
+    /** @param array<string, mixed> $data */
     public function updateUser(User $user, array $data): User
     {
         $user->update($data);
@@ -49,6 +57,7 @@ class StaffRepository
         return $user;
     }
 
+    /** @param array<string, mixed> $data */
     public function createRole(array $data): Role
     {
         return Role::create($data);

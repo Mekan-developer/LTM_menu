@@ -9,6 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /** @mixin Order */
 class OrderResource extends JsonResource
 {
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [
@@ -30,7 +31,7 @@ class OrderResource extends JsonResource
             'subtotal' => $this->subtotal,
             'discount_amount' => $this->discount_amount,
             'total' => $this->total,
-            'opened_at' => $this->opened_at?->toIso8601String(),
+            'opened_at' => $this->opened_at->toIso8601String(),
             'bill_requested_at' => $this->bill_requested_at?->toIso8601String(),
             'paid_at' => $this->paid_at?->toIso8601String(),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),

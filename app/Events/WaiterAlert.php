@@ -33,6 +33,7 @@ class WaiterAlert implements ShouldBroadcastNow
         return 'waiter.alert';
     }
 
+    /** @return array<string, mixed> */
     public function broadcastWith(): array
     {
         return [

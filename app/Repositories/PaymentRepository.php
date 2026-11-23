@@ -8,12 +8,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PaymentRepository
 {
+    /** @param array<string, mixed> $data */
     public function create(array $data): Payment
     {
         return Payment::create($data);
     }
 
-    /** Действующие (не отменённые) оплаты за интервал. */
+    /**
+     * Действующие (не отменённые) оплаты за интервал.
+     *
+     * @return Collection<int, Payment>
+     */
     public function validBetween(CarbonInterface $from, CarbonInterface $to): Collection
     {
         return Payment::query()
@@ -22,6 +27,7 @@ class PaymentRepository
             ->get(['id', 'order_id', 'method', 'cash_amount', 'card_amount', 'total', 'created_at']);
     }
 
+    /** @return Collection<int, Payment> */
     public function recentForCashier(int $limit = 20): Collection
     {
         return Payment::query()

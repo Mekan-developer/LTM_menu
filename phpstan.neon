@@ -11,3 +11,6 @@ parameters:
         - routes/
 
     level: 7
+
+    # Модели объявляют касты методом casts() — Larastan должен разбирать его тело.
+    parseModelCastsMethod: true

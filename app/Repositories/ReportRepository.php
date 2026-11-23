@@ -10,7 +10,11 @@ use Illuminate\Support\Facades\DB;
 
 class ReportRepository
 {
-    /** Топ блюд по количеству в оплаченных заказах за интервал. */
+    /**
+     * Топ блюд по количеству в оплаченных заказах за интервал.
+     *
+     * @return Collection<int, \stdClass>
+     */
     public function topDishes(CarbonInterface $from, CarbonInterface $to, int $limit = 5): Collection
     {
         return DB::table('order_items')

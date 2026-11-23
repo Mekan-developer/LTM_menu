@@ -11,6 +11,7 @@ class TableService
 {
     public function __construct(private readonly TableRepository $tables) {}
 
+    /** @param array<string, mixed> $data */
     public function create(array $data): DiningTable
     {
         return $this->tables->create($data + [
@@ -19,6 +20,7 @@ class TableService
         ]);
     }
 
+    /** @param array<string, mixed> $data */
     public function update(DiningTable $table, array $data): DiningTable
     {
         return $this->tables->update($table, $data);

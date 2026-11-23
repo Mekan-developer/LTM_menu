@@ -20,11 +20,13 @@ class Role extends Model
         return ['is_system' => 'boolean'];
     }
 
+    /** @return HasMany<User, $this> */
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
+    /** @return HasMany<RolePermission, $this> */
     public function permissions(): HasMany
     {
         return $this->hasMany(RolePermission::class);
@@ -38,7 +40,7 @@ class Role extends Model
     /** @return list<string> */
     public function permissionKeys(): array
     {
-        return $this->permissions->pluck('permission')->values()->all();
+        return array_values($this->permissions->map(fn (RolePermission $p) => $p->permission)->all());
     }
 
     public function localizedName(?string $locale = null): string

@@ -44,26 +44,31 @@ class Order extends Model
         ];
     }
 
+    /** @return BelongsTo<DiningTable, $this> */
     public function table(): BelongsTo
     {
         return $this->belongsTo(DiningTable::class, 'dining_table_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function waiter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'waiter_id');
     }
 
+    /** @return HasMany<OrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
+    /** @return HasOne<Payment, $this> */
     public function activePayment(): HasOne
     {
         return $this->hasOne(Payment::class)->whereNull('cancelled_at')->latestOfMany();

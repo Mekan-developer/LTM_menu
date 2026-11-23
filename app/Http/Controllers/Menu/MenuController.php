@@ -83,6 +83,7 @@ class MenuController extends Controller
         return back()->with('success', __('crm.deleted'));
     }
 
+    /** @return array<string, mixed> */
     private function formData(?Dish $dish): array
     {
         return [

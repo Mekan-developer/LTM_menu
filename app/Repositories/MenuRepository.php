@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Collection;
 
 class MenuRepository
 {
-    /** Категории с блюдами для админки (включая неактивные). */
+    /**
+     * Категории с блюдами для админки (включая неактивные).
+     *
+     * @return Collection<int, Category>
+     */
     public function categoriesWithDishes(): Collection
     {
         return Category::query()
@@ -17,7 +21,11 @@ class MenuRepository
             ->get();
     }
 
-    /** Активные категории и блюда — для гостя и официанта. */
+    /**
+     * Активные категории и блюда — для гостя и официанта.
+     *
+     * @return Collection<int, Category>
+     */
     public function activeMenu(): Collection
     {
         return Category::query()
@@ -29,7 +37,10 @@ class MenuRepository
             ->get();
     }
 
-    /** @param list<int> $ids */
+    /**
+     * @param  list<int>  $ids
+     * @return Collection<int, Dish>
+     */
     public function activeDishesByIds(array $ids): Collection
     {
         return Dish::query()
@@ -40,11 +51,13 @@ class MenuRepository
             ->keyBy('id');
     }
 
+    /** @param array<string, mixed> $data */
     public function createCategory(array $data): Category
     {
         return Category::create($data);
     }
 
+    /** @param array<string, mixed> $data */
     public function updateCategory(Category $category, array $data): Category
     {
         $category->update($data);
@@ -52,11 +65,13 @@ class MenuRepository
         return $category;
     }
 
+    /** @param array<string, mixed> $data */
     public function createDish(array $data): Dish
     {
         return Dish::create($data);
     }
 
+    /** @param array<string, mixed> $data */
     public function updateDish(Dish $dish, array $data): Dish
     {
         $dish->update($data);

@@ -29,6 +29,7 @@ class ActionLogger
 
     public function __construct(private readonly ActionLogRepository $logs) {}
 
+    /** @param array<string, mixed> $payload */
     public function log(string $action, ?Model $subject = null, array $payload = [], ?User $user = null): void
     {
         $this->logs->create([

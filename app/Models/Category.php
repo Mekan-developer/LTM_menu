@@ -21,11 +21,13 @@ class Category extends Model
         return ['is_active' => 'boolean', 'sort' => 'integer'];
     }
 
+    /** @return HasMany<Dish, $this> */
     public function dishes(): HasMany
     {
         return $this->hasMany(Dish::class);
     }
 
+    /** @return MorphOne<StopListEntry, $this> */
     public function stopEntry(): MorphOne
     {
         return $this->morphOne(StopListEntry::class, 'stoppable');

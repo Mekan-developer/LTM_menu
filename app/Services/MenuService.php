@@ -18,11 +18,13 @@ class MenuService
         private readonly ActionLogger $logger,
     ) {}
 
+    /** @param array<string, mixed> $data */
     public function createCategory(array $data): Category
     {
         return $this->menu->createCategory($data + ['sort' => $this->menu->nextCategorySort()]);
     }
 
+    /** @param array<string, mixed> $data */
     public function updateCategory(Category $category, array $data): Category
     {
         return $this->menu->updateCategory($category, $data);
@@ -38,6 +40,7 @@ class MenuService
         });
     }
 
+    /** @param array<string, mixed> $data */
     public function createDish(array $data, ?UploadedFile $photo): Dish
     {
         $data['price'] = Money::toMinor($data['price']);
@@ -49,6 +52,7 @@ class MenuService
         return $dish;
     }
 
+    /** @param array<string, mixed> $data */
     public function updateDish(Dish $dish, array $data, ?UploadedFile $photo, bool $removePhoto): Dish
     {
         $oldPrice = $dish->price;
@@ -85,6 +89,11 @@ class MenuService
         }
 
         $tmp = $photo->store('dishes/tmp', 'local');
+
+        if ($tmp === false) {
+            throw new \RuntimeException('Could not store the uploaded dish photo');
+        }
+
         ConvertDishPhotoToWebp::dispatch($dish->id, $tmp);
     }
 

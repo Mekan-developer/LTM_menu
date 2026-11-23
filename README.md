@@ -131,7 +131,7 @@ ln -s ../storage/app/public public/storage     # относительная сс
 
 npm install
 npm run build        # или npm run dev для разработки с HMR
-docker compose restart app queue reverb
+docker compose restart app queue reverb nginx   # nginx — чтобы он заново нашёл IP контейнера app (иначе 502)
 ```
 
 ### 4. Открыть приложение
@@ -149,7 +149,7 @@ docker compose restart app queue reverb
 После изменения PHP-кода, роутов или `.env` перезапустите контейнеры:
 
 ```bash
-docker compose restart app queue reverb
+docker compose restart app queue reverb nginx   # nginx — чтобы он заново нашёл IP контейнера app (иначе 502)
 ```
 
 ---
@@ -315,7 +315,7 @@ docker compose exec postgres psql -U <POSTGRES_USER> -d <POSTGRES_DB>
 ## Решение проблем
 
 **Изменения в PHP-коде не видны в Docker**
-OPcache не проверяет изменения файлов, а конфиги закэшированы при старте. Выполните `docker compose restart app queue reverb`.
+OPcache не проверяет изменения файлов, а конфиги закэшированы при старте. Выполните `docker compose restart app queue reverb nginx`.
 
 **`Vite manifest not found` или страница без стилей**
 Фронтенд не собран. Выполните `npm run build` или запустите `npm run dev`.

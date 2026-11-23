@@ -167,7 +167,7 @@ class WaiterOrderService
 
             $this->calculator->recalculate($order);
 
-            return $drafts->map(fn (OrderItem $i) => $i->station->value)->unique()->values()->all();
+            return array_values($drafts->map(fn (OrderItem $i) => $i->station->value)->unique()->all());
         });
 
         $this->realtime->send(new KitchenBoardChanged($stations));
@@ -198,7 +198,7 @@ class WaiterOrderService
 
             $this->calculator->recalculate($order);
 
-            return $items->map(fn (OrderItem $i) => $i->station->value)->unique()->values()->all();
+            return array_values($items->map(fn (OrderItem $i) => $i->station->value)->unique()->all());
         });
 
         $this->realtime->send(new KitchenBoardChanged($stations));

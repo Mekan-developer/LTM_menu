@@ -17,17 +17,24 @@ class StopListEntry extends Model
         return ['mode' => StopMode::class, 'until' => 'datetime'];
     }
 
+    /** @return MorphTo<Model, $this> */
     public function stoppable(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<User, $this> */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /** Действующие записи: ручной стоп или срок ещё не истёк. */
+    /**
+     * Действующие записи: ручной стоп или срок ещё не истёк.
+     *
+     * @param  Builder<StopListEntry>  $query
+     * @return Builder<StopListEntry>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where(function (Builder $q) {

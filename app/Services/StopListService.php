@@ -52,6 +52,7 @@ class StopListService
         $this->index = null;
     }
 
+    /** @return array{dishes: array<int, true>, categories: array<int, true>} */
     public function index(): array
     {
         return $this->index ??= $this->stopList->activeIndex();

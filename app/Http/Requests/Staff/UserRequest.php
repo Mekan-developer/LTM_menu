@@ -13,6 +13,7 @@ class UserRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $creating = $this->route('user') === null;

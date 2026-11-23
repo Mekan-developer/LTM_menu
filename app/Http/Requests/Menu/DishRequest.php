@@ -21,6 +21,7 @@ class DishRequest extends FormRequest
         }
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
@@ -38,6 +39,7 @@ class DishRequest extends FormRequest
         ];
     }
 
+    /** @return array<string, mixed> */
     public function dishData(): array
     {
         return $this->safe()->except(['photo', 'remove_photo']);

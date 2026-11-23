@@ -26,9 +26,9 @@ class OrderRepository
     /** @return list<int> */
     public function activeTableIds(): array
     {
-        return Order::query()->whereIn('status', OrderStatus::activeValues())
+        return array_values(Order::query()->whereIn('status', OrderStatus::activeValues())
             ->whereNotNull('dining_table_id')
-            ->pluck('dining_table_id')->map(fn ($id) => (int) $id)->all();
+            ->pluck('dining_table_id')->map(fn ($id) => (int) $id)->all());
     }
 
     public function findByPublicToken(string $token): ?Order
@@ -36,7 +36,11 @@ class OrderRepository
         return Order::query()->where('public_token', $token)->first();
     }
 
-    /** Активные заказы для экрана официанта: свои + неназначенные QR. С правом передачи — все. */
+    /**
+     * Активные заказы для экрана официанта: свои + неназначенные QR. С правом передачи — все.
+     *
+     * @return Collection<int, Order>
+     */
     public function activeForWaiter(User $waiter, bool $seeAll): Collection
     {
         return Order::query()
@@ -49,7 +53,11 @@ class OrderRepository
             ->get();
     }
 
-    /** Активные заказы для кассы: «просят счёт» первыми. */
+    /**
+     * Активные заказы для кассы: «просят счёт» первыми.
+     *
+     * @return Collection<int, Order>
+     */
     public function activeForCashier(): Collection
     {
         return Order::query()
@@ -69,7 +77,11 @@ class OrderRepository
         ]);
     }
 
-    /** Позиции на кухне для цеха: отправлены, ещё не готовы. */
+    /**
+     * Позиции на кухне для цеха: отправлены, ещё не готовы.
+     *
+     * @return Collection<int, OrderItem>
+     */
     public function kitchenQueue(Station $station): Collection
     {
         return OrderItem::query()
@@ -80,7 +92,11 @@ class OrderRepository
             ->get();
     }
 
-    /** Готово, но ещё не подано — нижняя строка экрана кухни. */
+    /**
+     * Готово, но ещё не подано — нижняя строка экрана кухни.
+     *
+     * @return Collection<int, OrderItem>
+     */
     public function waitingPickup(Station $station): Collection
     {
         return OrderItem::query()
@@ -92,6 +108,7 @@ class OrderRepository
             ->get();
     }
 
+    /** @return Collection<int, OrderItem> */
     public function itemsOfBatch(Order $order, int $batch, OrderItemStatus $status, ?Station $station = null): Collection
     {
         return $order->items()

@@ -31,11 +31,13 @@ class Dish extends Model
         ];
     }
 
+    /** @return BelongsTo<Category, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
+    /** @return MorphOne<StopListEntry, $this> */
     public function stopEntry(): MorphOne
     {
         return $this->morphOne(StopListEntry::class, 'stoppable');

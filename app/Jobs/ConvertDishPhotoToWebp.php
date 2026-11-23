@@ -43,6 +43,10 @@ class ConvertDishPhotoToWebp implements ShouldQueue
         $webp = ob_get_clean();
         imagedestroy($image);
 
+        if ($webp === false || $webp === '') {
+            throw new RuntimeException("WebP encoding failed for dish {$dish->id}");
+        }
+
         $path = 'dishes/'.$dish->id.'-'.now()->timestamp.'.webp';
         Storage::disk('public')->put($path, $webp);
 
@@ -64,8 +68,8 @@ class ConvertDishPhotoToWebp implements ShouldQueue
             return $image;
         }
 
-        $nw = (int) round($w * $scale);
-        $nh = (int) round($h * $scale);
+        $nw = max(1, (int) round($w * $scale));
+        $nh = max(1, (int) round($h * $scale));
         $resized = imagecreatetruecolor($nw, $nh);
         imagecopyresampled($resized, $image, 0, 0, 0, 0, $nw, $nh, $w, $h);
         imagedestroy($image);

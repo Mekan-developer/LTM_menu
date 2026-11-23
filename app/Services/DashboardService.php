@@ -14,6 +14,7 @@ class DashboardService
         private readonly ReportRepository $reports,
     ) {}
 
+    /** @return array<string, mixed> */
     public function overview(): array
     {
         $today = now()->startOfDay();

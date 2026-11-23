@@ -14,12 +14,14 @@ class MenuPresenter
 
     /**
      * @param  bool  $hideStopped  гостю позиции в стопе не показываем вовсе (ТЗ 2.3)
+     * @param  Collection<int, Category>  $categories
+     * @return list<array<string, mixed>>
      */
     public function present(Collection $categories, bool $hideStopped): array
     {
         $index = $this->stopList->index();
 
-        return $categories
+        return array_values($categories
             ->map(function (Category $category) use ($index, $hideStopped) {
                 $categoryStopped = isset($index['categories'][$category->id]);
 
@@ -40,7 +42,7 @@ class MenuPresenter
                         'photo_url' => $d->photoUrl(),
                         'stopped' => $categoryStopped || isset($index['dishes'][$d->id]),
                     ])
-                    ->when($hideStopped, fn ($c) => $c->reject(fn ($d) => $d['stopped']))
+                    ->reject(fn (array $d) => $hideStopped && $d['stopped'])
                     ->values()
                     ->all();
 
@@ -56,13 +58,16 @@ class MenuPresenter
                 ];
             })
             ->filter()
-            ->values()
-            ->all();
+            ->all());
     }
 
-    /** Версия меню: гость обновляет кэш в фоне, только если что-то изменилось. */
+    /**
+     * Версия меню: гость обновляет кэш в фоне, только если что-то изменилось.
+     *
+     * @param  array<mixed>  $menu
+     */
     public function version(array $menu): string
     {
-        return substr(sha1(json_encode($menu)), 0, 12);
+        return substr(sha1(json_encode($menu, JSON_THROW_ON_ERROR)), 0, 12);
     }
 }
