@@ -1,12 +1,16 @@
 services:
-  nginx:
-    ports:
-      - "8090:80"
-      
-  postgres:
-    ports:
-      - "5435:5432"
+    nginx:
+        ports:
+            - '${APP_PORT:-8090}:80'
 
-  redis:
-    ports:
-      - "6379:6379"
+    postgres:
+        ports:
+            - '${FORWARD_DB_PORT:-5435}:5432'
+
+    redis:
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+
+    reverb:
+        ports:
+            - '${REVERB_FORWARD_PORT:-8080}:8080'

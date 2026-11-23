@@ -1,44 +1,71 @@
-
 services:
-  app:
-    build:
-      context: .
-      dockerfile: docker/app/Dockerfile
-    container_name: tmshop_app  
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - .:/var/www  
+    app:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+        container_name: LTM_app
+        restart: unless-stopped
+        working_dir: /var/www
+        volumes:
+            - .:/var/www
 
-  nginx:
-    image: nginx:alpine
-    container_name: tmshop_nginx
-    restart: unless-stopped
-    volumes:
-      - .:/var/www
-      - ./docker/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf    
-    depends_on:
-      - postgres
-      - redis  
+    # Очередь: конвертация фото блюд в WebP и другие фоновые задачи
+    queue:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+        container_name: LTM_queue
+        restart: unless-stopped
+        working_dir: /var/www
+        command: php artisan queue:work --tries=3 --timeout=120
+        volumes:
+            - .:/var/www
+        depends_on:
+            - postgres
 
-  postgres:
-    image: postgres:17
-    container_name: tmshop_postgres
-    restart: unless-stopped
-    env_file:
-      - docker/.env.data
-    volumes:
-      - tmshop-pgdata:/var/lib/postgresql/data
+    # Реалтайм (Laravel Reverb): кухня, официант, касса
+    reverb:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+        container_name: LTM_reverb
+        restart: unless-stopped
+        working_dir: /var/www
+        command: php artisan reverb:start --host=0.0.0.0 --port=8080
+        volumes:
+            - .:/var/www
+        depends_on:
+            - postgres
 
-  redis:
-    image: redis:7-alpine
-    container_name: tmshop_redis
-    restart: unless-stopped
-    volumes:
-      - tmshop-redisdata:/data
+    nginx:
+        image: nginx:alpine
+        container_name: LTM_nginx
+        restart: unless-stopped
+        volumes:
+            - .:/var/www
+            - ./docker/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - postgres
+            - redis
+
+    postgres:
+        image: postgres:17
+        container_name: LTM_postgres
+        restart: unless-stopped
+        env_file:
+            - docker/.env.data
+        volumes:
+            - LTM-pgdata:/var/lib/postgresql/data
+
+    redis:
+        image: redis:7-alpine
+        container_name: LTM_redis
+        restart: unless-stopped
+        volumes:
+            - LTM-redisdata:/data
 
 volumes:
-  tmshop-pgdata:
-    driver: local
-  tmshop-redisdata:
-    driver: local  
+    LTM-pgdata:
+        driver: local
+    LTM-redisdata:
+        driver: local

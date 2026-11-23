@@ -1,6 +1,6 @@
 ############################################
 # Этап 1: сборка фронтенда
-# Node 22 + PHP (Wayfinder вызывает artisan во время vp build)
+# Node 22 + PHP (Ziggy импортируется из vendor/tightenco/ziggy во время vp build)
 ############################################
 FROM php:8.3-cli-bookworm AS frontend
 
@@ -38,11 +38,12 @@ RUN composer dump-autoload --no-dev --optimize --ignore-platform-req=ext-* \
 FROM php:8.3-fpm-alpine AS app
 
 # Runtime-библиотеки — остаются в образе
-RUN apk add --no-cache libpq libpng icu-libs unzip
+RUN apk add --no-cache libpq libpng libjpeg-turbo libwebp freetype icu-libs unzip
 
 # Build-зависимости ставятся во временный пакет и удаляются в том же слое
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-        postgresql-dev libpng-dev icu-dev \
+        postgresql-dev libpng-dev libjpeg-turbo-dev libwebp-dev freetype-dev icu-dev \
+ && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
  && docker-php-ext-install -j$(nproc) pdo_pgsql pgsql exif pcntl bcmath gd intl opcache \
  && pecl install redis \
  && docker-php-ext-enable redis \

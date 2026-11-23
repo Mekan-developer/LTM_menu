@@ -1,11 +1,19 @@
 services:
-  nginx:
-    ports:
-      - "80:80"
-      - "443:443"
-      
-  postgres:
-    restart: always
+    nginx:
+        ports:
+            - '80:80'
+            - '443:443'
 
-  redis:
-    restart: always
+    postgres:
+        restart: always
+
+    redis:
+        restart: always
+
+    queue:
+        restart: always
+
+    reverb:
+        restart: always
+        ports:
+            - '8080:8080'
