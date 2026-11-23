@@ -1,150 +1,174 @@
+/*
+ * Дизайн-система «Тамдыр»: бумага, хвоя, терракота, охра.
+ * Шрифты подключены локально (fontsource) — система работает и в локальной сети ресторана без интернета.
+ */
 @import 'tailwindcss';
 
-@import 'tw-animate-css';
+@import '@fontsource-variable/geologica';
+@import '@fontsource-variable/sofia-sans-condensed';
+@import '@fontsource-variable/onest';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+@import '@fontsource/spectral/500.css';
+@import '@fontsource/spectral/600.css';
+@import '@fontsource/spectral/500-italic.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+@source '../views';
 
-@custom-variant dark (&:is(.dark *));
+@theme {
+    --font-sans: 'Geologica Variable', 'Geologica', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-kds:
+        'Sofia Sans Condensed Variable', 'Sofia Sans Condensed', sans-serif;
+    --font-serif: 'Spectral', serif;
+    --font-guest: 'Onest Variable', 'Onest', sans-serif;
 
-@theme inline {
-    --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+    /* Админка, касса, официант — светлая «Тамдыр» */
+    --color-paper: #f3ede2;
+    --color-surface: #fbf8f2;
+    --color-surface-2: #ebe3d5;
+    --color-line: #dcd2c0;
+    --color-ink: #1d2420;
+    --color-ink-2: #4c5650;
+    --color-ink-3: #646c66;
+    --color-brand: #1f4a3a;
+    --color-brand-hover: #173a2d;
+    --color-brand-ink: #f3ede2;
+    --color-brand-soft: #dce6de;
+    --color-accent: #a8472a;
+    --color-accent-ink: #fbf8f2;
+    --color-accent-soft: #f2ddd2;
+    --color-ochre: #d9a23a;
+    --color-ochre-ink: #8a5d0a;
+    --color-ochre-soft: #f5e6c4;
+    --color-danger: #9e2b25;
+    --color-danger-soft: #f4d9d5;
+    --color-ok: #2e6b4c;
+    --color-ok-soft: #dcebdf;
+    --color-free: #b9ae99;
 
-    --font-display:
-        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Экран кухни — всегда тёмный */
+    --color-k-bg: #0b0c0b;
+    --color-k-card: #17191a;
+    --color-k-line: #2a2d2e;
+    --color-k-ink: #f4f1ea;
+    --color-k-dim: #9a9c98;
+    --color-k-warn: #e3a33a;
+    --color-k-late: #b8332a;
+    --color-k-ready: #5dbb82;
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --color-brand: var(--brand);
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+    /* Страница гостя — тёплая бумага меню */
+    --color-g-bg: #f6f1e8;
+    --color-g-card: #fffdf8;
+    --color-g-line: #e2d9cb;
+    --color-g-ink: #211c17;
+    --color-g-muted: #6b6259;
+    --color-g-accent: #9c4426;
+    --color-g-accent-dark: #7e3519;
+    --color-g-photo: #e6dac6;
 }
 
-:root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --brand: oklch(0.55 0.2 264);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
-}
-
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --brand: oklch(0.7 0.15 264);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+/* Ночная смена: тёмная «Тамдыр» для официанта */
+.theme-night {
+    --color-paper: #121714;
+    --color-surface: #1a211d;
+    --color-surface-2: #232c27;
+    --color-line: #313b35;
+    --color-ink: #ece5d7;
+    --color-ink-2: #aba597;
+    --color-ink-3: #858a82;
+    --color-brand: #6fb08f;
+    --color-brand-hover: #82bf9f;
+    --color-brand-ink: #121714;
+    --color-brand-soft: #1f3329;
+    --color-accent: #e58460;
+    --color-accent-ink: #121714;
+    --color-accent-soft: #3a2219;
+    --color-ochre: #e3ad45;
+    --color-ochre-ink: #e3ad45;
+    --color-ochre-soft: #3a2f17;
+    --color-danger: #ef6a5e;
+    --color-danger-soft: #3b1d1a;
+    --color-ok: #6fb08f;
+    --color-ok-soft: #1f3329;
+    --color-free: #4a564f;
 }
 
 @layer base {
-    * {
-        @apply border-border outline-ring/50;
+    html {
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-paper font-sans text-ink antialiased;
+    }
+
+    button:not(:disabled),
+    [role='button'] {
+        cursor: pointer;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+}
+
+@layer utilities {
+    .num {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+@keyframes pulse-ring {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0
+            color-mix(in srgb, var(--color-accent) 45%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 0 6px
+            color-mix(in srgb, var(--color-accent) 0%, transparent);
+    }
+}
+
+.pulse-ring {
+    animation: pulse-ring 0.9s ease-out 2;
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateX(24px);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+.slide-in {
+    animation: slide-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pulse-ring,
+    .slide-in {
+        animation: none;
+    }
+}
+
+/* Печать чека 80 мм и QR-кодов */
+@media print {
+    @page {
+        margin: 6mm;
+    }
+    .no-print {
+        display: none !important;
+    }
+    body {
+        background: #fff !important;
     }
 }

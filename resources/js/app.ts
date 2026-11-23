@@ -1,42 +1,24 @@
+import '../css/app.css';
+import './bootstrap.js';
+
 import { createInertiaApp } from '@inertiajs/vue3';
-import { initializeTheme } from '@/composables/useAppearance';
-import AppLayout from '@/layouts/AppLayout.vue';
-import AuthLayout from '@/layouts/AuthLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { initializeFlashToast } from '@/lib/flashToast';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { createApp, h, type DefineComponent } from 'vue';
+import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
+// Страницы MVP написаны на JS (<script setup>), Vite собирает их как есть.
 void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        switch (true) {
-            case name === 'Welcome':
-                return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
-            case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            default:
-                return AppLayout;
-        }
+    title: (title) => (title ? `${title} · CRM` : 'CRM'),
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.vue`,
+            import.meta.glob<DefineComponent>('./Pages/**/*.vue'),
+        ),
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .use(ZiggyVue)
+            .mount(el!);
     },
-    withApp: (app) => {
-        app.directive('focus', {
-            mounted: (el: HTMLElement, shouldFocus) => {
-                if (shouldFocus.value !== false) {
-                    el.focus();
-                }
-            },
-        });
-    },
-    progress: {
-        color: '#4B5563',
-    },
+    progress: { color: '#A8472A', delay: 150 },
 });
-
-// This will set light / dark mode on page load...
-initializeTheme();
-
-// This will listen for flash toast data from the server...
-initializeFlashToast();
