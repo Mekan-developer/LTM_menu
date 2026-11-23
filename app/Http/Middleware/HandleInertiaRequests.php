@@ -2,46 +2,46 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
+    public function __construct(private readonly SettingsService $settings) {}
+
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
+        $user = $request->user()?->loadMissing('role.permissions');
+
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
+            'locale' => app()->getLocale(),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role?->localizedName(),
+                    'is_owner' => $user->isOwner(),
+                    'permissions' => $user->permissionKeys(),
+                ] : null,
+                'shared_device' => (bool) $request->session()->get('shared_device', false),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'app' => fn () => [
+                'restaurant_name' => $this->settings->get('restaurant_name'),
+                'shared_idle_seconds' => (int) $this->settings->get('shared_idle_seconds'),
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
         ];
     }
 }

@@ -16,7 +16,7 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 
@@ -36,7 +36,7 @@ return [
     'pages' => [
 
         'paths' => [
-            resource_path('js/pages'),
+            resource_path('js/Pages'),
         ],
 
         'extensions' => [

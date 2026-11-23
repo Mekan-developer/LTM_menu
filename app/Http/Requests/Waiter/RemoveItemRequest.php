@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Requests\Waiter;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class RemoveItemRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'reason' => ['nullable', 'string', 'max:200'],
+        ];
+    }
+}

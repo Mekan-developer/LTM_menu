@@ -6,25 +6,35 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->string('slug')->nullable()->unique(); // у системных ролей — значение SystemRole
+            $table->string('name_tm');
+            $table->string('name_ru');
+            $table->boolean('is_system')->default(false);
             $table->timestamps();
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+        Schema::create('role_permissions', function (Blueprint $table) {
+            $table->foreignId('role_id')->constrained()->cascadeOnDelete();
+            $table->string('permission', 64);
+            $table->primary(['role_id', 'permission']);
+        });
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('login')->unique();
+            $table->string('password');
+            $table->string('pin')->nullable(); // хэш 4-значного PIN для общего планшета
+            $table->foreignId('role_id')->constrained()->restrictOnDelete();
+            $table->boolean('is_active')->default(true);
+            $table->unsignedTinyInteger('pin_failed_attempts')->default(0);
+            $table->timestamp('pin_locked_until')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -37,13 +47,11 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('role_permissions');
+        Schema::dropIfExists('roles');
     }
 };

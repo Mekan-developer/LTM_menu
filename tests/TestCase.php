@@ -2,15 +2,21 @@
 
 namespace Tests;
 
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Laravel\Fortify\Features;
 
 abstract class TestCase extends BaseTestCase
 {
-    protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
+    /** RefreshDatabase засеивает системные роли перед каждым тестом. */
+    protected bool $seed = true;
+
+    protected string $seeder = RoleSeeder::class;
+
+    protected function setUp(): void
     {
-        if (! Features::enabled($feature)) {
-            $this->markTestSkipped($message ?? "Fortify feature [{$feature}] is not enabled.");
-        }
+        parent::setUp();
+
+        // Страницы Inertia в тестах не собираются Vite.
+        $this->withoutVite();
     }
 }

@@ -114,20 +114,4 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Super Admin
-    |--------------------------------------------------------------------------
-    |
-    | Credentials used by the SuperAdminSeeder. Override these in production
-    | via the environment instead of relying on the development defaults.
-    |
-    */
-
-    'super_admin' => [
-        'name' => env('SUPER_ADMIN_NAME', 'Super Admin'),
-        'email' => env('SUPER_ADMIN_EMAIL', 'admin@gmail.com'),
-        'password' => env('SUPER_ADMIN_PASSWORD', 'password'),
-    ],
-
 ];
