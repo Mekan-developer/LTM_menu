@@ -126,8 +126,8 @@ const hp = computed(() =>
                     :key="`b${b.date}`"
                     :opacity="hover === null || hover === i ? 1 : 0.45"
                 >
-                    <path :d="b.a" :fill="SERIES.primary" />
-                    <path :d="b.b" :fill="SERIES.secondary" />
+                    <path :d="b.a" :style="{ fill: SERIES.primary }" />
+                    <path :d="b.b" :style="{ fill: SERIES.secondary }" />
                     <rect
                         :x="PAD.l + i * slot"
                         :y="PAD.t"

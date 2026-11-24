@@ -48,6 +48,12 @@
     --color-ok-soft: #dcebdf;
     --color-free: #b9ae99;
 
+    /* Графики отчётов: серии проверены валидатором палитры на поверхности #fbf8f2 */
+    --color-chart-1: #238a5e;
+    --color-chart-2: #c4572c;
+    --color-chart-prev: #8b8f88;
+    --color-chart-heat: #1a5c3f; /* насыщенный конец тепловой карты */
+
     /* Экран кухни — всегда тёмный */
     --color-k-bg: #0b0c0b;
     --color-k-card: #17191a;
@@ -69,8 +75,10 @@
     --color-g-photo: #e6dac6;
 }
 
-/* Ночная смена: тёмная «Тамдыр» для официанта */
+/* Тёмная «Тамдыр»: ночная смена официанта и тёмная тема админки, кассы, входа.
+   Класс ставится на <html> (useTheme), гостевые страницы и кухня его не получают. */
 .theme-night {
+    color-scheme: dark; /* тёмные полосы прокрутки, календарь в input[type=date] */
     --color-paper: #121714;
     --color-surface: #1a211d;
     --color-surface-2: #232c27;
@@ -93,6 +101,11 @@
     --color-ok: #6fb08f;
     --color-ok-soft: #1f3329;
     --color-free: #4a564f;
+    /* Серии графиков для тёмной поверхности #1a211d — проверены валидатором отдельно */
+    --color-chart-1: #35a06e;
+    --color-chart-2: #dc6a3c;
+    --color-chart-prev: #7d827b;
+    --color-chart-heat: #7cc29c;
 }
 
 @layer base {

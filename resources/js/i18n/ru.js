@@ -35,6 +35,11 @@ export default {
         guests: 'Гости',
         bookings: 'Брони',
     },
+    theme: {
+        dark: 'Тёмная тема',
+        to_dark: 'Включить тёмную тему',
+        to_light: 'Включить светлую тему',
+    },
     auth: {
         title: 'Вход',
         subtitle: 'Логин и пароль сотрудника',

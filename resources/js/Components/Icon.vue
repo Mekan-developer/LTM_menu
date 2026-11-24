@@ -23,6 +23,8 @@ const paths = {
     logout: '<path d="M7 3H3v12h4"/><path d="M11 6l3 3-3 3M14 9H7"/>',
     plus: '<path d="M9 3v12M3 9h12"/>',
     minus: '<path d="M3 9h12"/>',
+    sun: '<circle cx="9" cy="9" r="3.2"/><path d="M9 1.5v1.8M9 14.7v1.8M1.5 9h1.8M14.7 9h1.8M3.7 3.7L5 5M13 13l1.3 1.3M3.7 14.3L5 13M13 5l1.3-1.3"/>',
+    moon: '<path d="M15 10.6A6.5 6.5 0 0 1 7.4 3 6.5 6.5 0 1 0 15 10.6z"/>',
     back: '<path d="M11 3 5 9l6 6"/>',
     check: '<path d="M3.5 9.5 7.5 13.5 14.5 5"/>',
     bell: '<path d="M4.5 12.5V8a4.5 4.5 0 0 1 9 0v4.5l1.5 1.5h-12z"/><path d="M7.5 15.5a1.5 1.5 0 0 0 3 0"/>',
