@@ -12,6 +12,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Menu\MenuController;
 use App\Http\Controllers\Menu\StopListController;
 use App\Http\Controllers\Menu\TableController;
+use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Reviews\ReviewController;
 use App\Http\Controllers\Staff\ActionLogController;
 use App\Http\Controllers\Staff\RoleController;
@@ -51,6 +52,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::get('/dashboard', DashboardController::class)->middleware('permission:reports')->name('dashboard');
+
+    // Отчёты за период (ТЗ 2.10)
+    Route::middleware('permission:reports')->prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/export/{report}', [ReportController::class, 'export'])->whereIn('report', ['revenue', 'load', 'dishes', 'staff'])->name('export');
+    });
 
     // Меню и цены
     Route::middleware('permission:menu_prices')->prefix('menu')->name('menu.')->group(function () {

@@ -29,6 +29,12 @@ const groups = computed(() =>
                     perm: 'reports',
                 },
                 {
+                    label: t('nav.reports'),
+                    route: 'reports.index',
+                    icon: 'chart',
+                    perm: 'reports',
+                },
+                {
                     label: t('nav.waiter'),
                     route: 'waiter.index',
                     icon: 'waiter',
