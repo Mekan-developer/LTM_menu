@@ -6,6 +6,7 @@ use App\Http\Controllers\Cashier\CashierController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Guest\GuestController;
 use App\Http\Controllers\Guest\ReviewController as GuestReviewController;
+use App\Http\Controllers\Guests\GuestController as GuestBaseController;
 use App\Http\Controllers\Hall\HallController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Kitchen\KitchenController;
@@ -88,6 +89,16 @@ Route::middleware('auth')->group(function () {
         Route::put('/{hall}', [HallController::class, 'update'])->name('update');
         Route::delete('/{hall}', [HallController::class, 'destroy'])->name('destroy');
         Route::put('/{hall}/layout', [HallController::class, 'layout'])->name('layout');
+    });
+
+    // База гостей (ТЗ 2.1); экспорт — отдельное право
+    Route::get('/guests/export', [GuestBaseController::class, 'export'])->middleware('permission:export_guests')->name('guests.export');
+    Route::middleware('permission:guests')->prefix('guests')->name('guests.')->group(function () {
+        Route::get('/', [GuestBaseController::class, 'index'])->name('index');
+        Route::post('/', [GuestBaseController::class, 'store'])->name('store');
+        Route::get('/{guest}', [GuestBaseController::class, 'show'])->whereNumber('guest')->name('show');
+        Route::put('/{guest}', [GuestBaseController::class, 'update'])->whereNumber('guest')->name('update');
+        Route::delete('/{guest}', [GuestBaseController::class, 'destroy'])->whereNumber('guest')->name('destroy');
     });
 
     // Столы и QR-коды

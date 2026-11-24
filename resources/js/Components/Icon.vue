@@ -31,6 +31,7 @@ const paths = {
     trash: '<path d="M3 5h12M7 5V3h4v2M5 5l1 11h6l1-11"/>',
     edit: '<path d="M12 2.5l3.5 3.5L6 15.5H2.5V12z"/>',
     more: '<circle cx="4" cy="9" r="1"/><circle cx="9" cy="9" r="1"/><circle cx="14" cy="9" r="1"/>',
+    guests: '<circle cx="6.5" cy="6" r="2.5"/><path d="M2 15c0-2.6 2-4 4.5-4s4.5 1.4 4.5 4"/><circle cx="12.5" cy="6.5" r="2"/><path d="M12.5 11c2 0 3.5 1.1 3.5 3.3"/>',
     star: '<path d="M9 2.2l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 13l-4.2 2.2.8-4.7-3.4-3.3 4.7-.7z"/>',
     chart: '<path d="M2.5 15.5h13"/><path d="M4.5 12.5V9M8 12.5V5M11.5 12.5V7.5M15 12.5V3.5"/>',
     excel: '<path d="M4 2h7l3 3v11H4z"/><path d="M11 2v3h3"/><path d="M6.5 9l3 4M9.5 9l-3 4"/>',

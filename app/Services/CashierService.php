@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Support\Money;
+use App\Support\Phone;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -25,9 +26,10 @@ class CashierService
         private readonly ActionLogger $logger,
         private readonly Realtime $realtime,
         private readonly ReviewService $reviews,
+        private readonly GuestService $guests,
     ) {}
 
-    /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null} $data */
+    /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null} $data */
     public function pay(Order $order, array $data, User $cashier): Payment
     {
         $percent = max(0, min(100, $data['discount_percent'] ?? 0));
@@ -38,7 +40,12 @@ class CashierService
             throw ValidationException::withMessages(['tip_amount' => __('crm.cashier.tip_invalid')]);
         }
 
-        $payment = DB::transaction(function () use ($order, $data, $percent, $cashier, $tip) {
+        $guestPhone = $data['guest_phone'] ?? null;
+        if (filled($guestPhone) && Phone::normalize($guestPhone) === null) {
+            throw ValidationException::withMessages(['guest_phone' => __('crm.guests.phone_invalid')]);
+        }
+
+        $payment = DB::transaction(function () use ($order, $data, $percent, $cashier, $tip, $guestPhone) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
 
             if (! $order->isActive()) {
@@ -78,6 +85,11 @@ class CashierService
                 'paid_at' => now(),
                 'closed_at' => now(),
             ])->save();
+
+            // Гость назвал телефон — счёт попадает в его историю (ТЗ 2.1).
+            if (filled($guestPhone)) {
+                $this->guests->attachToOrder($order, (string) $guestPhone, $data['guest_name'] ?? null, $cashier);
+            }
 
             // Одноразовая ссылка на отзыв (ТЗ 2.9).
             $this->reviews->createForOrder($order);

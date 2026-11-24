@@ -112,4 +112,20 @@ return [
         'foreign_table' => 'Bu stol başga zala degişli',
         'no_space' => 'Zalda boş ýer ýok — shemany giňeldiň ýa-da başga zal saýlaň',
     ],
+
+    'guests' => [
+        'title' => 'Myhmanlar',
+        'unnamed' => 'Myhman',
+        'phone_invalid' => 'Telefon belgisi +993 XX XXXXXX görnüşinde bolmaly',
+        'phone_taken' => 'Bu belgili myhman eýýäm bar',
+        'name' => 'Ady',
+        'phone' => 'Telefon',
+        'birthday' => 'Doglan güni',
+        'address' => 'Eltip bermek salgysy',
+        'comment' => 'Bellik',
+        'visits' => 'Gelşi',
+        'spent' => 'Satyn alyş jemi',
+        'last_visit' => 'Soňky gelşi',
+        'since' => 'Bazada şundan bäri',
+    ],
 ];

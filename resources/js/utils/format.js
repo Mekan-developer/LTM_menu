@@ -57,3 +57,9 @@ export function elapsed(iso, now = Date.now()) {
 export function minutesSince(iso, now = Date.now()) {
     return iso ? (now - new Date(iso).getTime()) / 60000 : 0;
 }
+
+// «+99361234567» → «+993 61 234567» (ТЗ 2.1).
+export function phone(value) {
+    const m = /^\+993(\d{2})(\d{6})$/.exec(value ?? '');
+    return m ? `+993 ${m[1]} ${m[2]}` : (value ?? '');
+}

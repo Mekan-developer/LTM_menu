@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Order extends Model
 {
     protected $fillable = [
-        'public_token', 'dining_table_id', 'waiter_id', 'source', 'status', 'guest_comment',
+        'public_token', 'dining_table_id', 'waiter_id', 'guest_id', 'source', 'status', 'guest_comment',
         'discount_percent', 'subtotal', 'discount_amount', 'total', 'batch_counter',
         'opened_at', 'bill_requested_at', 'paid_at', 'closed_at',
     ];
@@ -90,5 +90,11 @@ class Order extends Model
     public function review(): HasOne
     {
         return $this->hasOne(Review::class);
+    }
+
+    /** @return BelongsTo<Guest, $this> */
+    public function guest(): BelongsTo
+    {
+        return $this->belongsTo(Guest::class);
     }
 }

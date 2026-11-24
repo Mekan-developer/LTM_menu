@@ -50,6 +50,8 @@ const form = useForm({
     cash_amount: '',
     tip_amount: '',
     tip_method: 'cash',
+    guest_phone: '',
+    guest_name: '',
 });
 const received = ref('');
 watch(
@@ -486,6 +488,24 @@ const cancelPayment = () =>
                 >
                     {{ t('cashier.card_hint') }}
                 </p>
+
+                <!-- Гость по телефону: счёт попадёт в его карточку (ТЗ 2.1) -->
+                <div class="grid grid-cols-2 gap-2 border-t border-line pt-4">
+                    <Field
+                        :label="t('cashier.guest_phone')"
+                        for="k-gphone"
+                        :error="form.errors.guest_phone"
+                        ><TextInput
+                            id="k-gphone"
+                            v-model="form.guest_phone"
+                            mono
+                            inputmode="tel"
+                            placeholder="+993 6X XXXXXX"
+                    /></Field>
+                    <Field :label="t('cashier.guest_name')" for="k-gname"
+                        ><TextInput id="k-gname" v-model="form.guest_name"
+                    /></Field>
+                </div>
 
                 <!-- Чаевые: не входят в выручку и в сумму счёта -->
                 <div class="flex flex-col gap-2 border-t border-line pt-4">
