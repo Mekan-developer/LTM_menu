@@ -316,6 +316,10 @@ export default {
         accept: 'Tölegi kabul et',
         cancel_title: 'Tölegi ýatyrmak (yzyna gaýtarma)',
         cancel_hint: 'Sebäbini görkeziň — ol hereketler žurnalyna düşer.',
+        tip: 'Çaý puly',
+        tip_method: 'Çaý pulunyň usuly',
+        tip_hint: 'Hasaba we girdejä goşulmaýar, hasabyň ofisiantyna ýazylýar.',
+        tips_day: 'Çaý puly (nagt / kart)',
     },
     receipt: {
         receipt: 'Çek',

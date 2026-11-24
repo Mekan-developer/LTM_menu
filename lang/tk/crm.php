@@ -58,6 +58,7 @@ return [
         'already_cancelled' => 'Töleg eýýäm ýatyryldy',
         'paid' => 'Töleg kabul edildi',
         'cancelled' => 'Töleg ýatyryldy',
+        'tip_invalid' => 'Çaý pulunyň mukdary nädogry',
     ],
 
     'staff' => [

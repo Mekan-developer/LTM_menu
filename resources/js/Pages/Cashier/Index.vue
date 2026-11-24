@@ -44,7 +44,13 @@ const subtotal = computed(() =>
     billable.value.reduce((s, i) => s + i.total, 0),
 );
 
-const form = useForm({ method: 'card', discount_percent: 0, cash_amount: '' });
+const form = useForm({
+    method: 'card',
+    discount_percent: 0,
+    cash_amount: '',
+    tip_amount: '',
+    tip_method: 'cash',
+});
 const received = ref('');
 watch(
     () => props.selected?.id,
@@ -178,6 +184,16 @@ const cancelPayment = () =>
                         ><span class="font-mono num">{{
                             money(summary.total)
                         }}</span>
+                    </div>
+                    <div
+                        v-if="summary.tips_cash || summary.tips_card"
+                        class="mt-1 flex justify-between border-t border-dashed border-line pt-1.5 text-ink-2"
+                    >
+                        <span>{{ t('cashier.tips_day') }}</span
+                        ><span class="text-right font-mono num"
+                            >{{ money(summary.tips_cash) }} /
+                            {{ money(summary.tips_card) }}</span
+                        >
                     </div>
                 </div>
             </aside>
@@ -470,6 +486,54 @@ const cancelPayment = () =>
                 >
                     {{ t('cashier.card_hint') }}
                 </p>
+
+                <!-- Чаевые: не входят в выручку и в сумму счёта -->
+                <div class="flex flex-col gap-2 border-t border-line pt-4">
+                    <span class="text-[13px] font-medium">{{
+                        t('cashier.tip')
+                    }}</span>
+                    <div class="grid grid-cols-[1fr_auto] gap-2">
+                        <TextInput
+                            id="k-tip"
+                            v-model="form.tip_amount"
+                            mono
+                            inputmode="decimal"
+                            placeholder="0,00"
+                            :aria-label="t('cashier.tip')"
+                            :invalid="Boolean(form.errors.tip_amount)"
+                        />
+                        <div
+                            role="radiogroup"
+                            :aria-label="t('cashier.tip_method')"
+                            class="flex overflow-hidden rounded-md border border-line"
+                        >
+                            <button
+                                v-for="m in ['cash', 'card']"
+                                :key="m"
+                                type="button"
+                                role="radio"
+                                :aria-checked="form.tip_method === m"
+                                class="h-11 px-3 text-sm"
+                                :class="
+                                    form.tip_method === m
+                                        ? 'bg-brand-soft font-semibold'
+                                        : 'bg-paper text-ink-2'
+                                "
+                                @click="form.tip_method = m"
+                            >
+                                {{ t(`pay.${m}`) }}
+                            </button>
+                        </div>
+                    </div>
+                    <span class="text-xs text-ink-3">{{
+                        t('cashier.tip_hint')
+                    }}</span>
+                    <span
+                        v-if="form.errors.tip_amount"
+                        class="text-xs text-danger"
+                        >{{ form.errors.tip_amount }}</span
+                    >
+                </div>
 
                 <p v-if="form.errors.order" class="text-sm text-danger">
                     {{ form.errors.order }}

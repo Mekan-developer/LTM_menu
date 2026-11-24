@@ -26,13 +26,18 @@ class CashierService
         private readonly Realtime $realtime,
     ) {}
 
-    /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null} $data */
+    /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null} $data */
     public function pay(Order $order, array $data, User $cashier): Payment
     {
         $percent = max(0, min(100, $data['discount_percent'] ?? 0));
         $this->assertDiscountAllowed($percent, $cashier);
+        $tip = Money::toMinor($data['tip_amount'] ?? 0);
 
-        $payment = DB::transaction(function () use ($order, $data, $percent, $cashier) {
+        if ($tip < 0) {
+            throw ValidationException::withMessages(['tip_amount' => __('crm.cashier.tip_invalid')]);
+        }
+
+        $payment = DB::transaction(function () use ($order, $data, $percent, $cashier, $tip) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
 
             if (! $order->isActive()) {
@@ -72,6 +77,18 @@ class CashierService
                 'paid_at' => now(),
                 'closed_at' => now(),
             ])->save();
+
+            // Чаевые — отдельно от выручки, привязаны к официанту счёта (ТЗ 2.12).
+            if ($tip > 0) {
+                $this->payments->createTip([
+                    'order_id' => $order->id,
+                    'payment_id' => $payment->id,
+                    'user_id' => $order->waiter_id,
+                    'amount' => $tip,
+                    'method' => ($data['tip_method'] ?? 'cash') === 'card' ? 'card' : 'cash',
+                    'created_by' => $cashier->id,
+                ]);
+            }
 
             if ($percent > 0) {
                 $this->logger->log(ActionLogger::DISCOUNT_APPLIED, $order, [
@@ -116,19 +133,23 @@ class CashierService
     }
 
     /**
-     * Итог за день: наличными / картой, отменённые оплаты не считаются.
+     * Итог за день: наличными / картой, отменённые оплаты не считаются; чаевые отдельно.
      *
      * @return array<string, mixed>
      */
     public function daySummary(): array
     {
         $payments = $this->payments->validBetween(now()->startOfDay(), now()->endOfDay());
+        $tips = $this->payments->validTipsBetween(now()->startOfDay(), now()->endOfDay());
 
         return [
             'count' => $payments->count(),
             'cash' => (int) $payments->sum('cash_amount'),
             'card' => (int) $payments->sum('card_amount'),
             'total' => (int) $payments->sum('total'),
+            // Чаевые не входят в выручку — отдельной строкой.
+            'tips_cash' => (int) $tips->where('method', PaymentMethod::Cash)->sum('amount'),
+            'tips_card' => (int) $tips->where('method', PaymentMethod::Card)->sum('amount'),
         ];
     }
 
