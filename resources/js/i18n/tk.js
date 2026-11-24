@@ -217,6 +217,7 @@ export default {
         stop_added: 'Stopa',
         stop_removed: 'Stopdan',
         role_permissions_changed: 'Roluň hukuklary',
+        table_moved: 'Stol geçirildi',
     },
     waiter: {
         my_tables: 'Meniň stollarym',
@@ -250,6 +251,10 @@ export default {
         reason_ph: 'Sebäbi',
         transfer: 'Stoly ofisianta bermek',
         transfer_do: 'Bermek',
+        move: 'Başga stola geçirmek',
+        move_do: 'Geçir',
+        pick_table: 'Stoly saýlaň',
+        no_free_tables: 'Boş stol ýok',
     },
     item_status: {
         draft: 'täze',

@@ -40,6 +40,9 @@ return [
         'rejected' => 'QR-sargyt ret edildi',
         'bill_requested' => 'Hasap soraldy — kassa stoly görýär',
         'transferred' => 'Stol berildi',
+        'table_unavailable' => 'Bu stola geçirip bolmaýar',
+        'table_busy' => 'Bu stolda eýýäm açyk sargyt bar',
+        'moved' => 'Sargyt başga stola geçirildi',
     ],
 
     'guest' => [

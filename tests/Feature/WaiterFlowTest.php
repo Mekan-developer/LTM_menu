@@ -73,3 +73,38 @@ it('кухня отмечает «Готово»', function () {
 
     expect($item->fresh()->status)->toBe(OrderItemStatus::Ready);
 });
+
+it('официант переносит заказ за свободный стол, и это пишется в журнал', function () {
+    $waiter = staff(SystemRole::Waiter);
+    $item = openOrderWithSentItem($waiter);
+    $target = DiningTable::factory()->create(['number' => '7']);
+
+    $this->actingAs($waiter)
+        ->post(route('waiter.move', $item->order_id), ['table_id' => $target->id])
+        ->assertSessionHasNoErrors();
+
+    expect($item->order->fresh()->dining_table_id)->toBe($target->id)
+        ->and(ActionLog::where('action', 'table_moved')->exists())->toBeTrue();
+});
+
+it('за занятый стол заказ перенести нельзя', function () {
+    $waiter = staff(SystemRole::Waiter);
+    $item = openOrderWithSentItem($waiter);
+    $busy = DiningTable::factory()->create();
+    $this->post(route('waiter.open', $busy));
+
+    $this->post(route('waiter.move', $item->order_id), ['table_id' => $busy->id])
+        ->assertSessionHasErrors('table_id');
+
+    expect($item->order->fresh()->dining_table_id)->not->toBe($busy->id);
+});
+
+it('официант печатает счёт своего стола, чужой — нет', function () {
+    $item = openOrderWithSentItem(staff(SystemRole::Waiter));
+
+    $this->get(route('waiter.print', $item->order_id))->assertOk();
+
+    $this->actingAs(staff(SystemRole::Waiter))
+        ->get(route('waiter.print', $item->order_id))
+        ->assertForbidden();
+});

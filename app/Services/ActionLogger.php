@@ -21,6 +21,8 @@ class ActionLogger
 
     public const TABLE_TRANSFERRED = 'table_transferred';
 
+    public const TABLE_MOVED = 'table_moved';
+
     public const STOP_ADDED = 'stop_added';
 
     public const STOP_REMOVED = 'stop_removed';

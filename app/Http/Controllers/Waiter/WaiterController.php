@@ -6,6 +6,7 @@ use App\Enums\OrderItemStatus;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Waiter\AddItemsRequest;
+use App\Http\Requests\Waiter\MoveTableRequest;
 use App\Http\Requests\Waiter\RemoveItemRequest;
 use App\Http\Requests\Waiter\TransferRequest;
 use App\Http\Requests\Waiter\UpdateItemRequest;
@@ -17,10 +18,12 @@ use App\Models\User;
 use App\Repositories\MenuRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\TableRepository;
+use App\Services\SettingsService;
 use App\Services\WaiterOrderService;
 use App\Support\MenuPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +36,7 @@ class WaiterController extends Controller
         private readonly TableRepository $tables,
         private readonly MenuRepository $menu,
         private readonly MenuPresenter $presenter,
+        private readonly SettingsService $settings,
     ) {}
 
     public function index(Request $request): Response
@@ -53,14 +57,9 @@ class WaiterController extends Controller
             };
         };
 
-        $busyTableIds = $this->orders->activeTableIds();
-
         return Inertia::render('Waiter/Index', [
             'orders' => OrderResource::collection($orders->sortBy($rank)->values()),
-            'freeTables' => $this->tables->active()
-                ->reject(fn (DiningTable $t) => in_array($t->id, $busyTableIds, true))
-                ->map(fn (DiningTable $t) => ['id' => $t->id, 'number' => $t->number, 'seats' => $t->seats])
-                ->values(),
+            'freeTables' => $this->freeTables(),
         ]);
     }
 
@@ -85,6 +84,7 @@ class WaiterController extends Controller
                     ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name])->values()
                 : [],
             'canRemoveSent' => $request->user()->hasPermission(Permission::RemoveAfterKitchen),
+            'freeTables' => fn () => $this->freeTables(),
         ]);
     }
 
@@ -144,10 +144,41 @@ class WaiterController extends Controller
         return redirect()->route('waiter.index')->with('success', __('crm.order.bill_requested'));
     }
 
+    /** Гости пересели — заказ переходит за другой свободный стол (ТЗ 2.4). */
+    public function move(MoveTableRequest $request, Order $order): RedirectResponse
+    {
+        $this->service->moveTable($order, DiningTable::findOrFail($request->integer('table_id')), $request->user());
+
+        return back()->with('success', __('crm.order.moved'));
+    }
+
+    /** Печать счёта официантом (ТЗ 2.4) — та же лента 80 мм, что и в кассе. */
+    public function printBill(Request $request, Order $order): Response
+    {
+        $this->service->authorizeHandle($order, $request->user());
+
+        return Inertia::render('Cashier/Receipt', [
+            'order' => new OrderResource($this->orders->loadForScreen($order)),
+            'restaurant' => $this->settings->get('restaurant_name'),
+        ]);
+    }
+
     public function transfer(TransferRequest $request, Order $order): RedirectResponse
     {
         $this->service->transfer($order, User::findOrFail($request->integer('waiter_id')), $request->user());
 
         return redirect()->route('waiter.index')->with('success', __('crm.order.transferred'));
+    }
+
+    /** @return Collection<int, array{id:int, number:string, seats:int}> */
+    private function freeTables(): Collection
+    {
+        $busy = $this->orders->activeTableIds();
+
+        return $this->tables->active()
+            ->reject(fn (DiningTable $t) => in_array($t->id, $busy, true))
+            ->map(fn (DiningTable $t) => ['id' => $t->id, 'number' => $t->number, 'seats' => $t->seats])
+            ->values()
+            ->toBase();
     }
 }

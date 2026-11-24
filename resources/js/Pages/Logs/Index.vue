@@ -20,6 +20,7 @@ const actions = [
     'payment_cancelled',
     'price_changed',
     'table_transferred',
+    'table_moved',
     'stop_added',
     'stop_removed',
     'role_permissions_changed',
@@ -40,6 +41,8 @@ function details(log) {
             return `${money(p.total, true)} · ${p.reason}`;
         case 'price_changed':
             return `${p.name}: ${money(p.old)} → ${money(p.new)}`;
+        case 'table_moved':
+            return `${t('tables.table')} ${p.from} → ${p.to}`;
         default:
             return '';
     }

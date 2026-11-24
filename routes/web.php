@@ -115,6 +115,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/{order}/batches/{batch}/served', [WaiterController::class, 'served'])->whereNumber('batch')->name('served');
         Route::post('/orders/{order}/bill', [WaiterController::class, 'bill'])->name('bill');
         Route::post('/orders/{order}/transfer', [WaiterController::class, 'transfer'])->name('transfer');
+        Route::post('/orders/{order}/move', [WaiterController::class, 'move'])->name('move');
+        Route::get('/orders/{order}/print', [WaiterController::class, 'printBill'])->name('print');
     });
 
     // Экран кухни и бара

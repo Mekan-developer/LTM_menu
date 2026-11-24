@@ -268,6 +268,35 @@ class WaiterOrderService
         $this->realtime->send(new WaiterAlert('transfer', $order->id, $order->table?->number, $target->id));
     }
 
+    /**
+     * Перенос заказа за другой стол (ТЗ 2.4): гости пересели. Стол должен быть свободен.
+     * Переносит тот, кто ведёт стол, или пользователь с правом «Передача столов».
+     */
+    public function moveTable(Order $order, DiningTable $target, User $user): void
+    {
+        $this->assertCanHandle($order, $user);
+        $this->assertActive($order);
+
+        if (! $target->is_active || $target->id === $order->dining_table_id) {
+            throw ValidationException::withMessages(['table_id' => __('crm.order.table_unavailable')]);
+        }
+
+        DB::transaction(function () use ($order, $target, $user) {
+            if ($this->orders->activeForTableLocked($target) !== null) {
+                throw ValidationException::withMessages(['table_id' => __('crm.order.table_busy')]);
+            }
+
+            $from = $order->table?->number;
+            $order->forceFill(['dining_table_id' => $target->id])->save();
+
+            $this->logger->log(ActionLogger::TABLE_MOVED, $order, ['from' => $from, 'to' => $target->number], $user);
+        });
+
+        // Номер стола виден на кухне и в кассе — обновляем оба экрана.
+        $this->realtime->send(new KitchenBoardChanged(['kitchen', 'bar']));
+        $this->realtime->send(new CashierQueueChanged($order->id));
+    }
+
     public function authorizeHandle(Order $order, User $user): void
     {
         $this->assertCanHandle($order, $user);

@@ -215,6 +215,7 @@ export default {
         stop_added: 'На стоп',
         stop_removed: 'Со стопа',
         role_permissions_changed: 'Права роли',
+        table_moved: 'Перенос стола',
     },
     waiter: {
         my_tables: 'Мои столы',
@@ -248,6 +249,10 @@ export default {
         reason_ph: 'Причина',
         transfer: 'Передать стол официанту',
         transfer_do: 'Передать',
+        move: 'Перенести за другой стол',
+        move_do: 'Перенести',
+        pick_table: 'Выберите стол',
+        no_free_tables: 'Свободных столов нет',
     },
     item_status: {
         draft: 'новая',

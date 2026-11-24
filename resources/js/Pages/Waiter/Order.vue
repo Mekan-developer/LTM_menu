@@ -15,6 +15,7 @@ const props = defineProps({
     menu: { type: Array, default: () => [] },
     waiters: { type: Array, default: () => [] },
     canRemoveSent: { type: Boolean, default: false },
+    freeTables: { type: Array, default: () => [] },
 });
 
 const { t, loc } = useI18n();
@@ -173,6 +174,21 @@ const transfer = () =>
     router.post(route('waiter.transfer', props.order.id), {
         waiter_id: transferTo.value,
     });
+
+// Перенос за другой стол: гости пересели (ТЗ 2.4).
+const moveTo = ref(null);
+const move = () =>
+    router.post(
+        route('waiter.move', props.order.id),
+        { table_id: moveTo.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                more.value = false;
+                moveTo.value = null;
+            },
+        },
+    );
 
 useRealtime('waiters', 'waiter.alert', (payload) => {
     if (!payload || payload.order_id === props.order.id)
@@ -453,6 +469,48 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                 >
                     «{{ order.guest_comment }}»
                 </p>
+                <a
+                    :href="route('waiter.print', order.id)"
+                    target="_blank"
+                    rel="noopener"
+                    class="flex h-11 items-center justify-center gap-2 rounded-md border border-line text-sm font-medium"
+                    ><Icon name="print" :size="16" />{{
+                        t('cashier.print_bill')
+                    }}</a
+                >
+
+                <label for="move" class="text-[13px] font-medium">{{
+                    t('waiter.move')
+                }}</label>
+                <template v-if="freeTables.length">
+                    <select
+                        id="move"
+                        v-model="moveTo"
+                        class="h-11 rounded-md border border-line bg-paper px-3 text-sm"
+                    >
+                        <option :value="null" disabled>
+                            {{ t('waiter.pick_table') }}
+                        </option>
+                        <option
+                            v-for="tb in freeTables"
+                            :key="tb.id"
+                            :value="tb.id"
+                        >
+                            {{ t('tables.table') }} {{ tb.number }} ·
+                            {{ tb.seats }} {{ t('tables.seats_short') }}
+                        </option>
+                    </select>
+                    <Btn
+                        variant="secondary"
+                        :disabled="!moveTo"
+                        @click="move"
+                        >{{ t('waiter.move_do') }}</Btn
+                    >
+                </template>
+                <p v-else class="text-sm text-ink-3">
+                    {{ t('waiter.no_free_tables') }}
+                </p>
+
                 <template v-if="waiters.length">
                     <label for="transfer" class="text-[13px] font-medium">{{
                         t('waiter.transfer')
