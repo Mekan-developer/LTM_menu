@@ -13,4 +13,4 @@ services:
 
     reverb:
         ports:
-            - '${REVERB_FORWARD_PORT:-8080}:8080'
+            - '${REVERB_FORWARD_PORT:-8000}:8080'
