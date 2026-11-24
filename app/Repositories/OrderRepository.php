@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\DeliveryStatus;
+use App\Enums\OrderChannel;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
 use App\Enums\Station;
@@ -45,6 +47,7 @@ class OrderRepository
     {
         return Order::query()
             ->whereIn('status', OrderStatus::activeValues())
+            ->where('channel', OrderChannel::Hall->value) // доставка и самовывоз — не официанту
             ->when(! $seeAll, fn (Builder $q) => $q->where(fn (Builder $w) => $w
                 ->where('waiter_id', $waiter->id)
                 ->orWhereNull('waiter_id')))
@@ -54,7 +57,8 @@ class OrderRepository
     }
 
     /**
-     * Активные заказы для кассы: «просят счёт» первыми.
+     * Активные заказы для кассы: «просят счёт» первыми. Из доставки — только готовый самовывоз:
+     * гость платит при выдаче; доставку оплачивает курьер (ТЗ 2.6).
      *
      * @return Collection<int, Order>
      */
@@ -62,7 +66,10 @@ class OrderRepository
     {
         return Order::query()
             ->whereIn('status', OrderStatus::activeValues())
-            ->with(['table', 'waiter:id,name'])
+            ->where(fn (Builder $q) => $q->where('channel', OrderChannel::Hall->value)
+                ->orWhere(fn (Builder $p) => $p->where('channel', OrderChannel::Pickup->value)
+                    ->whereHas('delivery', fn (Builder $d) => $d->where('status', DeliveryStatus::Ready->value))))
+            ->with(['table', 'waiter:id,name', 'delivery'])
             ->orderByRaw('case when status = ? then 0 else 1 end', [OrderStatus::BillRequested->value])
             ->orderBy('bill_requested_at')
             ->orderBy('opened_at')
@@ -72,7 +79,7 @@ class OrderRepository
     public function loadForScreen(Order $order): Order
     {
         return $order->load([
-            'table', 'waiter:id,name', 'activePayment',
+            'table', 'waiter:id,name', 'activePayment', 'delivery',
             'items' => fn ($q) => $q->orderBy('batch')->orderBy('id'),
         ]);
     }
@@ -87,7 +94,7 @@ class OrderRepository
         return OrderItem::query()
             ->where('station', $station->value)
             ->where('status', OrderItemStatus::Sent->value)
-            ->with(['order:id,dining_table_id,waiter_id,source', 'order.table:id,number', 'order.waiter:id,name'])
+            ->with(['order:id,dining_table_id,waiter_id,source,channel', 'order.table:id,number', 'order.waiter:id,name'])
             ->orderBy('sent_at')
             ->get();
     }
@@ -103,7 +110,7 @@ class OrderRepository
             ->where('station', $station->value)
             ->where('status', OrderItemStatus::Ready->value)
             ->where('ready_at', '>=', now()->subHour())
-            ->with(['order:id,dining_table_id', 'order.table:id,number'])
+            ->with(['order:id,dining_table_id,channel', 'order.table:id,number'])
             ->orderBy('ready_at')
             ->get();
     }

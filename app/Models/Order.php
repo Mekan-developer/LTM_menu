@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderChannel;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
@@ -13,8 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Order extends Model
 {
     protected $fillable = [
-        'public_token', 'dining_table_id', 'waiter_id', 'guest_id', 'source', 'status', 'guest_comment',
-        'discount_percent', 'subtotal', 'discount_amount', 'total', 'batch_counter',
+        'public_token', 'dining_table_id', 'waiter_id', 'guest_id', 'source', 'channel', 'status', 'guest_comment',
+        'discount_percent', 'subtotal', 'discount_amount', 'delivery_fee', 'total', 'batch_counter',
         'opened_at', 'bill_requested_at', 'paid_at', 'closed_at',
     ];
 
@@ -23,7 +24,9 @@ class Order extends Model
         'discount_percent' => 0,
         'subtotal' => 0,
         'discount_amount' => 0,
+        'delivery_fee' => 0,
         'total' => 0,
+        'channel' => 'hall',
         'batch_counter' => 0,
     ];
 
@@ -31,10 +34,12 @@ class Order extends Model
     {
         return [
             'source' => OrderSource::class,
+            'channel' => OrderChannel::class,
             'status' => OrderStatus::class,
             'discount_percent' => 'integer',
             'subtotal' => 'integer',
             'discount_amount' => 'integer',
+            'delivery_fee' => 'integer',
             'total' => 'integer',
             'batch_counter' => 'integer',
             'opened_at' => 'datetime',
@@ -90,6 +95,18 @@ class Order extends Model
     public function review(): HasOne
     {
         return $this->hasOne(Review::class);
+    }
+
+    /** @return HasOne<Delivery, $this> */
+    public function delivery(): HasOne
+    {
+        return $this->hasOne(Delivery::class);
+    }
+
+    /** Заказ зала (не доставка и не самовывоз). */
+    public function isHall(): bool
+    {
+        return $this->channel === OrderChannel::Hall;
     }
 
     /** @return BelongsTo<Guest, $this> */

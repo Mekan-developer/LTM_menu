@@ -7,7 +7,9 @@ import { useI18n } from '@/i18n';
 import { money } from '@/utils/format';
 
 const props = defineProps({
-    table: { type: Object, required: true },
+    // Меню по QR-коду стола — table; доставка и самовывоз (/delivery) — delivery = { fee }.
+    table: { type: Object, default: null },
+    delivery: { type: Object, default: null },
     menu: { type: Array, default: () => [] },
     version: { type: String, default: '' },
     restaurant: { type: String, default: '' },
@@ -19,8 +21,11 @@ const { t, loc } = useI18n();
  * Меню сохраняется на телефоне гостя: при слабой связи открывается сразу,
  * при появлении связи меню, цены и стоп-лист обновляются в фоне (ТЗ 2.3).
  */
+const isDelivery = Boolean(props.delivery);
 const menuKey = 'guest-menu';
-const cartKey = `guest-cart:${props.table.token}`;
+const cartKey = isDelivery
+    ? 'guest-cart:delivery'
+    : `guest-cart:${props.table.token}`;
 const liveMenu = ref(props.menu);
 const liveVersion = ref(props.version);
 
@@ -76,7 +81,9 @@ function dec(id) {
 async function refreshMenu() {
     try {
         const { data } = await axios.get(
-            route('guest.menu.json', props.table.token),
+            isDelivery
+                ? route('guest.delivery.menu.json')
+                : route('guest.menu.json', props.table.token),
         );
         if (data.version !== liveVersion.value) {
             liveMenu.value = data.menu;
@@ -151,6 +158,26 @@ const sending = ref(false);
 const problems = ref([]);
 const error = ref('');
 
+/*
+ * Доставка и самовывоз (ТЗ 2.6): тип, контакты, адрес, способ оплаты.
+ * Имя, телефон и адрес запоминаются на телефоне гостя для следующего заказа.
+ */
+const contactKey = 'guest-delivery-contact';
+const contact = ref({
+    type: 'delivery',
+    name: '',
+    phone: '',
+    address: '',
+    method: 'cash',
+    ...read(contactKey, {}),
+});
+watch(contact, (v) => write(contactKey, v), { deep: true });
+const fieldErrors = ref({});
+const fee = computed(() =>
+    isDelivery && contact.value.type === 'delivery' ? props.delivery.fee : 0,
+);
+const grandTotal = computed(() => total.value + fee.value);
+
 // Гость убрал всё из корзины — возвращаем в меню (если нет сообщения о смене меню).
 watch(count, (n) => {
     if (n === 0 && !problems.value.length) cartOpen.value = false;
@@ -161,18 +188,25 @@ async function submit() {
     sending.value = true;
     error.value = '';
     problems.value = [];
+    fieldErrors.value = {};
+    const items = lines.value.map((l) => ({
+        dish_id: l.dish.id,
+        quantity: l.qty,
+        price: l.price,
+    }));
+    const c = contact.value;
     try {
-        const { data } = await axios.post(
-            route('guest.orders.store', props.table.token),
-            {
-                items: lines.value.map((l) => ({
-                    dish_id: l.dish.id,
-                    quantity: l.qty,
-                    price: l.price,
-                })),
-                comment: comment.value || null,
-            },
-        );
+        const { data } = isDelivery
+            ? await axios.post(route('guest.delivery.store'), {
+                  ...c,
+                  address: c.type === 'delivery' ? c.address : null,
+                  items,
+                  comment: comment.value || null,
+              })
+            : await axios.post(route('guest.orders.store', props.table.token), {
+                  items,
+                  comment: comment.value || null,
+              });
         cart.value = {};
         comment.value = '';
         router.visit(data.status_url);
@@ -195,6 +229,15 @@ async function submit() {
                 return { ...p, name };
             });
             cart.value = next;
+        } else if (e.response?.status === 422) {
+            // Ошибки полей формы доставки — под полями.
+            fieldErrors.value = Object.fromEntries(
+                Object.entries(e.response.data.errors ?? {}).map(([k, v]) => [
+                    k,
+                    v[0],
+                ]),
+            );
+            error.value = e.response.data.message;
         } else if (!navigator.onLine || !e.response) {
             error.value = t('guest.offline');
         } else {
@@ -223,7 +266,11 @@ async function submit() {
                 </div>
                 <span
                     class="flex h-8 items-center rounded-sm bg-g-ink px-2.5 text-[13px] font-semibold text-g-bg"
-                    >{{ t('tables.table') }} {{ table.number }}</span
+                    >{{
+                        isDelivery
+                            ? t('guest.type_delivery')
+                            : `${t('tables.table')} ${table.number}`
+                    }}</span
                 >
                 <LangSwitch />
             </div>
@@ -440,7 +487,11 @@ async function submit() {
                     </button>
                     <span
                         class="flex h-8 items-center rounded-lg bg-g-ink px-3 text-[13px] font-semibold text-g-bg"
-                        >{{ t('tables.table') }} {{ table.number }}</span
+                        >{{
+                            isDelivery
+                                ? t('guest.type_delivery')
+                                : `${t('tables.table')} ${table.number}`
+                        }}</span
                     >
                 </div>
             </header>
@@ -562,6 +613,121 @@ async function submit() {
                             :placeholder="t('guest.comment_ph')"
                         />
                     </label>
+
+                    <!-- Доставка или самовывоз: контакты и оплата -->
+                    <section
+                        v-if="isDelivery"
+                        class="dish-card mt-2 flex flex-col gap-4 rounded-2xl bg-g-card p-4"
+                    >
+                        <div
+                            role="radiogroup"
+                            class="grid grid-cols-2 gap-1 rounded-xl bg-g-bg p-1"
+                        >
+                            <button
+                                v-for="tp in ['delivery', 'pickup']"
+                                :key="tp"
+                                type="button"
+                                role="radio"
+                                :aria-checked="contact.type === tp"
+                                class="h-11 rounded-lg text-[15px] font-semibold transition"
+                                :class="
+                                    contact.type === tp
+                                        ? 'bg-g-ink text-g-bg'
+                                        : 'text-g-muted'
+                                "
+                                @click="contact.type = tp"
+                            >
+                                {{ t(`guest.type_${tp}`) }}
+                            </button>
+                        </div>
+                        <label class="flex flex-col gap-1.5">
+                            <span class="text-[15px] font-semibold">{{
+                                t('guest.your_name')
+                            }}</span>
+                            <input
+                                v-model="contact.name"
+                                autocomplete="name"
+                                maxlength="120"
+                                class="guest-input"
+                            />
+                            <span
+                                v-if="fieldErrors.name"
+                                class="text-sm text-g-accent-dark"
+                                >{{ fieldErrors.name }}</span
+                            >
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <span class="text-[15px] font-semibold">{{
+                                t('guest.phone')
+                            }}</span>
+                            <input
+                                v-model="contact.phone"
+                                type="tel"
+                                autocomplete="tel"
+                                inputmode="tel"
+                                placeholder="+993 6X XXXXXX"
+                                class="guest-input num"
+                            />
+                            <span
+                                v-if="fieldErrors.phone"
+                                class="text-sm text-g-accent-dark"
+                                >{{ fieldErrors.phone }}</span
+                            >
+                        </label>
+                        <label
+                            v-if="contact.type === 'delivery'"
+                            class="flex flex-col gap-1.5"
+                        >
+                            <span class="text-[15px] font-semibold">{{
+                                t('guest.address')
+                            }}</span>
+                            <textarea
+                                v-model="contact.address"
+                                rows="2"
+                                maxlength="500"
+                                autocomplete="street-address"
+                                :placeholder="t('guest.address_ph')"
+                                class="guest-input resize-none py-3 leading-6"
+                            />
+                            <span
+                                v-if="fieldErrors.address"
+                                class="text-sm text-g-accent-dark"
+                                >{{ fieldErrors.address }}</span
+                            >
+                        </label>
+                        <div class="flex flex-col gap-1.5">
+                            <span class="text-[15px] font-semibold">{{
+                                t('guest.pay_method')
+                            }}</span>
+                            <div
+                                role="radiogroup"
+                                class="grid grid-cols-2 gap-2"
+                            >
+                                <button
+                                    v-for="m in ['cash', 'card']"
+                                    :key="m"
+                                    type="button"
+                                    role="radio"
+                                    :aria-checked="contact.method === m"
+                                    class="h-12 rounded-xl text-[15px] font-medium transition"
+                                    :class="
+                                        contact.method === m
+                                            ? 'border-2 border-g-accent bg-g-bg text-g-ink'
+                                            : 'border border-g-line text-g-muted'
+                                    "
+                                    @click="contact.method = m"
+                                >
+                                    {{
+                                        m === 'cash'
+                                            ? t('guest.pay_cash')
+                                            : contact.type === 'delivery'
+                                              ? t('guest.pay_card_courier')
+                                              : t('guest.pay_card')
+                                    }}
+                                </button>
+                            </div>
+                        </div>
+                    </section>
                     <p
                         v-if="error"
                         class="px-1 text-sm text-g-accent-dark"
@@ -578,10 +744,27 @@ async function submit() {
                 <div
                     class="mx-auto flex max-w-xl flex-col gap-3 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),16px)]"
                 >
+                    <div
+                        v-if="fee"
+                        class="flex flex-col gap-0.5 px-1 text-[15px] text-g-muted"
+                    >
+                        <span class="flex justify-between"
+                            ><span>{{ t('guest.items_sum') }}</span
+                            ><span class="num">{{
+                                money(total, true)
+                            }}</span></span
+                        >
+                        <span class="flex justify-between"
+                            ><span>{{ t('guest.fee') }}</span
+                            ><span class="num">{{
+                                money(fee, true)
+                            }}</span></span
+                        >
+                    </div>
                     <div class="flex items-baseline justify-between px-1">
                         <span class="text-[17px]">{{ t('guest.total') }}</span
                         ><span class="text-[28px] leading-8 font-bold num">{{
-                            money(total, true)
+                            money(grandTotal, true)
                         }}</span>
                     </div>
                     <button
@@ -590,10 +773,18 @@ async function submit() {
                         :disabled="!count || sending"
                         @click="submit"
                     >
-                        {{ sending ? t('guest.sending') : t('guest.send') }}
+                        {{
+                            sending
+                                ? t('guest.sending')
+                                : isDelivery
+                                  ? t('guest.send_delivery')
+                                  : t('guest.send')
+                        }}
                     </button>
                     <span class="text-center text-[13px] text-g-muted">{{
-                        t('guest.waiter_confirms')
+                        isDelivery
+                            ? t('guest.admin_confirms')
+                            : t('guest.waiter_confirms')
                     }}</span>
                 </div>
             </footer>
@@ -611,6 +802,21 @@ async function submit() {
 
 .no-scrollbar {
     scrollbar-width: none;
+}
+
+.guest-input {
+    min-height: 3rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-g-line);
+    background: var(--color-g-bg);
+    padding: 0 1rem;
+    font-size: 16px; /* 16px — iOS не увеличивает страницу при фокусе */
+    outline: none;
+}
+
+.guest-input:focus {
+    outline: 2px solid var(--color-g-accent);
+    outline-offset: 0;
 }
 
 .no-scrollbar::-webkit-scrollbar {

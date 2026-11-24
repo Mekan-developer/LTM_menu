@@ -10,11 +10,11 @@ use App\Repositories\ReportRepository;
 use App\Repositories\ReviewRepository;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 
 /**
  * Отчёты за период (ТЗ 2.10). Деньги — в тенге целым числом.
- * Отчёты «Постоянные гости» и «Персонал» появятся вместе с базой гостей (2.1) и сменами (2.12);
- * каналы «доставка» и «самовывоз» — вместе с разделом 2.6. Пока вся выручка — зал.
+ * Отчёт «Персонал» появится вместе со сменами (2.12).
  */
 class ReportService
 {
@@ -43,11 +43,15 @@ class ReportService
         return [$start, $end];
     }
 
-    /** @return array<string, mixed> */
-    public function build(CarbonImmutable $from, CarbonImmutable $to): array
+    /**
+     * @param  bool  $withPhones  телефоны гостей — только с правом «Гости»
+     * @return array<string, mixed>
+     */
+    public function build(CarbonImmutable $from, CarbonImmutable $to, bool $withPhones = false): array
     {
         return [
             'revenue' => $this->revenue($from, $to),
+            'guests' => $this->guests($from, $to, $withPhones),
             'load' => $this->hallLoad($from, $to),
             'dishes' => $this->dishes($from, $to),
             'staff' => $this->staff($from, $to),
@@ -119,8 +123,78 @@ class ReportService
                 'bills' => $prevBills,
                 'avg_check' => $prevBills > 0 ? intdiv($prevRevenue, $prevBills) : 0,
             ],
-            // Доставка и самовывоз — раздел 2.6; пока все счета из зала.
-            'channels' => ['hall' => $sum('revenue')],
+            // Выручка по каналам: зал, доставка (вместе со стоимостью доставки), самовывоз (ТЗ 2.10).
+            'channels' => $this->channels($from, $to),
+        ];
+    }
+
+    /** @return array{hall: int, delivery: int, pickup: int} */
+    public function channels(CarbonInterface $from, CarbonInterface $to): array
+    {
+        $by = $this->reports->revenueByChannel($from, $to);
+
+        return [
+            'hall' => (int) $by->get('hall', 0),
+            'delivery' => (int) $by->get('delivery', 0),
+            'pickup' => (int) $by->get('pickup', 0),
+        ];
+    }
+
+    /**
+     * Постоянные гости (ТЗ 2.10): новые и повторные гости за период и топ-20 по сумме покупок.
+     * Гость попадает в отчёт, только если кассир добавил к счёту его телефон (ТЗ 2.1),
+     * поэтому рядом показана доля таких счетов.
+     *
+     * @return array<string, mixed>
+     */
+    public function guests(CarbonImmutable $from, CarbonImmutable $to, bool $withPhones = false, int $top = 20): array
+    {
+        $visits = $this->reports->guestVisits($from, $to)->map(fn ($r) => [
+            'id' => (int) $r->guest_id,
+            'name' => $r->name,
+            'phone' => $withPhones ? $r->phone : null,
+            'visits' => (int) $r->visits,
+            'spent' => (int) $r->spent,
+            'avg_check' => (int) $r->visits > 0 ? intdiv((int) $r->spent, (int) $r->visits) : 0,
+            'first_at' => Carbon::parse($r->first_at),
+            'last_at' => Carbon::parse($r->last_at)->toIso8601String(),
+        ]);
+        $isNew = fn (array $g) => $g['first_at']->greaterThanOrEqualTo($from);
+        $firstDay = $visits->mapWithKeys(fn ($g) => [$g['id'] => $g['first_at']->toDateString()]);
+
+        // По дням: гость новый в тот день, когда был его самый первый визит.
+        $byDay = [];
+        foreach ($this->reports->guestPayments($from, $to) as $p) {
+            $day = Carbon::parse($p->created_at)->toDateString();
+            $kind = $firstDay->get((int) $p->guest_id) === $day ? 'new' : 'returning';
+            $byDay[$day][$kind][(int) $p->guest_id] = true;
+        }
+        $days = [];
+        for ($d = $from; $d->lessThanOrEqualTo($to); $d = $d->addDay()) {
+            $key = $d->toDateString();
+            $days[] = [
+                'date' => $key,
+                'new' => count($byDay[$key]['new'] ?? []),
+                'returning' => count($byDay[$key]['returning'] ?? []),
+            ];
+        }
+
+        $bills = $this->payments->validBetween($from, $to)->count();
+        $withGuest = (int) $visits->sum('visits');
+
+        return [
+            'totals' => [
+                'guests' => $visits->count(),
+                'new' => $visits->filter($isNew)->count(),
+                'returning' => $visits->reject($isNew)->count(),
+                'bills' => $bills,
+                'bills_with_guest' => $withGuest,
+                'spent' => (int) $visits->sum('spent'),
+            ],
+            'days' => $days,
+            'top' => $visits->sortByDesc('spent')->take($top)
+                ->map(fn ($g) => ['is_new' => $isNew($g)] + array_diff_key($g, ['first_at' => true]))
+                ->values()->all(),
         ];
     }
 

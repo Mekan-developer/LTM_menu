@@ -62,8 +62,13 @@ onMounted(async () => {
                 }}
             </p>
             <p class="text-center">
-                {{ t('tables.table') }} {{ order.table?.number }} ·
-                {{ order.waiter?.name ?? '' }}
+                <template v-if="order.channel && order.channel !== 'hall'">{{
+                    t(`delivery.type_${order.channel}`)
+                }}</template>
+                <template v-else
+                    >{{ t('tables.table') }} {{ order.table?.number }} ·
+                    {{ order.waiter?.name ?? '' }}</template
+                >
             </p>
             <p class="text-center">
                 {{ dateTime(paid?.created_at ?? new Date().toISOString()) }}
@@ -86,6 +91,10 @@ onMounted(async () => {
                     >{{ t('cashier.discount') }}
                     {{ order.discount_percent }}%</span
                 ><span>−{{ money(order.discount_amount) }}</span>
+            </p>
+            <p v-if="order.delivery_fee" class="flex justify-between">
+                <span>{{ t('delivery.fee') }}</span
+                ><span>{{ money(order.delivery_fee) }}</span>
             </p>
             <p class="flex justify-between text-[15px] font-semibold">
                 <span>{{ t('receipt.total') }}</span

@@ -91,12 +91,21 @@ class GuestController extends Controller
     /** @return array<string, mixed> */
     private function statusPayload(Order $order): array
     {
-        $order->load(['table:id,number', 'review', 'items' => fn ($q) => $q->whereIn('status', OrderItemStatus::visibleToGuest())->orderBy('batch')]);
+        // У доставки блюда видны сразу, ещё до отправки на кухню.
+        $visible = $order->isHall()
+            ? OrderItemStatus::visibleToGuest()
+            : [OrderItemStatus::Draft->value, ...OrderItemStatus::visibleToGuest()];
+        $order->load(['table:id,number', 'review', 'delivery', 'items' => fn ($q) => $q->whereIn('status', $visible)->orderBy('batch')]);
 
         return [
             'table' => $order->table?->number,
             'status' => $order->status->value,
             'total' => $order->total,
+            // Доставка и самовывоз: свой путь статусов (ТЗ 2.6).
+            'channel' => $order->channel->value,
+            'number' => $order->id,
+            'delivery_fee' => $order->delivery_fee,
+            'delivery_status' => $order->delivery?->status->value,
             // После оплаты — ссылка на оценку, пока гость её не оставил (ТЗ 2.9).
             'review_url' => $this->reviews->pendingUrl($order),
             'reviewed' => (bool) $order->review?->isSubmitted(),

@@ -2,13 +2,19 @@
 
 namespace App\Services;
 
+use App\Enums\DeliveryStatus;
+use App\Enums\OrderChannel;
+use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\Permission;
 use App\Events\CashierQueueChanged;
+use App\Events\DeliveriesChanged;
+use App\Events\KitchenBoardChanged;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Repositories\DeliveryRepository;
 use App\Repositories\PaymentRepository;
 use App\Support\Money;
 use App\Support\Phone;
@@ -27,10 +33,54 @@ class CashierService
         private readonly Realtime $realtime,
         private readonly ReviewService $reviews,
         private readonly GuestService $guests,
+        private readonly DeliveryRepository $deliveries,
     ) {}
 
-    /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null} $data */
+    /**
+     * Оплата на кассе. Доставку оплачивает курьер при вручении (DeliveryService::complete),
+     * самовывоз — здесь же, когда заказ готов: после оплаты он сразу «выдан» (ТЗ 2.6).
+     *
+     * @param  array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null}  $data
+     */
     public function pay(Order $order, array $data, User $cashier): Payment
+    {
+        if ($order->channel === OrderChannel::Delivery) {
+            throw ValidationException::withMessages(['order' => __('crm.delivery.courier_pays')]);
+        }
+
+        if ($order->channel !== OrderChannel::Pickup) {
+            return $this->settle($order, $data, $cashier);
+        }
+
+        $payment = DB::transaction(function () use ($order, $data, $cashier) {
+            $delivery = $this->deliveries->lockForOrder($order->id);
+
+            if ($delivery === null || $delivery->status !== DeliveryStatus::Ready) {
+                throw ValidationException::withMessages(['order' => __('crm.delivery.not_ready')]);
+            }
+
+            $payment = $this->settle($order, $data, $cashier);
+            $delivery->forceFill(['status' => DeliveryStatus::Issued->value, 'finished_at' => now()])->save();
+            // Самовывоз выдан — с экрана кухни «Ждут выдачи» заказ уходит.
+            $order->items()->where('status', OrderItemStatus::Ready->value)
+                ->update(['status' => OrderItemStatus::Served->value, 'served_at' => now()]);
+
+            return $payment;
+        });
+
+        $this->realtime->send(new DeliveriesChanged($order->id, DeliveryStatus::Issued->value));
+        $this->realtime->send(new KitchenBoardChanged(['kitchen', 'bar']));
+
+        return $payment;
+    }
+
+    /**
+     * Провести оплату заказа: скидка, способ оплаты, чаевые, гость, ссылка на отзыв.
+     * Общая для кассы и курьера. Чаевые — официанту счёта или курьеру ($tipUserId).
+     *
+     * @param  array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null}  $data
+     */
+    public function settle(Order $order, array $data, User $cashier, ?int $tipUserId = null): Payment
     {
         $percent = max(0, min(100, $data['discount_percent'] ?? 0));
         $this->assertDiscountAllowed($percent, $cashier);
@@ -45,7 +95,7 @@ class CashierService
             throw ValidationException::withMessages(['guest_phone' => __('crm.guests.phone_invalid')]);
         }
 
-        $payment = DB::transaction(function () use ($order, $data, $percent, $cashier, $tip, $guestPhone) {
+        $payment = DB::transaction(function () use ($order, $data, $percent, $cashier, $tip, $guestPhone, $tipUserId) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
 
             if (! $order->isActive()) {
@@ -99,7 +149,7 @@ class CashierService
                 $this->payments->createTip([
                     'order_id' => $order->id,
                     'payment_id' => $payment->id,
-                    'user_id' => $order->waiter_id,
+                    'user_id' => $tipUserId ?? $order->waiter_id,
                     'amount' => $tip,
                     'method' => ($data['tip_method'] ?? 'cash') === 'card' ? 'card' : 'cash',
                     'created_by' => $cashier->id,
@@ -151,7 +201,7 @@ class CashierService
     }
 
     /**
-     * Итог за день: наличными / картой, отменённые оплаты не считаются; чаевые отдельно.
+     * Итог за день: наличными в кассе / картой / наличными у курьеров, отменённые оплаты не считаются; чаевые отдельно.
      *
      * @return array<string, mixed>
      */
@@ -159,10 +209,13 @@ class CashierService
     {
         $payments = $this->payments->validBetween(now()->startOfDay(), now()->endOfDay());
         $tips = $this->payments->validTipsBetween(now()->startOfDay(), now()->endOfDay());
+        // Наличные за доставку, которые курьеры ещё не сдали, — отдельной строкой «у курьера» (ТЗ 2.6).
+        $onCouriers = (int) $this->deliveries->cashOnCouriers(now()->startOfDay())->sum('amount');
 
         return [
             'count' => $payments->count(),
-            'cash' => (int) $payments->sum('cash_amount'),
+            'cash' => (int) $payments->sum('cash_amount') - $onCouriers,
+            'courier_cash' => $onCouriers,
             'card' => (int) $payments->sum('card_amount'),
             'total' => (int) $payments->sum('total'),
             // Чаевые не входят в выручку — отдельной строкой.

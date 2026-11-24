@@ -18,13 +18,14 @@ const props = defineProps({
     summary: { type: Object, required: true },
     recent: { type: Array, default: () => [] },
     rules: { type: Object, required: true },
+    couriers: { type: Array, default: () => [] },
 });
 
 const { t, loc } = useI18n();
 
 useRealtime('cashier', 'cashier.changed', () =>
     router.reload({
-        only: ['queue', 'summary', 'recent'],
+        only: ['queue', 'summary', 'recent', 'couriers'],
         preserveScroll: true,
     }),
 );
@@ -102,6 +103,21 @@ const cancelPayment = () =>
             cancelForm.reset();
         },
     });
+
+// Самовывоз в очереди кассы — номер заказа вместо стола (ТЗ 2.6).
+const orderLabel = (o) =>
+    o.channel === 'pickup'
+        ? t('cashier.pickup', { n: o.id })
+        : `${t('tables.table')} ${o.table?.number ?? '—'}`;
+
+function receiveCash(c) {
+    if (!window.confirm(`${c.name}: ${money(c.amount, true)}?`)) return;
+    router.post(
+        route('cashier.courier-cash', c.id),
+        {},
+        { preserveScroll: true },
+    );
+}
 </script>
 
 <template>
@@ -132,9 +148,7 @@ const cancelPayment = () =>
                             : 'border-transparent hover:bg-surface-2'
                     "
                 >
-                    <span class="font-semibold"
-                        >{{ t('tables.table') }} {{ o.table?.number }}</span
-                    >
+                    <span class="font-semibold">{{ orderLabel(o) }}</span>
                     <span class="text-right font-mono num">{{
                         money(o.total)
                     }}</span>
@@ -160,6 +174,42 @@ const cancelPayment = () =>
                     {{ t('cashier.queue_empty') }}
                 </p>
 
+                <!-- Курьеры сдают наличные за доставку (ТЗ 2.6) -->
+                <div
+                    v-if="couriers.length"
+                    class="flex flex-col gap-2 border-t border-line bg-ochre-soft px-4 py-3 text-[13px]"
+                >
+                    <span class="flex flex-col"
+                        ><span class="font-semibold text-ochre-ink">{{
+                            t('cashier.courier_cash')
+                        }}</span
+                        ><span class="text-[11px] text-ink-3">{{
+                            t('cashier.courier_cash_hint')
+                        }}</span></span
+                    >
+                    <div
+                        v-for="c in couriers"
+                        :key="c.id"
+                        class="flex items-center gap-2"
+                    >
+                        <span class="min-w-0 flex-1 truncate"
+                            >{{ c.name }}
+                            <span class="text-[11px] text-ink-3">{{
+                                t('cashier.courier_orders', { n: c.orders })
+                            }}</span></span
+                        >
+                        <span class="font-mono font-semibold num">{{
+                            money(c.amount)
+                        }}</span>
+                        <Btn
+                            size="sm"
+                            variant="secondary"
+                            @click="receiveCash(c)"
+                            >{{ t('cashier.receive_cash') }}</Btn
+                        >
+                    </div>
+                </div>
+
                 <div
                     class="mt-auto flex flex-col gap-1.5 border-t border-line px-4 py-3 text-[13px]"
                 >
@@ -177,6 +227,16 @@ const cancelPayment = () =>
                         <span class="text-ink-2">{{ t('pay.card') }}</span
                         ><span class="font-mono num">{{
                             money(summary.card)
+                        }}</span>
+                    </div>
+                    <!-- Наличные за доставку, ещё не сданные курьерами (ТЗ 2.6) -->
+                    <div
+                        v-if="summary.courier_cash"
+                        class="flex justify-between text-ochre-ink"
+                    >
+                        <span>{{ t('cashier.at_couriers') }}</span
+                        ><span class="font-mono num">{{
+                            money(summary.courier_cash)
                         }}</span>
                     </div>
                     <div class="flex justify-between font-semibold">
@@ -234,8 +294,7 @@ const cancelPayment = () =>
                             <h2
                                 class="text-[28px] leading-[34px] font-semibold"
                             >
-                                {{ t('tables.table') }}
-                                {{ selected.table?.number }}
+                                {{ orderLabel(selected) }}
                             </h2>
                         </div>
                         <a
@@ -353,8 +412,12 @@ const cancelPayment = () =>
                             time(p.created_at)
                         }}</span>
                         <span
-                            >{{ t('tables.table') }} {{ p.table ?? '—' }} ·
-                            {{ t(`pay.${p.method}`) }}</span
+                            >{{
+                                p.channel && p.channel !== 'hall'
+                                    ? `${t(`delivery.type_${p.channel}`)} №${p.order_id}`
+                                    : `${t('tables.table')} ${p.table ?? '—'}`
+                            }}
+                            · {{ t(`pay.${p.method}`) }}</span
                         >
                         <span
                             class="font-mono num"

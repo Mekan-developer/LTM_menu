@@ -24,6 +24,8 @@ class PaymentResource extends JsonResource
             'cancel_reason' => $this->cancel_reason,
             'table' => $this->whenLoaded('order', fn () => $this->order?->relationLoaded('table') ? $this->order->table?->number : null),
             'cashier' => $this->whenLoaded('cashier', fn () => $this->cashier?->name),
+            // Доставка и самовывоз: вместо стола — канал и номер заказа (ТЗ 2.6).
+            'channel' => $this->whenLoaded('order', fn () => $this->order?->channel?->value),
         ];
     }
 }

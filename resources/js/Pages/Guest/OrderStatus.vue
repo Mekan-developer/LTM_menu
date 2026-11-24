@@ -31,17 +31,56 @@ onMounted(() => {
 });
 onUnmounted(() => clearInterval(timer));
 
-const steps = ['pending', 'sent', 'ready', 'served'];
+// Доставка и самовывоз (ТЗ 2.6) идут по статусу доставки, зал — по статусам блюд.
+const isDelivery = computed(() => (state.value.channel ?? 'hall') !== 'hall');
+const deliverySteps = computed(() =>
+    state.value.channel === 'pickup'
+        ? ['new', 'cooking', 'ready', 'issued']
+        : ['new', 'cooking', 'ready', 'on_way', 'delivered'],
+);
+const deliveryIndex = {
+    new: 0,
+    accepted: 1,
+    cooking: 1,
+    ready: 2,
+    on_way: 3,
+    delivered: 4,
+    issued: 3,
+};
+const steps = computed(() =>
+    isDelivery.value
+        ? deliverySteps.value
+        : ['pending', 'sent', 'ready', 'served'],
+);
 const stage = computed(() => {
+    if (isDelivery.value)
+        return deliveryIndex[state.value.delivery_status] ?? 0;
     const st = state.value.items
-        .map((i) => steps.indexOf(i.status))
+        .map((i) => steps.value.indexOf(i.status))
         .filter((i) => i >= 0);
     return st.length ? Math.min(...st) : 0;
 });
-const cancelled = computed(() => state.value.status === 'cancelled');
+const cancelled = computed(() =>
+    isDelivery.value
+        ? state.value.delivery_status === 'cancelled'
+        : state.value.status === 'cancelled',
+);
+const stepLabel = (s) =>
+    isDelivery.value ? t(`guest.d_step_${s}`) : t(`guest.step_${s}`);
+const heading = computed(() => {
+    if (!isDelivery.value)
+        return cancelled.value
+            ? t('guest.stage_cancelled')
+            : t(`guest.stage_${steps.value[stage.value]}`);
+    const st = state.value.delivery_status;
+    if (st === 'ready') return t(`guest.d_ready_${state.value.channel}`);
+    return t(`guest.d_${st}`);
+});
 
 // Когда всё подано, последний этап тоже считается пройденным (галочка, а не часы).
-const finished = computed(() => steps[stage.value] === 'served');
+const finished = computed(() =>
+    ['served', 'delivered', 'issued'].includes(steps.value[stage.value]),
+);
 const passed = (i) => i < stage.value || finished.value;
 const current = (i) => i === stage.value && !finished.value;
 
@@ -68,7 +107,10 @@ const statusClass = (s) =>
         served: 'text-g-muted',
     })[s] ?? 'text-g-muted';
 
-const back = () => window.history.back();
+const back = () =>
+    isDelivery.value
+        ? (window.location.href = route('guest.delivery'))
+        : window.history.back();
 </script>
 
 <template>
@@ -83,7 +125,11 @@ const back = () => window.history.back();
                 }}</span>
                 <span
                     class="flex h-8 items-center rounded-lg bg-g-ink px-3 text-[13px] font-semibold text-g-bg"
-                    >{{ t('tables.table') }} {{ state.table }}</span
+                    >{{
+                        isDelivery
+                            ? t('guest.d_number', { n: state.number })
+                            : `${t('tables.table')} ${state.table}`
+                    }}</span
                 >
                 <LangSwitch />
             </div>
@@ -118,11 +164,7 @@ const back = () => window.history.back();
                     class="font-serif text-[34px] leading-10 font-semibold"
                     aria-live="polite"
                 >
-                    {{
-                        cancelled
-                            ? t('guest.stage_cancelled')
-                            : t(`guest.stage_${steps[stage]}`)
-                    }}
+                    {{ heading }}
                 </h1>
             </div>
 
@@ -193,7 +235,7 @@ const back = () => window.history.back();
                                   ? 'text-g-ink'
                                   : 'text-g-muted/60'
                         "
-                        >{{ t(`guest.step_${s}`) }}</span
+                        >{{ stepLabel(s) }}</span
                     >
                 </li>
             </ol>
@@ -216,12 +258,22 @@ const back = () => window.history.back();
                             {{ loc(r, 'name') }}
                         </span>
                         <span
+                            v-if="!isDelivery"
                             class="shrink-0 text-[15px] whitespace-nowrap"
                             :class="statusClass(r.status)"
                             >{{ t(`item_status.${r.status}`) }}</span
                         >
                     </li>
                 </ul>
+                <div
+                    v-if="state.delivery_fee"
+                    class="-mx-5 mt-1 flex items-baseline justify-between border-t border-g-line px-5 pt-3 text-[15px] text-g-muted"
+                >
+                    <span>{{ t('guest.fee') }}</span
+                    ><span class="num">{{
+                        money(state.delivery_fee, true)
+                    }}</span>
+                </div>
                 <div
                     v-if="state.total"
                     class="-mx-5 mt-1 flex items-baseline justify-between border-t border-g-line px-5 pt-3.5 pb-2"

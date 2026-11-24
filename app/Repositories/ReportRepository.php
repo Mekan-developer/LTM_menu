@@ -31,7 +31,8 @@ class ReportRepository
 
     public function activeOrdersCount(): int
     {
-        return DB::table('orders')->whereIn('status', OrderStatus::activeValues())->count();
+        // Занятые столы: заказы доставки и самовывоза стол не занимают.
+        return DB::table('orders')->whereIn('status', OrderStatus::activeValues())->whereNotNull('dining_table_id')->count();
     }
 
     public function tablesCount(): int
@@ -115,6 +116,64 @@ class ReportRepository
             ->where('opened_at', '<=', $to)
             ->where(fn ($q) => $q->whereNull('closed_at')->orWhere('closed_at', '>=', $from))
             ->get(['dining_table_id', 'opened_at', 'closed_at']);
+    }
+
+    /**
+     * Выручка по каналам за период: зал, доставка, самовывоз (ТЗ 2.10).
+     *
+     * @return Collection<string, int> channel => сумма в тенге
+     */
+    public function revenueByChannel(CarbonInterface $from, CarbonInterface $to): Collection
+    {
+        return DB::table('payments')
+            ->join('orders', 'orders.id', '=', 'payments.order_id')
+            ->whereNull('payments.cancelled_at')
+            ->whereBetween('payments.created_at', [$from, $to])
+            ->groupBy('orders.channel')
+            ->selectRaw('orders.channel, sum(payments.total) as revenue')
+            ->pluck('revenue', 'channel')
+            ->map(fn ($v) => (int) $v);
+    }
+
+    /**
+     * Гости, у которых в периоде был оплаченный счёт (отчёт «Постоянные гости», ТЗ 2.10).
+     * Визит — неотменённая оплата заказа с guest_id. first_at — самый первый визит за всё время,
+     * по нему гость делится на нового (первый визит в периоде) и повторного (бывал раньше).
+     *
+     * @return Collection<int, \stdClass> guest_id, name, phone, visits, spent, first_at, last_at
+     */
+    public function guestVisits(CarbonInterface $from, CarbonInterface $to): Collection
+    {
+        return DB::table('payments')
+            ->join('orders', 'orders.id', '=', 'payments.order_id')
+            ->join('guests', 'guests.id', '=', 'orders.guest_id')
+            ->whereNull('payments.cancelled_at')
+            ->where('payments.created_at', '<=', $to)
+            ->groupBy('guests.id', 'guests.name', 'guests.phone')
+            ->havingRaw('sum(case when payments.created_at >= ? then 1 else 0 end) > 0', [$from])
+            ->selectRaw(
+                'guests.id as guest_id, guests.name, guests.phone,
+                 sum(case when payments.created_at >= ? then 1 else 0 end) as visits,
+                 sum(case when payments.created_at >= ? then payments.total else 0 end) as spent,
+                 min(payments.created_at) as first_at, max(payments.created_at) as last_at',
+                [$from, $from],
+            )
+            ->get();
+    }
+
+    /**
+     * Визиты гостей в периоде — для разбивки по дням.
+     *
+     * @return Collection<int, \stdClass> guest_id, created_at
+     */
+    public function guestPayments(CarbonInterface $from, CarbonInterface $to): Collection
+    {
+        return DB::table('payments')
+            ->join('orders', 'orders.id', '=', 'payments.order_id')
+            ->whereNull('payments.cancelled_at')
+            ->whereBetween('payments.created_at', [$from, $to])
+            ->whereNotNull('orders.guest_id')
+            ->get(['orders.guest_id', 'payments.created_at']);
     }
 
     /**
