@@ -28,6 +28,7 @@ export default {
         logout: 'Çykmak',
         open: 'Menýuny aç',
         sections: 'Bölümler',
+        reviews: 'Teswirler',
     },
     auth: {
         title: 'Giriş',
@@ -187,6 +188,7 @@ export default {
         area_waiter: 'Ofisiant ekrany',
         area_kitchen: 'Aşhana ekrany',
         area_cashier: 'Kassa',
+        reviews: 'Teswirler',
     },
     settings: {
         general: 'Umumy',
@@ -201,6 +203,10 @@ export default {
         security: 'Howpsuzlyk',
         idle: 'Umumy planşetden çykyş, sekunt',
         idle_hint: 'TZ boýunça — 60 sekunt hereketsizlik',
+        reviews: 'Teswirler',
+        reviews_enabled: 'Tölegden soň myhmandan baha soramak',
+        reviews_hint:
+            'Myhman bir gezeklik salgyny sargyt ýagdaýy sahypasynda we çekdäki QR-kodda alýar. Push/SMS goşulandan soň — habarnama bilen.',
     },
     log: {
         when: 'Haçan',
@@ -327,6 +333,7 @@ export default {
         total: 'Jemi',
         thanks: 'Sag boluň, ýene garaşýarys!',
         not_fiscal: 'Fiskal resminama däl',
+        review: 'Bize baha beriň — QR-y skanirläň',
     },
     guest: {
         no_registration: 'Menýu we sargyt hasaba durmazdan',
@@ -359,5 +366,31 @@ export default {
         step_ready: 'Taýýar',
         step_served: 'Getirildi',
         order_more: 'Ýene sargyt et',
+    },
+    review: {
+        title: 'Bize baha beriň',
+        subtitle: 'Bu bir minut alar we bize has gowy bolmaga kömek eder',
+        rating: 'Baha',
+        label_1: 'Erbet',
+        label_2: 'Gowy däl',
+        label_3: 'Kadaly',
+        label_4: 'Gowy',
+        label_5: 'Ajaýyp!',
+        comment: 'Teswir',
+        comment_ph: 'Näme halady, nämäni gowulandyrmaly?',
+        send: 'Ugrat',
+        thanks: 'Bahaňyz üçin sag boluň!',
+        thanks_text: 'Pikiriňizi okarys we hökman hasaba alarys.',
+        invite: 'Bize baha beriň',
+        invite_text: 'Bir minut — we biz has gowy bolarys',
+    },
+    reviews: {
+        avg: 'Ortaça baha',
+        count: 'Teswir: {n}',
+        low: 'Pes bahalar (3 we az)',
+        new: 'täze',
+        no_comment: 'Teswirsiz',
+        empty: 'Entek teswir ýok',
+        unseen: 'Täze pes bahalar: {n}',
     },
 };

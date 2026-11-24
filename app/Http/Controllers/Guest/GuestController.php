@@ -11,6 +11,7 @@ use App\Repositories\MenuRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\TableRepository;
 use App\Services\GuestOrderService;
+use App\Services\ReviewService;
 use App\Services\SettingsService;
 use App\Support\MenuPresenter;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,7 @@ class GuestController extends Controller
         private readonly GuestOrderService $orders,
         private readonly OrderRepository $orderRepository,
         private readonly SettingsService $settings,
+        private readonly ReviewService $reviews,
     ) {}
 
     public function menu(string $token): Response
@@ -89,12 +91,15 @@ class GuestController extends Controller
     /** @return array<string, mixed> */
     private function statusPayload(Order $order): array
     {
-        $order->load(['table:id,number', 'items' => fn ($q) => $q->whereIn('status', OrderItemStatus::visibleToGuest())->orderBy('batch')]);
+        $order->load(['table:id,number', 'review', 'items' => fn ($q) => $q->whereIn('status', OrderItemStatus::visibleToGuest())->orderBy('batch')]);
 
         return [
             'table' => $order->table?->number,
             'status' => $order->status->value,
             'total' => $order->total,
+            // После оплаты — ссылка на оценку, пока гость её не оставил (ТЗ 2.9).
+            'review_url' => $this->reviews->pendingUrl($order),
+            'reviewed' => (bool) $order->review?->isSubmitted(),
             'items' => $order->items->map(fn (OrderItem $i) => [
                 'id' => $i->id,
                 'name_tm' => $i->name_tm,

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Permission;
+use App\Repositories\ReviewRepository;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -10,7 +12,10 @@ class HandleInertiaRequests extends Middleware
 {
     protected $rootView = 'app';
 
-    public function __construct(private readonly SettingsService $settings) {}
+    public function __construct(
+        private readonly SettingsService $settings,
+        private readonly ReviewRepository $reviews,
+    ) {}
 
     public function version(Request $request): ?string
     {
@@ -38,6 +43,10 @@ class HandleInertiaRequests extends Middleware
                 'restaurant_name' => $this->settings->get('restaurant_name'),
                 'shared_idle_seconds' => (int) $this->settings->get('shared_idle_seconds'),
             ],
+            // Непрочитанные низкие оценки — счётчик в меню админки (ТЗ 2.9).
+            'reviews_unseen' => fn () => $user?->hasPermission(Permission::Reviews)
+                ? $this->reviews->unseenLowCount()
+                : 0,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

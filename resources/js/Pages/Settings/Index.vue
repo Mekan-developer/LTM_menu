@@ -12,6 +12,7 @@ const { t } = useI18n();
 const form = useForm({
     ...props.settings,
     qr_confirmation: Boolean(props.settings.qr_confirmation),
+    reviews_enabled: Boolean(props.settings.reviews_enabled),
 });
 const submit = () =>
     form.put(route('settings.update'), { preserveScroll: true });
@@ -94,6 +95,29 @@ const submit = () =>
                             mono
                     /></Field>
                 </div>
+            </section>
+
+            <section
+                class="flex flex-col gap-4 rounded-lg border border-line bg-surface p-5"
+            >
+                <h2 class="text-lg font-semibold">
+                    {{ t('settings.reviews') }}
+                </h2>
+                <label class="flex items-start gap-3">
+                    <input
+                        v-model="form.reviews_enabled"
+                        type="checkbox"
+                        class="mt-0.5 size-[18px] accent-[var(--color-brand)]"
+                    />
+                    <span class="flex flex-col"
+                        ><span class="text-sm font-medium">{{
+                            t('settings.reviews_enabled')
+                        }}</span
+                        ><span class="text-xs text-ink-3">{{
+                            t('settings.reviews_hint')
+                        }}</span></span
+                    >
+                </label>
             </section>
 
             <section

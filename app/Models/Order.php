@@ -85,4 +85,10 @@ class Order extends Model
             ->whereIn('status', [OrderItemStatus::Draft->value, OrderItemStatus::Pending->value])
             ->exists();
     }
+
+    /** @return HasOne<Review, $this> */
+    public function review(): HasOne
+    {
+        return $this->hasOne(Review::class);
+    }
 }

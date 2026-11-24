@@ -13,6 +13,7 @@ use App\Models\Payment;
 use App\Repositories\OrderRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\CashierService;
+use App\Services\ReviewService;
 use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class CashierController extends Controller
         private readonly OrderRepository $orders,
         private readonly PaymentRepository $payments,
         private readonly SettingsService $settings,
+        private readonly ReviewService $reviews,
     ) {}
 
     public function index(Request $request): Response
@@ -71,6 +73,8 @@ class CashierController extends Controller
         return Inertia::render('Cashier/Receipt', [
             'order' => new OrderResource($this->orders->loadForScreen($order)),
             'restaurant' => $this->settings->get('restaurant_name'),
+            // QR на чеке ведёт на оценку: пока нет push/SMS, это основной способ попросить отзыв.
+            'reviewUrl' => $this->reviews->pendingUrl($order->loadMissing('review')),
         ]);
     }
 }

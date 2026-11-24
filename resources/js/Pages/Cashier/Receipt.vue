@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import QRCode from 'qrcode';
 import { Head } from '@inertiajs/vue3';
 import { useI18n } from '@/i18n';
 import { dateTime, money } from '@/utils/format';
@@ -7,6 +8,7 @@ import { dateTime, money } from '@/utils/format';
 const props = defineProps({
     order: { type: Object, required: true },
     restaurant: { type: String, default: '' },
+    reviewUrl: { type: String, default: null },
 });
 
 const { t, loc } = useI18n();
@@ -18,7 +20,21 @@ const items = computed(() =>
 const paid = computed(() => props.order.payment);
 const print = () => window.print();
 
-onMounted(() => setTimeout(print, 300));
+// QR на оценку (ТЗ 2.9): печатаем, только когда он уже нарисован.
+const reviewQr = ref(null);
+onMounted(async () => {
+    if (props.reviewUrl) {
+        try {
+            reviewQr.value = await QRCode.toDataURL(props.reviewUrl, {
+                margin: 0,
+                width: 240,
+            });
+        } catch {
+            /* без QR чек всё равно печатается */
+        }
+    }
+    setTimeout(print, 300);
+});
 </script>
 
 <template>
@@ -86,6 +102,14 @@ onMounted(() => setTimeout(print, 300));
                 </p>
             </template>
             <p class="my-1.5 border-t border-dashed border-black" />
+            <div
+                v-if="reviewQr"
+                class="mb-1.5 flex flex-col items-center gap-1"
+            >
+                <img :src="reviewQr" alt="" class="size-[30mm]" />
+                <p class="text-center">{{ t('receipt.review') }}</p>
+                <p class="my-1.5 w-full border-t border-dashed border-black" />
+            </div>
             <p class="text-center">{{ t('receipt.thanks') }}</p>
             <p class="mt-1 text-center text-[10px]">
                 {{ t('receipt.not_fiscal') }}

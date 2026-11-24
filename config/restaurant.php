@@ -10,6 +10,7 @@ return [
         'kitchen_warn_minutes' => 10,      // карточка на кухне становится охристой
         'kitchen_late_minutes' => 20,      // карточка становится красной
         'shared_idle_seconds' => 60,       // выход с общего планшета при бездействии
+        'reviews_enabled' => true,         // ссылка на отзыв после оплаты (ТЗ 2.9)
     ],
 
     'auth' => [

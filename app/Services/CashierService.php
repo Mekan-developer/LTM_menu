@@ -24,6 +24,7 @@ class CashierService
         private readonly SettingsService $settings,
         private readonly ActionLogger $logger,
         private readonly Realtime $realtime,
+        private readonly ReviewService $reviews,
     ) {}
 
     /** @param array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null} $data */
@@ -77,6 +78,9 @@ class CashierService
                 'paid_at' => now(),
                 'closed_at' => now(),
             ])->save();
+
+            // Одноразовая ссылка на отзыв (ТЗ 2.9).
+            $this->reviews->createForOrder($order);
 
             // Чаевые — отдельно от выручки, привязаны к официанту счёта (ТЗ 2.12).
             if ($tip > 0) {

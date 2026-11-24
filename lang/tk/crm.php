@@ -69,4 +69,8 @@ return [
         'blocked' => 'Işgär petiklendi',
         'unblocked' => 'Işgär açyldy',
     ],
+
+    'reviews' => [
+        'already' => 'Bu hasap eýýäm bahalandyryldy. Sag boluň!',
+    ],
 ];

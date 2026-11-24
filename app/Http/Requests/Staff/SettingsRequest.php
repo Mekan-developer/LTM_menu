@@ -21,6 +21,7 @@ class SettingsRequest extends FormRequest
             'kitchen_warn_minutes' => ['required', 'integer', 'min:1', 'max:180'],
             'kitchen_late_minutes' => ['required', 'integer', 'gt:kitchen_warn_minutes', 'max:240'],
             'shared_idle_seconds' => ['required', 'integer', 'min:15', 'max:3600'],
+            'reviews_enabled' => ['required', 'boolean'],
         ];
     }
 }

@@ -233,6 +233,41 @@ const back = () => window.history.back();
                 </div>
             </section>
 
+            <!-- После оплаты — приглашение оценить (ТЗ 2.9) -->
+            <a
+                v-if="state.review_url"
+                :href="state.review_url"
+                class="dish-card flex items-center gap-4 rounded-2xl bg-g-card px-5 py-4 transition active:scale-[0.99]"
+            >
+                <span class="flex flex-1 flex-col gap-0.5">
+                    <span class="text-[17px] font-semibold">{{
+                        t('review.invite')
+                    }}</span>
+                    <span class="text-[15px] text-g-muted">{{
+                        t('review.invite_text')
+                    }}</span>
+                </span>
+                <span class="flex gap-0.5 text-g-accent" aria-hidden="true">
+                    <svg
+                        v-for="n in 5"
+                        :key="n"
+                        class="size-5"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"
+                        />
+                    </svg>
+                </span>
+            </a>
+            <p
+                v-else-if="state.reviewed"
+                class="px-1 text-center text-[15px] text-g-muted"
+            >
+                {{ t('review.thanks') }}
+            </p>
+
             <button
                 type="button"
                 class="mt-1 h-14 rounded-xl border-[1.5px] border-g-ink bg-g-card text-[17px] font-semibold shadow-[0_1px_2px_rgb(33_28_23/0.06)] transition active:scale-[0.98] active:bg-g-bg"

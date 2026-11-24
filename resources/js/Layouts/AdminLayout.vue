@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import FlashToast from '@/Components/FlashToast.vue';
 import LangSwitch from '@/Components/LangSwitch.vue';
@@ -92,6 +92,13 @@ const groups = computed(() =>
             title: t('nav.system'),
             items: [
                 {
+                    label: t('nav.reviews'),
+                    route: 'reviews.index',
+                    icon: 'star',
+                    perm: 'reviews',
+                    badge: page.props.reviews_unseen,
+                },
+                {
                     label: t('nav.logs'),
                     route: 'logs.index',
                     icon: 'log',
@@ -113,6 +120,18 @@ const groups = computed(() =>
 const active = (name) =>
     route().current(name) || route().current(name.replace('.index', '.*'));
 const logout = () => router.post(route('logout'));
+
+// Низкая оценка гостя — сразу обновляем счётчик в меню (ТЗ 2.9).
+onMounted(() => {
+    if (can('reviews') && window.Echo) {
+        window.Echo.private('reviews').listen('.review.low', () =>
+            router.reload({ only: ['reviews_unseen'] }),
+        );
+    }
+});
+onUnmounted(() => {
+    if (can('reviews')) window.Echo?.leave('reviews');
+});
 </script>
 
 <template>
@@ -208,6 +227,12 @@ const logout = () => router.post(route('logout'));
                     >
                         <Icon :name="item.icon" class="text-ink-2" />
                         {{ item.label }}
+                        <span
+                            v-if="item.badge"
+                            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 font-mono text-[11px] font-semibold text-white"
+                            :aria-label="t('reviews.unseen', { n: item.badge })"
+                            >{{ item.badge }}</span
+                        >
                     </Link>
                 </div>
             </nav>

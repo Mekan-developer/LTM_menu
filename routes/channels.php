@@ -10,3 +10,5 @@ Broadcast::channel('kitchen.{station}', fn (User $user, string $station) => in_a
 Broadcast::channel('waiters', fn (User $user) => $user->hasPermission(Permission::AreaWaiter));
 
 Broadcast::channel('cashier', fn (User $user) => $user->hasPermission(Permission::AreaCashier));
+
+Broadcast::channel('reviews', fn (User $user) => $user->hasPermission(Permission::Reviews));

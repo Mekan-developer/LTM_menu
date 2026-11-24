@@ -5,12 +5,14 @@ use App\Http\Controllers\Auth\PinLoginController;
 use App\Http\Controllers\Cashier\CashierController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Guest\GuestController;
+use App\Http\Controllers\Guest\ReviewController as GuestReviewController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Kitchen\KitchenController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Menu\MenuController;
 use App\Http\Controllers\Menu\StopListController;
 use App\Http\Controllers\Menu\TableController;
+use App\Http\Controllers\Reviews\ReviewController;
 use App\Http\Controllers\Staff\ActionLogController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SettingsController;
@@ -29,6 +31,8 @@ Route::name('guest.')->group(function () {
     Route::post('/t/{token}/orders', [GuestController::class, 'store'])->middleware('throttle:guest-orders')->name('orders.store');
     Route::get('/o/{publicToken}', [GuestController::class, 'show'])->name('order');
     Route::get('/o/{publicToken}/status.json', [GuestController::class, 'status'])->name('order.status');
+    Route::get('/r/{token}', [GuestReviewController::class, 'show'])->name('review');
+    Route::post('/r/{token}', [GuestReviewController::class, 'store'])->middleware('throttle:guest-orders')->name('review.store');
 });
 
 /*
@@ -100,6 +104,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/logs', [ActionLogController::class, 'index'])->middleware('permission:action_log')->name('logs.index');
+    Route::get('/reviews', [ReviewController::class, 'index'])->middleware('permission:reviews')->name('reviews.index');
 
     // Экран официанта
     Route::middleware('permission:area_waiter')->prefix('waiter')->name('waiter.')->group(function () {
