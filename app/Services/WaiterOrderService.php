@@ -7,6 +7,7 @@ use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Enums\Permission;
 use App\Events\CashierQueueChanged;
+use App\Events\HallChanged;
 use App\Events\KitchenBoardChanged;
 use App\Events\WaiterAlert;
 use App\Models\DiningTable;
@@ -43,7 +44,7 @@ class WaiterOrderService
                 return $existing;
             }
 
-            return Order::create([
+            $order = Order::create([
                 'public_token' => Str::lower(Str::random(32)),
                 'dining_table_id' => $table->id,
                 'waiter_id' => $waiter->id,
@@ -51,6 +52,10 @@ class WaiterOrderService
                 'status' => OrderStatus::Open->value,
                 'opened_at' => now(),
             ]);
+
+            DB::afterCommit(fn () => $this->realtime->hallOf($order));
+
+            return $order;
         });
     }
 
@@ -202,6 +207,7 @@ class WaiterOrderService
         });
 
         $this->realtime->send(new KitchenBoardChanged($stations));
+        $this->realtime->hallOf($order);
     }
 
     public function rejectQrBatch(Order $order, int $batch, User $waiter): void
@@ -225,6 +231,8 @@ class WaiterOrderService
                 $order->forceFill(['status' => OrderStatus::Cancelled->value, 'closed_at' => now()])->save();
             }
         });
+
+        $this->realtime->hallOf($order);
     }
 
     public function markServed(Order $order, int $batch, User $waiter): void
@@ -235,6 +243,8 @@ class WaiterOrderService
             ->where('batch', $batch)
             ->where('status', OrderItemStatus::Ready->value)
             ->update(['status' => OrderItemStatus::Served->value, 'served_at' => now()]);
+
+        $this->realtime->hallOf($order);
     }
 
     public function requestBill(Order $order, User $waiter): void
@@ -248,6 +258,7 @@ class WaiterOrderService
         ])->save();
 
         $this->realtime->send(new CashierQueueChanged($order->id));
+        $this->realtime->hallOf($order);
     }
 
     /** Передать стол другому официанту — право «Передача столов» (ТЗ 2.4). */
@@ -266,35 +277,49 @@ class WaiterOrderService
 
         $this->logger->log(ActionLogger::TABLE_TRANSFERRED, $order, ['from' => $from, 'to' => $target->id], $actor);
         $this->realtime->send(new WaiterAlert('transfer', $order->id, $order->table?->number, $target->id));
+        $this->realtime->hallOf($order);
     }
 
     /**
      * Перенос заказа за другой стол (ТЗ 2.4): гости пересели. Стол должен быть свободен.
-     * Переносит тот, кто ведёт стол, или пользователь с правом «Передача столов».
+     * Строка целевого стола блокируется (lockForUpdate), чтобы двое не пересадили гостей
+     * на один стол одновременно. Права — как у остальных действий с заказом.
      */
-    public function moveTable(Order $order, DiningTable $target, User $user): void
+    public function moveToTable(Order $order, DiningTable $target, User $user): void
     {
         $this->assertCanHandle($order, $user);
         $this->assertActive($order);
 
-        if (! $target->is_active || $target->id === $order->dining_table_id) {
+        if ($target->id === $order->dining_table_id) {
             throw ValidationException::withMessages(['table_id' => __('crm.order.table_unavailable')]);
         }
 
+        $fromHall = $order->table?->hall_id;
+
         DB::transaction(function () use ($order, $target, $user) {
-            if ($this->orders->activeForTableLocked($target) !== null) {
+            $locked = DiningTable::query()->lockForUpdate()->find($target->id);
+
+            if ($locked === null || ! $locked->is_active) {
+                throw ValidationException::withMessages(['table_id' => __('crm.order.table_unavailable')]);
+            }
+
+            if ($this->orders->activeForTableLocked($locked) !== null) {
                 throw ValidationException::withMessages(['table_id' => __('crm.order.table_busy')]);
             }
 
             $from = $order->table?->number;
-            $order->forceFill(['dining_table_id' => $target->id])->save();
+            $order->forceFill(['dining_table_id' => $locked->id])->save();
 
-            $this->logger->log(ActionLogger::TABLE_MOVED, $order, ['from' => $from, 'to' => $target->number], $user);
+            $this->logger->log(ActionLogger::TABLE_MOVED, $order, ['from' => $from, 'to' => $locked->number], $user);
         });
 
-        // Номер стола виден на кухне и в кассе — обновляем оба экрана.
+        // Номер стола виден на кухне, в кассе и на схеме.
         $this->realtime->send(new KitchenBoardChanged(['kitchen', 'bar']));
         $this->realtime->send(new CashierQueueChanged($order->id));
+        if ($fromHall !== null && $fromHall !== $target->hall_id) {
+            $this->realtime->send(new HallChanged($fromHall));
+        }
+        $this->realtime->hallOf($order->unsetRelation('table'));
     }
 
     public function authorizeHandle(Order $order, User $user): void

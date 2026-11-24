@@ -7,14 +7,19 @@ import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { useIdleLogout } from '@/composables/useIdleLogout';
 
-defineProps({ title: { type: String, default: '' } });
+defineProps({
+    title: { type: String, default: '' },
+    // Узкая полоса иконок 56 px вместо сайдбара — для широких экранов вроде схемы зала.
+    compact: { type: Boolean, default: false },
+});
 
 const page = usePage();
 const { t } = useI18n();
 const { warning, left } = useIdleLogout();
 const navOpen = ref(false);
 
-const can = (p) => page.props.auth.user?.permissions?.includes(p);
+const can = (p) =>
+    [p].flat().some((x) => page.props.auth.user?.permissions?.includes(x));
 
 // Пункты меню видны только с правом — кнопок, которые нельзя нажать, нет.
 const groups = computed(() =>
@@ -33,6 +38,12 @@ const groups = computed(() =>
                     route: 'reports.index',
                     icon: 'chart',
                     perm: 'reports',
+                },
+                {
+                    label: t('nav.hall'),
+                    route: 'hall.index',
+                    icon: 'tables',
+                    perm: ['area_waiter', 'tables', 'reports'],
                 },
                 {
                     label: t('nav.waiter'),
@@ -208,8 +219,11 @@ onUnmounted(() => {
         <div class="flex flex-wrap">
             <nav
                 :aria-label="t('nav.sections')"
-                class="no-print w-full border-b border-line bg-surface px-3 py-4 lg:block lg:min-h-[calc(100vh-56px)] lg:w-[232px] lg:border-r lg:border-b-0"
-                :class="navOpen ? 'block' : 'hidden'"
+                class="no-print w-full border-b border-line bg-surface py-4 lg:block lg:min-h-[calc(100vh-56px)] lg:border-r lg:border-b-0"
+                :class="[
+                    navOpen ? 'block' : 'hidden',
+                    compact ? 'px-3 lg:w-14 lg:px-1.5' : 'px-3 lg:w-[232px]',
+                ]"
             >
                 <div
                     v-for="group in groups"
@@ -218,24 +232,34 @@ onUnmounted(() => {
                 >
                     <span
                         class="px-2.5 pb-1 font-mono text-[10px] tracking-[0.08em] text-ink-3 uppercase"
+                        :class="compact ? 'lg:sr-only' : ''"
                         >{{ group.title }}</span
                     >
                     <Link
                         v-for="item in group.items"
                         :key="item.route"
                         :href="route(item.route)"
-                        class="flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-sm"
-                        :class="
+                        class="relative flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-sm"
+                        :class="[
                             active(item.route)
                                 ? 'bg-brand-soft font-semibold'
-                                : 'hover:bg-surface-2'
-                        "
+                                : 'hover:bg-surface-2',
+                            compact ? 'lg:justify-center lg:px-0' : '',
+                        ]"
+                        :title="compact ? item.label : undefined"
                     >
-                        <Icon :name="item.icon" class="text-ink-2" />
-                        {{ item.label }}
+                        <Icon :name="item.icon" class="shrink-0 text-ink-2" />
+                        <span :class="compact ? 'lg:sr-only' : ''">{{
+                            item.label
+                        }}</span>
                         <span
                             v-if="item.badge"
                             class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 font-mono text-[11px] font-semibold text-white"
+                            :class="
+                                compact
+                                    ? 'lg:absolute lg:-top-1 lg:right-0 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[10px]'
+                                    : ''
+                            "
                             :aria-label="t('reviews.unseen', { n: item.badge })"
                             >{{ item.badge }}</span
                         >

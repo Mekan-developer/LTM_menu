@@ -15,7 +15,9 @@ class TableResource extends JsonResource
         return [
             'id' => $this->id,
             'number' => $this->number,
-            'hall' => $this->hall,
+            'hall_id' => $this->hall_id,
+            'hall' => $this->whenLoaded('hall', fn () => $this->hall?->localizedName()),
+            'shape' => $this->shape->value,
             'seats' => $this->seats,
             'is_active' => $this->is_active,
             'qr_url' => route('guest.menu', $this->qr_token),

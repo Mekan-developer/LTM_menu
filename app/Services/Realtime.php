@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\HallChanged;
+use App\Models\Order;
 use Throwable;
 
 /**
@@ -16,6 +18,19 @@ class Realtime
             broadcast($event);
         } catch (Throwable $e) {
             report($e);
+        }
+    }
+
+    /**
+     * Статус стола на схеме зала изменился. Зал берём из стола заказа;
+     * заказ без стола (доставка — следующий этап) схему не трогает.
+     */
+    public function hallOf(?Order $order): void
+    {
+        $hallId = $order?->table?->hall_id;
+
+        if ($hallId !== null) {
+            $this->send(new HallChanged($hallId));
         }
     }
 }

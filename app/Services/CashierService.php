@@ -104,6 +104,7 @@ class CashierService
         });
 
         $this->realtime->send(new CashierQueueChanged($order->id));
+        $this->realtime->hallOf($order);
 
         return $payment;
     }
@@ -134,6 +135,7 @@ class CashierService
         });
 
         $this->realtime->send(new CashierQueueChanged($payment->order_id));
+        $this->realtime->hallOf($payment->order);
     }
 
     /**

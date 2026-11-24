@@ -12,3 +12,7 @@ Broadcast::channel('waiters', fn (User $user) => $user->hasPermission(Permission
 Broadcast::channel('cashier', fn (User $user) => $user->hasPermission(Permission::AreaCashier));
 
 Broadcast::channel('reviews', fn (User $user) => $user->hasPermission(Permission::Reviews));
+
+Broadcast::channel('hall', fn (User $user) => $user->hasPermission(Permission::AreaWaiter)
+    || $user->hasPermission(Permission::Tables)
+    || $user->hasPermission(Permission::Reports));

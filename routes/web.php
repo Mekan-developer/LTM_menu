@@ -6,6 +6,7 @@ use App\Http\Controllers\Cashier\CashierController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Guest\GuestController;
 use App\Http\Controllers\Guest\ReviewController as GuestReviewController;
+use App\Http\Controllers\Hall\HallController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Kitchen\KitchenController;
 use App\Http\Controllers\LocaleController;
@@ -78,6 +79,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [StopListController::class, 'index'])->name('index');
         Route::post('/', [StopListController::class, 'store'])->name('store');
         Route::delete('/{entry}', [StopListController::class, 'destroy'])->name('destroy');
+    });
+
+    // Схема зала (ТЗ 2.2): работа — официант, столы — редактор, отчёты — просмотр
+    Route::get('/hall', [HallController::class, 'index'])->middleware('permission:area_waiter,tables,reports')->name('hall.index');
+    Route::middleware('permission:tables')->prefix('halls')->name('halls.')->group(function () {
+        Route::post('/', [HallController::class, 'store'])->name('store');
+        Route::put('/{hall}', [HallController::class, 'update'])->name('update');
+        Route::delete('/{hall}', [HallController::class, 'destroy'])->name('destroy');
+        Route::put('/{hall}/layout', [HallController::class, 'layout'])->name('layout');
     });
 
     // Столы и QR-коды

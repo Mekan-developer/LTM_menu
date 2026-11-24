@@ -84,5 +84,6 @@ class KitchenService
 
         $this->realtime->send(new WaiterAlert('ready', $order->id, $order->table?->number, $order->waiter_id, $batch));
         $this->realtime->send(new KitchenBoardChanged([$station->value]));
+        $this->realtime->hallOf($order);
     }
 }

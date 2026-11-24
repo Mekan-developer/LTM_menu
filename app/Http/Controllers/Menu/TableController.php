@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Menu\TableRequest;
 use App\Http\Resources\TableResource;
 use App\Models\DiningTable;
+use App\Models\Hall;
+use App\Repositories\HallRepository;
 use App\Repositories\TableRepository;
 use App\Services\TableService;
 use Illuminate\Http\RedirectResponse;
@@ -13,18 +15,22 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** Столы и их QR-коды. В MVP — список вместо схемы зала. */
+/** Столы и их QR-коды списком. Расстановка — в редакторе схемы зала (HallController). */
 class TableController extends Controller
 {
     public function __construct(
         private readonly TableRepository $tables,
         private readonly TableService $service,
+        private readonly HallRepository $halls,
     ) {}
 
     public function index(): Response
     {
         return Inertia::render('Tables/Index', [
             'tables' => TableResource::collection($this->tables->all()),
+            'halls' => $this->halls->all()->map(fn (Hall $h) => [
+                'id' => $h->id, 'name_tm' => $h->name_tm, 'name_ru' => $h->name_ru,
+            ])->values(),
         ]);
     }
 

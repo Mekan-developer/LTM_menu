@@ -99,4 +99,17 @@ return [
         'reviews' => 'Teswirler',
         'removed' => 'Pozulan naharlar',
     ],
+
+    'hall' => [
+        'saved' => 'Zalyň shemasy ýatda saklandy',
+        'busy_delete' => ':n stolda açyk sargyt bar — ony pozup bolmaýar',
+        'too_small' => 'Täze ölçeg shemadaky stollary we obýektleri sygdyrmaýar',
+        'not_empty' => 'Zalda stollar bar — ilki olary aýyryň',
+        'out_of_bounds' => ':n stol zalyň çäginden çykýar',
+        'element_out_of_bounds' => 'Obýekt zalyň çäginden çykýar',
+        'overlap' => ':a we :b stollar biri-birine düşýär',
+        'number_taken' => ':n belgili stol eýýäm bar',
+        'foreign_table' => 'Bu stol başga zala degişli',
+        'no_space' => 'Zalda boş ýer ýok — shemany giňeldiň ýa-da başga zal saýlaň',
+    ],
 ];

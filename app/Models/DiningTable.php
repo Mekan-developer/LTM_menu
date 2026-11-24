@@ -3,23 +3,39 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Enums\TableShape;
 use Database\Factories\DiningTableFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-/** Стол. В MVP без схемы зала: номер, зал (текстом), места и QR-код. */
+/** Стол: номер, места, QR-код и место на схеме зала (ТЗ 2.2). Размер — без учёта поворота. */
 class DiningTable extends Model
 {
     /** @use HasFactory<DiningTableFactory> */
     use HasFactory;
 
-    protected $fillable = ['number', 'hall', 'seats', 'qr_token', 'is_active', 'sort'];
+    protected $fillable = [
+        'number', 'hall_id', 'seats', 'qr_token', 'is_active', 'sort',
+        'shape', 'pos_x', 'pos_y', 'width', 'height', 'rotation',
+    ];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean', 'seats' => 'integer', 'sort' => 'integer'];
+        return [
+            'is_active' => 'boolean', 'seats' => 'integer', 'sort' => 'integer',
+            'shape' => TableShape::class,
+            'pos_x' => 'integer', 'pos_y' => 'integer', 'width' => 'integer', 'height' => 'integer',
+            'rotation' => 'integer',
+        ];
+    }
+
+    /** @return BelongsTo<Hall, $this> */
+    public function hall(): BelongsTo
+    {
+        return $this->belongsTo(Hall::class);
     }
 
     /** @return HasMany<Order, $this> */

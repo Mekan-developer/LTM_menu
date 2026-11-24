@@ -94,6 +94,7 @@ class GuestOrderService
         });
 
         $this->realtime->send(new WaiterAlert('qr_order', $order->id, $table->number, $order->waiter_id, $batch));
+        $this->realtime->hallOf($order->setRelation('table', $table));
 
         if ($autoSend) {
             $this->realtime->send(new KitchenBoardChanged($stations));

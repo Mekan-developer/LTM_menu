@@ -23,6 +23,8 @@ class ActionLogger
 
     public const TABLE_MOVED = 'table_moved';
 
+    public const HALL_LAYOUT_SAVED = 'hall_layout_saved';
+
     public const STOP_ADDED = 'stop_added';
 
     public const STOP_REMOVED = 'stop_removed';

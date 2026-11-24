@@ -10,7 +10,7 @@ class TableRepository
     /** @return Collection<int, DiningTable> */
     public function all(): Collection
     {
-        return DiningTable::query()->with('activeOrder')->orderBy('sort')->orderBy('id')->get();
+        return DiningTable::query()->with(['activeOrder', 'hall'])->orderBy('sort')->orderBy('id')->get();
     }
 
     /** @return Collection<int, DiningTable> */

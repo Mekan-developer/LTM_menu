@@ -141,13 +141,15 @@ class WaiterController extends Controller
     {
         $this->service->requestBill($order, $request->user());
 
-        return redirect()->route('waiter.index')->with('success', __('crm.order.bill_requested'));
+        // Со схемы зала (?stay=1) остаёмся на схеме.
+        return ($request->boolean('stay') ? back() : redirect()->route('waiter.index'))
+            ->with('success', __('crm.order.bill_requested'));
     }
 
     /** Гости пересели — заказ переходит за другой свободный стол (ТЗ 2.4). */
     public function move(MoveTableRequest $request, Order $order): RedirectResponse
     {
-        $this->service->moveTable($order, DiningTable::findOrFail($request->integer('table_id')), $request->user());
+        $this->service->moveToTable($order, DiningTable::findOrFail($request->integer('table_id')), $request->user());
 
         return back()->with('success', __('crm.order.moved'));
     }
@@ -167,7 +169,8 @@ class WaiterController extends Controller
     {
         $this->service->transfer($order, User::findOrFail($request->integer('waiter_id')), $request->user());
 
-        return redirect()->route('waiter.index')->with('success', __('crm.order.transferred'));
+        return ($request->boolean('stay') ? back() : redirect()->route('waiter.index'))
+            ->with('success', __('crm.order.transferred'));
     }
 
     /** @return Collection<int, array{id:int, number:string, seats:int}> */

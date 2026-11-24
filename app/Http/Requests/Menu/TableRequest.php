@@ -17,7 +17,7 @@ class TableRequest extends FormRequest
     {
         return [
             'number' => ['required', 'string', 'max:16', Rule::unique('dining_tables', 'number')->ignore($this->route('table'))],
-            'hall' => ['nullable', 'string', 'max:64'],
+            'hall_id' => ['required', 'integer', 'exists:halls,id'],
             'seats' => ['required', 'integer', 'min:1', 'max:50'],
             'is_active' => ['boolean'],
         ];

@@ -11,11 +11,19 @@ import Modal from '@/Components/Modal.vue';
 import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 
-const props = defineProps({ tables: { type: Array, default: () => [] } });
+const props = defineProps({
+    tables: { type: Array, default: () => [] },
+    halls: { type: Array, default: () => [] },
+});
 
-const { t } = useI18n();
+const { t, loc } = useI18n();
 const editing = ref(null);
-const form = useForm({ number: '', hall: '', seats: 4, is_active: true });
+const form = useForm({
+    number: '',
+    hall_id: props.halls[0]?.id ?? null,
+    seats: 4,
+    is_active: true,
+});
 const qr = ref({});
 
 async function renderQr() {
@@ -38,7 +46,7 @@ function open(table = null) {
     editing.value = table ?? 'new';
     form.clearErrors();
     form.number = table?.number ?? '';
-    form.hall = table?.hall ?? '';
+    form.hall_id = table?.hall_id ?? props.halls[0]?.id ?? null;
     form.seats = table?.seats ?? 4;
     form.is_active = table?.is_active ?? true;
 }
@@ -211,9 +219,21 @@ function remove(table) {
                     <Field
                         :label="t('tables.hall')"
                         for="t-h"
-                        :error="form.errors.hall"
-                        ><TextInput id="t-h" v-model="form.hall"
-                    /></Field>
+                        :error="form.errors.hall_id"
+                        ><select
+                            id="t-h"
+                            v-model="form.hall_id"
+                            class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm"
+                        >
+                            <option
+                                v-for="h in halls"
+                                :key="h.id"
+                                :value="h.id"
+                            >
+                                {{ loc(h, 'name') }}
+                            </option>
+                        </select></Field
+                    >
                 </div>
                 <label class="col-span-2 flex items-center gap-2 text-sm"
                     ><input

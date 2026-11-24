@@ -21,6 +21,7 @@ const actions = [
     'price_changed',
     'table_transferred',
     'table_moved',
+    'hall_layout_saved',
     'stop_added',
     'stop_removed',
     'role_permissions_changed',
