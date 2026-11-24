@@ -32,7 +32,7 @@ class PaymentRepository
     public function recentForCashier(int $limit = 20): Collection
     {
         return Payment::query()
-            ->with(['order:id,dining_table_id', 'order.table:id,number', 'cashier:id,name'])
+            ->with(['order:id,dining_table_id,channel', 'order.table:id,number', 'cashier:id,name'])
             ->where('created_at', '>=', now()->startOfDay())
             ->latest()
             ->limit($limit)

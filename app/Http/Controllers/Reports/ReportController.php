@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\ReportRequest;
 use App\Services\ReportExporter;
@@ -21,10 +22,13 @@ class ReportController extends Controller
     public function index(ReportRequest $request): Response
     {
         [$from, $to] = $this->reports->period($request->validated('from'), $request->validated('to'));
+        // Телефоны и карточки гостей — только с правом «Гости».
+        $canGuests = $request->user()->hasPermission(Permission::Guests);
 
         return Inertia::render('Reports/Index', [
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
-            ...$this->reports->build($from, $to),
+            ...$this->reports->build($from, $to, $canGuests),
+            'canGuests' => $canGuests,
         ]);
     }
 
@@ -33,7 +37,7 @@ class ReportController extends Controller
         abort_unless(in_array($report, ReportExporter::REPORTS, true), 404);
         [$from, $to] = $this->reports->period($request->validated('from'), $request->validated('to'));
 
-        $content = $this->exporter->export($report, $from, $to)->toString();
+        $content = $this->exporter->export($report, $from, $to, $request->user()->hasPermission(Permission::Guests))->toString();
 
         return response($content, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

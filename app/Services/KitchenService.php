@@ -18,6 +18,7 @@ class KitchenService
     public function __construct(
         private readonly OrderRepository $orders,
         private readonly Realtime $realtime,
+        private readonly DeliveryService $deliveries,
     ) {}
 
     /**
@@ -40,6 +41,8 @@ class KitchenService
                     'table' => $first->order->table?->number,
                     'waiter' => $first->order->waiter?->name,
                     'source' => $first->order->source->value,
+                    // Доставка и самовывоз: вместо стола — номер заказа (ТЗ 2.5).
+                    'channel' => $first->order->channel->value,
                     'sent_at' => $items->min('sent_at')?->toIso8601String(),
                     'items' => $items->map(fn (OrderItem $i) => [
                         'id' => $i->id,
@@ -59,6 +62,8 @@ class KitchenService
             ->map(fn (Collection $items) => [
                 'key' => $items->first()->order_id.'-'.$items->first()->batch,
                 'table' => $items->first()->order->table?->number,
+                'order_id' => $items->first()->order_id,
+                'channel' => $items->first()->order->channel->value,
                 'ready_at' => $items->max('ready_at')?->toIso8601String(),
             ])
             ->values()
@@ -81,9 +86,16 @@ class KitchenService
         ]);
 
         $order->loadMissing('table');
+        $this->realtime->send(new KitchenBoardChanged([$station->value]));
+
+        // Доставка: официанта не зовём, заказ становится «готов», когда готовы все позиции.
+        if (! $order->isHall()) {
+            $this->deliveries->kitchenReady($order);
+
+            return;
+        }
 
         $this->realtime->send(new WaiterAlert('ready', $order->id, $order->table?->number, $order->waiter_id, $batch));
-        $this->realtime->send(new KitchenBoardChanged([$station->value]));
         $this->realtime->hallOf($order);
     }
 }

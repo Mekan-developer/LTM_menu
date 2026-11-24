@@ -87,6 +87,8 @@ class AuthService
             $user->hasPermission(Permission::AreaCashier) => 'cashier.index',
             $user->hasPermission(Permission::AreaKitchen) => 'kitchen.index',
             $user->hasPermission(Permission::AreaWaiter) => 'waiter.index',
+            $user->hasPermission(Permission::AreaCourier) => 'courier.index',
+            $user->hasPermission(Permission::Delivery) => 'deliveries.index',
             $user->hasPermission(Permission::Menu) => 'menu.index',
             $user->hasPermission(Permission::StopList) => 'stop-list.index',
             default => 'no-access',

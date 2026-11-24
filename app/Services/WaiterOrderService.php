@@ -329,6 +329,11 @@ class WaiterOrderService
 
     private function assertCanHandle(Order $order, User $user): void
     {
+        // Доставка и самовывоз ведутся на экране «Доставка», не у официанта.
+        if (! $order->isHall()) {
+            throw new AuthorizationException(__('crm.order.not_your_table'));
+        }
+
         $own = $order->waiter_id === null || (int) $order->waiter_id === (int) $user->id;
 
         if (! $own && ! $user->hasPermission(Permission::TransferTables)) {

@@ -4,8 +4,11 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PinLoginController;
 use App\Http\Controllers\Bookings\BookingController;
 use App\Http\Controllers\Cashier\CashierController;
+use App\Http\Controllers\Courier\CourierController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Deliveries\DeliveryController;
 use App\Http\Controllers\Guest\BookingController as GuestBookingController;
+use App\Http\Controllers\Guest\DeliveryController as GuestDeliveryController;
 use App\Http\Controllers\Guest\GuestController;
 use App\Http\Controllers\Guest\ReviewController as GuestReviewController;
 use App\Http\Controllers\Guests\GuestController as GuestBaseController;
@@ -23,6 +26,7 @@ use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SettingsController;
 use App\Http\Controllers\Staff\UserController;
 use App\Http\Controllers\Waiter\WaiterController;
+use App\Services\ReportExporter;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/locale/{locale}', LocaleController::class)->name('locale.switch');
@@ -38,6 +42,9 @@ Route::name('guest.')->group(function () {
     Route::get('/o/{publicToken}/status.json', [GuestController::class, 'status'])->name('order.status');
     Route::get('/book', [GuestBookingController::class, 'create'])->name('booking');
     Route::post('/book', [GuestBookingController::class, 'store'])->middleware('throttle:guest-orders')->name('booking.store');
+    Route::get('/delivery', [GuestDeliveryController::class, 'create'])->name('delivery');
+    Route::get('/delivery/menu.json', [GuestDeliveryController::class, 'menuJson'])->name('delivery.menu.json');
+    Route::post('/delivery', [GuestDeliveryController::class, 'store'])->middleware('throttle:guest-orders')->name('delivery.store');
     Route::get('/r/{token}', [GuestReviewController::class, 'show'])->name('review');
     Route::post('/r/{token}', [GuestReviewController::class, 'store'])->middleware('throttle:guest-orders')->name('review.store');
 });
@@ -62,7 +69,7 @@ Route::middleware('auth')->group(function () {
     // Отчёты за период (ТЗ 2.10)
     Route::middleware('permission:reports')->prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('/export/{report}', [ReportController::class, 'export'])->whereIn('report', ['revenue', 'load', 'dishes', 'staff'])->name('export');
+        Route::get('/export/{report}', [ReportController::class, 'export'])->whereIn('report', ReportExporter::REPORTS)->name('export');
     });
 
     // Меню и цены
@@ -102,6 +109,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [BookingController::class, 'store'])->name('store');
         Route::put('/{booking}', [BookingController::class, 'update'])->name('update');
         Route::post('/{booking}/status', [BookingController::class, 'status'])->name('status');
+    });
+
+    // Доставка и самовывоз (ТЗ 2.6)
+    Route::middleware('permission:delivery')->prefix('deliveries')->name('deliveries.')->group(function () {
+        Route::get('/', [DeliveryController::class, 'index'])->name('index');
+        Route::get('/guest', [DeliveryController::class, 'guest'])->name('guest');
+        Route::post('/', [DeliveryController::class, 'store'])->name('store');
+        Route::post('/{delivery}/action', [DeliveryController::class, 'action'])->name('action');
+        Route::post('/{delivery}/complete', [DeliveryController::class, 'complete'])->name('complete');
+    });
+
+    // Экран курьера: только свои заказы — проверяет DeliveryService
+    Route::middleware('permission:area_courier')->prefix('courier')->name('courier.')->group(function () {
+        Route::get('/', [CourierController::class, 'index'])->name('index');
+        Route::post('/{delivery}/pick-up', [CourierController::class, 'pickUp'])->name('pick-up');
+        Route::post('/{delivery}/complete', [CourierController::class, 'complete'])->name('complete');
     });
 
     // База гостей (ТЗ 2.1); экспорт — отдельное право
@@ -177,5 +200,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/{order}/pay', [CashierController::class, 'pay'])->name('pay');
         Route::get('/orders/{order}/receipt', [CashierController::class, 'receipt'])->name('receipt');
         Route::post('/payments/{payment}/cancel', [CashierController::class, 'cancel'])->name('cancel');
+        Route::post('/couriers/{user}/cash', [CashierController::class, 'receiveCash'])->name('courier-cash');
     });
 });

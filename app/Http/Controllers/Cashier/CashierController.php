@@ -10,11 +10,15 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\PaymentResource;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\User;
+use App\Repositories\DeliveryRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\CashierService;
+use App\Services\DeliveryService;
 use App\Services\ReviewService;
 use App\Services\SettingsService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,6 +32,8 @@ class CashierController extends Controller
         private readonly PaymentRepository $payments,
         private readonly SettingsService $settings,
         private readonly ReviewService $reviews,
+        private readonly DeliveryRepository $deliveries,
+        private readonly DeliveryService $deliveryService,
     ) {}
 
     public function index(Request $request): Response
@@ -42,6 +48,10 @@ class CashierController extends Controller
             'selected' => $selected ? new OrderResource($this->orders->loadForScreen($selected)) : null,
             'summary' => fn () => $this->cashier->daySummary(),
             'recent' => fn () => PaymentResource::collection($this->payments->recentForCashier()),
+            // Наличные, которые курьеры должны сдать (ТЗ 2.6).
+            'couriers' => fn () => $this->deliveries->cashOnCouriers()->map(fn ($r) => [
+                'id' => (int) $r->courier_id, 'name' => $r->name, 'amount' => (int) $r->amount, 'orders' => (int) $r->orders,
+            ])->values(),
             'rules' => [
                 'discount_limit_k' => $this->cashier->discountLimit(),
                 'can_discount' => $user->hasPermission(Permission::DiscountUpToK) || $user->hasPermission(Permission::DiscountUnlimited),
@@ -49,6 +59,14 @@ class CashierController extends Controller
                 'can_cancel' => $user->hasPermission(Permission::CancelPayment),
             ],
         ]);
+    }
+
+    /** Курьер сдал наличные за доставку — кассир отмечает (ТЗ 2.6). */
+    public function receiveCash(Request $request, User $user): RedirectResponse
+    {
+        $amount = $this->deliveryService->receiveCash($user, $request->user());
+
+        return back()->with('success', __('crm.delivery.cash_received', ['sum' => Money::format($amount)]));
     }
 
     public function pay(PayRequest $request, Order $order): RedirectResponse

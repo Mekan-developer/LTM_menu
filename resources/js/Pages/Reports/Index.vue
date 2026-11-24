@@ -1,19 +1,22 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Icon from '@/Components/Icon.vue';
+import Badge from '@/Components/Badge.vue';
 import LineChart from '@/Components/Charts/LineChart.vue';
 import StackedBars from '@/Components/Charts/StackedBars.vue';
 import Heatmap from '@/Components/Charts/Heatmap.vue';
 import HBars from '@/Components/Charts/HBars.vue';
 import { axisMoney, shortDate } from '@/Components/Charts/chart';
 import { useI18n } from '@/i18n';
-import { money } from '@/utils/format';
+import { date, money, phone } from '@/utils/format';
 
 const props = defineProps({
     period: { type: Object, required: true },
     revenue: { type: Object, required: true },
+    guests: { type: Object, required: true },
+    canGuests: { type: Boolean, default: false },
     load: { type: Object, required: true },
     dishes: { type: Object, required: true },
     staff: { type: Array, default: () => [] },
@@ -63,7 +66,7 @@ function pick(p) {
 }
 
 // --- Вкладки ----------------------------------------------------------------
-const tabs = ['revenue', 'load', 'dishes', 'staff'];
+const tabs = ['revenue', 'guests', 'load', 'dishes', 'staff'];
 const tab = ref('revenue');
 const exportUrl = computed(() =>
     route('reports.export', {
@@ -131,6 +134,13 @@ const prevLabel = computed(
         `${t('reports.prev_period')} · ${shortDate(prev.value.from)}–${shortDate(prev.value.to)}`,
 );
 const moneyFull = (v) => money(v, true);
+// Выручка по каналам: зал, доставка, самовывоз (ТЗ 2.10).
+const channelRows = computed(() =>
+    ['hall', 'delivery', 'pickup'].map((c) => ({
+        label: t(`reports.channel_${c}`),
+        value: props.revenue.channels?.[c] ?? 0,
+    })),
+);
 
 const weekdays = computed(() => t('dash.weekdays'));
 const tablesFmt = (v) =>
@@ -146,6 +156,38 @@ const topRows = computed(() =>
 const staffRows = computed(() =>
     props.staff.map((s) => ({ label: s.name, value: s.revenue })),
 );
+// --- Постоянные гости ---------------------------------------------------------
+const share = (part, whole) =>
+    whole ? `${Math.round((part / whole) * 100)} %` : '—';
+const gt = computed(() => props.guests.totals);
+const guestTiles = computed(() => [
+    { label: t('reports.guests_total'), value: String(gt.value.guests) },
+    {
+        label: t('reports.guests_new'),
+        value: String(gt.value.new),
+        note: share(gt.value.new, gt.value.guests),
+    },
+    {
+        label: t('reports.guests_returning'),
+        value: String(gt.value.returning),
+        note: share(gt.value.returning, gt.value.guests),
+    },
+    {
+        label: t('reports.bills_with_guest'),
+        value: share(gt.value.bills_with_guest, gt.value.bills),
+        note: t('reports.of', {
+            n: gt.value.bills_with_guest,
+            m: gt.value.bills,
+        }),
+    },
+]);
+const guestPoints = computed(() =>
+    props.guests.days.map((d) => ({ date: d.date, a: d.new, b: d.returning })),
+);
+const countFmt = (v) => String(v);
+// Гостей считаем целыми: дробные деления оси не подписываем.
+const countAxis = (v) => (Number.isInteger(v) ? String(v) : '');
+
 const qtyFmt = (v) => `${v} ${t('reports.pcs')}`;
 const rating = (v) => (v === null ? '—' : String(v).replace('.', ','));
 </script>
@@ -310,9 +352,16 @@ const rating = (v) => (v === null ? '—' : String(v).replace('.', ','));
                         />
                     </section>
                 </div>
-                <p class="text-xs text-ink-3">
-                    {{ t('reports.channels_note') }}
-                </p>
+                <section class="rounded-lg border border-line bg-surface p-5">
+                    <h2 class="mb-3 text-base font-semibold">
+                        {{ t('reports.by_channel') }}
+                    </h2>
+                    <HBars
+                        :rows="channelRows"
+                        :format="moneyFull"
+                        :title="t('reports.by_channel')"
+                    />
+                </section>
 
                 <!-- Таблица — те же числа, что на графиках -->
                 <div
@@ -377,6 +426,141 @@ const rating = (v) => (v === null ? '—' : String(v).replace('.', ','));
                         </tbody>
                     </table>
                 </div>
+            </template>
+
+            <!-- Постоянные гости -->
+            <template v-else-if="tab === 'guests'">
+                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <div
+                        v-for="k in guestTiles"
+                        :key="k.label"
+                        class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4"
+                    >
+                        <span class="text-[13px] text-ink-2">{{
+                            k.label
+                        }}</span>
+                        <span
+                            class="font-mono text-[26px] leading-8 font-semibold num"
+                            >{{ k.value }}</span
+                        >
+                        <span
+                            v-if="k.note"
+                            class="font-mono text-xs text-ink-3"
+                            >{{ k.note }}</span
+                        >
+                    </div>
+                </div>
+
+                <section class="rounded-lg border border-line bg-surface p-5">
+                    <h2 class="mb-3 text-base font-semibold">
+                        {{ t('reports.guests_by_day') }}
+                    </h2>
+                    <StackedBars
+                        :points="guestPoints"
+                        :labels="[
+                            t('reports.guests_new'),
+                            t('reports.guests_returning'),
+                        ]"
+                        :format="countFmt"
+                        :axis-format="countAxis"
+                        :title="t('reports.guests_by_day')"
+                    />
+                </section>
+                <p class="text-xs text-ink-3">{{ t('reports.guests_hint') }}</p>
+
+                <section
+                    class="overflow-x-auto rounded-lg border border-line bg-surface"
+                >
+                    <h2
+                        class="border-b border-line px-4 py-3 text-base font-semibold"
+                    >
+                        {{ t('reports.guests_top') }}
+                    </h2>
+                    <table class="w-full min-w-[720px] text-sm">
+                        <thead
+                            class="bg-surface-2 text-left text-xs font-medium text-ink-2"
+                        >
+                            <tr>
+                                <th class="w-10 px-4 py-2.5">#</th>
+                                <th class="px-4 py-2.5">
+                                    {{ t('guests.name') }}
+                                </th>
+                                <th v-if="canGuests" class="px-4 py-2.5">
+                                    {{ t('guests.phone') }}
+                                </th>
+                                <th class="px-4 py-2.5 text-right">
+                                    {{ t('guests.visits') }}
+                                </th>
+                                <th class="px-4 py-2.5 text-right">
+                                    {{ t('guests.spent') }}
+                                </th>
+                                <th class="px-4 py-2.5 text-right">
+                                    {{ t('reports.avg_check') }}
+                                </th>
+                                <th class="px-4 py-2.5 text-right">
+                                    {{ t('guests.last_visit') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="(g, i) in guests.top"
+                                :key="g.id"
+                                class="h-10 border-t border-line"
+                            >
+                                <td class="px-4 font-mono text-ink-3 num">
+                                    {{ i + 1 }}
+                                </td>
+                                <td class="px-4">
+                                    <span class="flex items-center gap-2">
+                                        <Link
+                                            v-if="canGuests"
+                                            :href="route('guests.show', g.id)"
+                                            class="font-medium hover:underline"
+                                            >{{ g.name }}</Link
+                                        >
+                                        <span v-else class="font-medium">{{
+                                            g.name
+                                        }}</span>
+                                        <Badge v-if="g.is_new" tone="ok">{{
+                                            t('reports.new_badge')
+                                        }}</Badge>
+                                    </span>
+                                </td>
+                                <td
+                                    v-if="canGuests"
+                                    class="px-4 font-mono text-ink-2"
+                                >
+                                    {{ phone(g.phone) }}
+                                </td>
+                                <td class="px-4 text-right font-mono num">
+                                    {{ g.visits }}
+                                </td>
+                                <td class="px-4 text-right font-mono num">
+                                    {{ money(g.spent) }}
+                                </td>
+                                <td
+                                    class="px-4 text-right font-mono text-ink-2 num"
+                                >
+                                    {{ money(g.avg_check) }}
+                                </td>
+                                <td
+                                    class="px-4 text-right font-mono text-ink-2 num"
+                                >
+                                    {{ date(g.last_at) }}
+                                </td>
+                            </tr>
+                            <tr v-if="!guests.top.length">
+                                <td
+                                    :colspan="canGuests ? 7 : 6"
+                                    class="px-4 py-8 text-center text-ink-3"
+                                >
+                                    {{ t('reports.guests_empty') }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
             </template>
 
             <!-- Загрузка зала -->

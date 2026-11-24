@@ -18,3 +18,6 @@ Broadcast::channel('hall', fn (User $user) => $user->hasPermission(Permission::A
     || $user->hasPermission(Permission::Reports));
 
 Broadcast::channel('bookings', fn (User $user) => $user->hasPermission(Permission::Bookings));
+
+Broadcast::channel('deliveries', fn (User $user) => $user->hasPermission(Permission::Delivery)
+    || $user->hasPermission(Permission::AreaCourier));

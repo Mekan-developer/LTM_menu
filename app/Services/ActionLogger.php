@@ -29,6 +29,14 @@ class ActionLogger
 
     public const BOOKING_CANCELLED = 'booking_cancelled';
 
+    public const ORDER_CANCELLED = 'order_cancelled';
+
+    public const DELIVERY_FEE_CHANGED = 'delivery_fee_changed';
+
+    public const PAYMENT_METHOD_CHANGED = 'payment_method_changed';
+
+    public const COURIER_CASH_RECEIVED = 'courier_cash_received';
+
     public const STOP_ADDED = 'stop_added';
 
     public const STOP_REMOVED = 'stop_removed';

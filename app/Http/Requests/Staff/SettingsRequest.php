@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Staff;
 
+use App\Support\Money;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SettingsRequest extends FormRequest
@@ -9,6 +10,14 @@ class SettingsRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /** Стоимость доставки вводится в TMT («15» или «15,50»), хранится в тенге. */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('delivery_fee')) {
+            $this->merge(['delivery_fee' => Money::toMinor($this->string('delivery_fee')->value())]);
+        }
     }
 
     /** @return array<string, mixed> */
@@ -25,6 +34,8 @@ class SettingsRequest extends FormRequest
             'booking_minutes' => ['required', 'integer', 'min:30', 'max:720'],
             'booking_reserve_before' => ['required', 'integer', 'min:0', 'max:360'],
             'online_booking' => ['required', 'boolean'],
+            'delivery_fee' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'online_delivery' => ['required', 'boolean'],
         ];
     }
 }

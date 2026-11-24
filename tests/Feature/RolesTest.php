@@ -27,10 +27,10 @@ it('бухгалтер по умолчанию видит отчёты и не �
     $this->get(route('cashier.index'))->assertForbidden();
 });
 
-it('курьер без экрана доставки попадает на «Нет доступа»', function () {
+it('курьер после входа попадает на свой экран доставки', function () {
     $this->actingAs(staff(SystemRole::Courier))
         ->get(route('home'))
-        ->assertRedirect(route('no-access'));
+        ->assertRedirect(route('courier.index'));
 });
 
 it('право «Отзывы» по умолчанию у администратора зала, у официанта — нет', function () {

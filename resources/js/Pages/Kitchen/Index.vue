@@ -87,6 +87,9 @@ function ready(ticket) {
 }
 
 const clock = computed(() => time(new Date(now.value).toISOString()));
+
+// Доставка и самовывоз: на карточке номер заказа вместо стола.
+const isDelivery = (x) => Boolean(x.channel) && x.channel !== 'hall';
 </script>
 
 <template>
@@ -162,13 +165,21 @@ const clock = computed(() => time(new Date(now.value).toISOString()));
                     <div class="flex min-w-0 flex-col">
                         <span
                             class="truncate text-4xl leading-[38px] font-extrabold uppercase"
-                            >{{ t('tables.table') }}
-                            {{ ticket.table ?? '—' }}</span
+                            >{{
+                                isDelivery(ticket)
+                                    ? `№${ticket.order_id}`
+                                    : `${t('tables.table')} ${ticket.table ?? '—'}`
+                            }}</span
                         >
+                        <!-- Доставка: под номером — тип заказа (ТЗ 2.5) -->
                         <span
                             class="truncate text-xl font-bold uppercase opacity-85"
-                            >{{ ticket.source === 'qr' ? 'QR · ' : ''
-                            }}{{ ticket.waiter ?? '' }}</span
+                            >{{
+                                isDelivery(ticket)
+                                    ? t(`delivery.type_${ticket.channel}`)
+                                    : (ticket.source === 'qr' ? 'QR · ' : '') +
+                                      (ticket.waiter ?? '')
+                            }}</span
                         >
                     </div>
                     <span class="font-mono text-4xl font-semibold">{{
@@ -225,7 +236,11 @@ const clock = computed(() => time(new Date(now.value).toISOString()));
                 :key="p.key"
                 class="flex h-12 items-center gap-2 rounded-md border border-k-ready bg-[#1E3A2A] px-4 text-2xl font-bold"
             >
-                {{ t('tables.table') }} {{ p.table }}
+                {{
+                    isDelivery(p)
+                        ? `№${p.order_id}`
+                        : `${t('tables.table')} ${p.table}`
+                }}
                 <span class="font-mono text-lg text-k-ready">{{
                     elapsed(p.ready_at, now)
                 }}</span>

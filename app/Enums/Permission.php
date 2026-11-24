@@ -17,6 +17,7 @@ enum Permission: string
     case Guests = 'guests';
     case Bookings = 'bookings';
     case ExportGuests = 'export_guests';
+    case Delivery = 'delivery';
     case CancelPayment = 'cancel_payment';
     case DiscountUnlimited = 'discount_unlimited';
     case DiscountUpToK = 'discount_up_to_k';
@@ -27,13 +28,14 @@ enum Permission: string
     case AreaWaiter = 'area_waiter';
     case AreaKitchen = 'area_kitchen';
     case AreaCashier = 'area_cashier';
+    case AreaCourier = 'area_courier';
 
     /** Группы для матрицы прав в админке. */
     public function group(): string
     {
         return match ($this) {
-            self::AreaWaiter, self::AreaKitchen, self::AreaCashier => 'areas',
-            self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests, self::Bookings => 'management',
+            self::AreaWaiter, self::AreaKitchen, self::AreaCashier, self::AreaCourier => 'areas',
+            self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests, self::Bookings, self::Delivery => 'management',
             self::Reports, self::ActionLog, self::Reviews, self::ExportGuests => 'control',
             default => 'operations',
         };

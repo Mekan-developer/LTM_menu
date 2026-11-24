@@ -8,14 +8,16 @@ use Carbon\CarbonImmutable;
 /** Выгрузка отчётов в Excel (ТЗ 2.10). Заголовки — на языке интерфейса. */
 class ReportExporter
 {
-    public const REPORTS = ['revenue', 'load', 'dishes', 'staff'];
+    public const REPORTS = ['revenue', 'guests', 'load', 'dishes', 'staff'];
 
     public function __construct(private readonly ReportService $reports) {}
 
-    public function export(string $report, CarbonImmutable $from, CarbonImmutable $to): XlsxWriter
+    /** @param  bool  $withPhones  телефоны гостей — только с правом «Гости» */
+    public function export(string $report, CarbonImmutable $from, CarbonImmutable $to, bool $withPhones = false): XlsxWriter
     {
         return match ($report) {
             'revenue' => $this->revenue($from, $to),
+            'guests' => $this->guests($from, $to, $withPhones),
             'load' => $this->load($from, $to),
             'dishes' => $this->dishes($from, $to),
             default => $this->staff($from, $to),
@@ -47,11 +49,46 @@ class ReportExporter
 
         $t = $data['totals'];
 
-        return $xlsx->addRow([
+        $xlsx->addRow([
             ['v' => __('crm.reports.total'), 's' => 'bold'],
             self::money($t['revenue']), $t['bills'], self::money($t['avg_check']),
             self::money($t['cash']), self::money($t['card']), self::money($t['tips']), self::money($data['previous']['revenue']),
         ]);
+
+        // Выручка по каналам (ТЗ 2.10).
+        $xlsx->addRow([])->addRow([['v' => __('crm.reports.by_channel'), 's' => 'bold']]);
+        foreach ($data['channels'] as $channel => $amount) {
+            $xlsx->addRow([__('crm.reports.channel_'.$channel), self::money($amount)]);
+        }
+
+        return $xlsx;
+    }
+
+    private function guests(CarbonImmutable $from, CarbonImmutable $to, bool $withPhones): XlsxWriter
+    {
+        $data = $this->reports->guests($from, $to, $withPhones);
+        $t = $data['totals'];
+        $xlsx = (new XlsxWriter(__('crm.reports.guests')))
+            ->setWidths([28, 18, 10, 14, 14, 14, 10])
+            ->addRow([__('crm.reports.guests_total'), $t['guests']])
+            ->addRow([__('crm.reports.guests_new'), $t['new']])
+            ->addRow([__('crm.reports.guests_returning'), $t['returning']])
+            ->addRow([__('crm.reports.bills_with_guest'), $t['bills_with_guest'].' / '.$t['bills']])
+            ->addRow([])
+            ->addRow([['v' => __('crm.reports.guests_top'), 's' => 'bold']])
+            ->addHeader([
+                __('crm.guests.name'), __('crm.guests.phone'), __('crm.guests.visits'), __('crm.guests.spent'),
+                __('crm.reports.avg_check'), __('crm.guests.last_visit'), __('crm.reports.guests_new'),
+            ]);
+
+        foreach ($data['top'] as $g) {
+            $xlsx->addRow([
+                $g['name'], $g['phone'] ?? '—', $g['visits'], self::money($g['spent']), self::money($g['avg_check']),
+                CarbonImmutable::parse($g['last_at'])->format('d.m.Y'), $g['is_new'] ? '✓' : '',
+            ]);
+        }
+
+        return $xlsx;
     }
 
     private function load(CarbonImmutable $from, CarbonImmutable $to): XlsxWriter
