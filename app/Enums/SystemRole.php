@@ -3,8 +3,8 @@
 namespace App\Enums;
 
 /**
- * Роли из ТЗ, которые нельзя удалить. Права у них меняются (кроме Владельца).
- * Курьер и бухгалтер — следующий этап.
+ * Роли из ТЗ (1.3), которые нельзя удалить. Права у них меняются (кроме Владельца).
+ * Экран курьера появится вместе с доставкой (2.6), зарплата бухгалтера — с разделом 2.12.
  */
 enum SystemRole: string
 {
@@ -13,6 +13,8 @@ enum SystemRole: string
     case Waiter = 'waiter';
     case Cook = 'cook';
     case Cashier = 'cashier';
+    case Courier = 'courier';
+    case Accountant = 'accountant';
 
     public function nameTm(): string
     {
@@ -22,6 +24,8 @@ enum SystemRole: string
             self::Waiter => 'Ofisiant',
             self::Cook => 'Aşpez / barmen',
             self::Cashier => 'Kassir',
+            self::Courier => 'Kurýer',
+            self::Accountant => 'Buhgalter',
         };
     }
 
@@ -33,6 +37,8 @@ enum SystemRole: string
             self::Waiter => 'Официант',
             self::Cook => 'Повар / бармен',
             self::Cashier => 'Кассир',
+            self::Courier => 'Курьер',
+            self::Accountant => 'Бухгалтер',
         };
     }
 
@@ -52,6 +58,8 @@ enum SystemRole: string
             self::Waiter => [Permission::AreaWaiter],
             self::Cook => [Permission::StopList, Permission::AreaKitchen],
             self::Cashier => [Permission::DiscountUpToK, Permission::AreaCashier],
+            self::Courier => [],
+            self::Accountant => [Permission::Reports],
         };
     }
 }
