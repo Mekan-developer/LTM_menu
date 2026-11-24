@@ -12,12 +12,15 @@ use App\Http\Requests\Waiter\TransferRequest;
 use App\Http\Requests\Waiter\UpdateItemRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\DiningTable;
+use App\Models\Hall;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Repositories\HallRepository;
 use App\Repositories\MenuRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\TableRepository;
+use App\Services\HallService;
 use App\Services\SettingsService;
 use App\Services\WaiterOrderService;
 use App\Support\MenuPresenter;
@@ -37,6 +40,8 @@ class WaiterController extends Controller
         private readonly MenuRepository $menu,
         private readonly MenuPresenter $presenter,
         private readonly SettingsService $settings,
+        private readonly HallRepository $halls,
+        private readonly HallService $hallService,
     ) {}
 
     public function index(Request $request): Response
@@ -57,9 +62,19 @@ class WaiterController extends Controller
             };
         };
 
+        // Режим «Схема»: залы и доска выбранного зала (?hall=ID).
+        $halls = $this->halls->all();
+        $hall = $halls->firstWhere('id', $request->integer('hall')) ?? $halls->first();
+
         return Inertia::render('Waiter/Index', [
             'orders' => OrderResource::collection($orders->sortBy($rank)->values()),
             'freeTables' => $this->freeTables(),
+            'halls' => $halls->map(fn (Hall $h) => [
+                'id' => $h->id, 'name_tm' => $h->name_tm, 'name_ru' => $h->name_ru,
+                'width' => $h->width, 'height' => $h->height,
+            ])->values(),
+            'hallId' => $hall?->id,
+            'board' => fn () => $hall ? $this->hallService->board($hall, $user) : ['tables' => [], 'elements' => []],
         ]);
     }
 

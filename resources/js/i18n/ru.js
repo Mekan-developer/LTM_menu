@@ -263,6 +263,9 @@ export default {
         move_do: 'Перенести',
         pick_table: 'Выберите стол',
         no_free_tables: 'Свободных столов нет',
+        view_list: 'Список',
+        view_hall: 'Схема',
+        hall_hint: 'Тап по своему столу — заказ, по свободному — открыть стол.',
     },
     item_status: {
         draft: 'новая',

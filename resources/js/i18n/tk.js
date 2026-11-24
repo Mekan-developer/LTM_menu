@@ -265,6 +265,9 @@ export default {
         move_do: 'Geçir',
         pick_table: 'Stoly saýlaň',
         no_free_tables: 'Boş stol ýok',
+        view_list: 'Sanaw',
+        view_hall: 'Shema',
+        hall_hint: 'Öz stoluňa bas — sargyt, boş stola — açmak.',
     },
     item_status: {
         draft: 'täze',

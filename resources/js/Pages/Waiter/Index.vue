@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import WaiterLayout from '@/Layouts/WaiterLayout.vue';
 import Btn from '@/Components/Btn.vue';
+import HallCanvas from '@/Components/Hall/HallCanvas.vue';
 import { useI18n } from '@/i18n';
 import { money, time } from '@/utils/format';
 import { useRealtime } from '@/composables/useRealtime';
@@ -11,6 +12,9 @@ import { useSound } from '@/composables/useSound';
 const props = defineProps({
     orders: { type: Array, default: () => [] },
     freeTables: { type: Array, default: () => [] },
+    halls: { type: Array, default: () => [] },
+    hallId: { type: Number, default: null },
+    board: { type: Object, default: () => ({ tables: [], elements: [] }) },
 });
 
 const { t, loc } = useI18n();
@@ -20,7 +24,47 @@ const me = computed(() => page.props.auth.user);
 const seeAll = computed(() => me.value.permissions.includes('transfer_tables'));
 
 const reload = () =>
-    router.reload({ only: ['orders', 'freeTables'], preserveScroll: true });
+    router.reload({
+        only: ['orders', 'freeTables', 'board'],
+        preserveScroll: true,
+    });
+
+// «Список | Схема» — выбор запоминается на устройстве.
+const view = ref('list');
+try {
+    view.value =
+        localStorage.getItem('waiter-view') === 'hall' ? 'hall' : 'list';
+} catch {
+    /* приватный режим */
+}
+function setView(v) {
+    view.value = v;
+    try {
+        localStorage.setItem('waiter-view', v);
+    } catch {
+        /* */
+    }
+}
+const hall = computed(() => props.halls.find((h) => h.id === props.hallId));
+const goHall = (id) =>
+    router.get(
+        route('waiter.index'),
+        { hall: id },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['hallId', 'board'],
+        },
+    );
+// Тап по своему столу — заказ, по свободному — открыть стол. Чужие столы не трогаем.
+function onHallTap(tb) {
+    if (tb.status === 'free') router.post(route('waiter.open', tb.id));
+    else if (tb.details && tb.order_id)
+        router.visit(route('waiter.order', tb.order_id));
+}
+useRealtime('hall', 'hall.changed', () =>
+    router.reload({ only: ['board'], preserveScroll: true }),
+);
 
 useRealtime('waiters', 'waiter.alert', (payload) => {
     if (payload) {
@@ -97,7 +141,58 @@ const openTable = (table) => router.post(route('waiter.open', table.id));
 
 <template>
     <WaiterLayout :title="t('waiter.my_tables')">
-        <div class="flex flex-col gap-2.5">
+        <div
+            v-if="halls.length"
+            class="mb-3 grid grid-cols-2 overflow-hidden rounded-md border border-line text-sm"
+            role="tablist"
+        >
+            <button
+                v-for="v in ['list', 'hall']"
+                :key="v"
+                type="button"
+                role="tab"
+                :aria-selected="view === v"
+                class="h-10"
+                :class="
+                    view === v
+                        ? 'bg-ink font-semibold text-paper'
+                        : 'bg-surface text-ink-2'
+                "
+                @click="setView(v)"
+            >
+                {{ t(`waiter.view_${v}`) }}
+            </button>
+        </div>
+
+        <!-- Схема зала, вписанная в ширину телефона -->
+        <div v-if="view === 'hall' && hall" class="flex flex-col gap-3">
+            <div v-if="halls.length > 1" class="flex gap-2 overflow-x-auto">
+                <button
+                    v-for="h in halls"
+                    :key="h.id"
+                    type="button"
+                    class="h-9 shrink-0 rounded-sm border px-3 text-sm"
+                    :class="
+                        h.id === hallId
+                            ? 'border-ink bg-ink text-paper'
+                            : 'border-line'
+                    "
+                    @click="goHall(h.id)"
+                >
+                    {{ loc(h, 'name') }}
+                </button>
+            </div>
+            <HallCanvas
+                :hall="hall"
+                :tables="board.tables"
+                :elements="board.elements"
+                crop
+                @select="onHallTap"
+            />
+            <p class="text-xs text-ink-3">{{ t('waiter.hall_hint') }}</p>
+        </div>
+
+        <div v-else class="flex flex-col gap-2.5">
             <!-- QR-заказы — первыми и крупно: одно нажатие отправляет на кухню -->
             <template v-for="o in cards" :key="`qr-${o.id}`">
                 <section
