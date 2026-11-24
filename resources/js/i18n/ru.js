@@ -26,6 +26,7 @@ export default {
         logs: 'Журнал действий',
         settings: 'Настройки',
         logout: 'Выйти',
+        toggle: 'Свернуть / развернуть меню',
         open: 'Открыть меню',
         sections: 'Разделы',
         reports: 'Отчёты',

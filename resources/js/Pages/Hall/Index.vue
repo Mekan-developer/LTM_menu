@@ -633,7 +633,7 @@ function deleteHall() {
                     <!-- Панель стола: справа на компьютере, нижняя шторка на телефоне -->
                     <aside
                         v-if="selected"
-                        class="fixed inset-x-0 bottom-0 z-30 max-h-[72vh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-4 shadow-[0_-12px_32px_-12px_rgb(0_0_0/0.3)] lg:sticky lg:top-4 lg:z-auto lg:max-h-[calc(100vh-120px)] lg:w-80 lg:shrink-0 lg:rounded-lg lg:border lg:shadow-none"
+                        class="fixed inset-x-0 bottom-0 z-30 max-h-[72vh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-4 shadow-[0_-12px_32px_-12px_rgb(0_0_0/0.3)] lg:sticky lg:top-[72px] lg:z-auto lg:max-h-[calc(100vh-88px)] lg:w-80 lg:shrink-0 lg:rounded-lg lg:border lg:shadow-none"
                         :aria-label="`${t('tables.table')} ${selected.number}`"
                     >
                         <div
@@ -913,7 +913,7 @@ function deleteHall() {
                     </div>
 
                     <aside
-                        class="flex w-full flex-col gap-4 rounded-lg border border-line bg-surface p-4 lg:sticky lg:top-4 lg:w-80 lg:shrink-0"
+                        class="flex w-full flex-col gap-4 rounded-lg border border-line bg-surface p-4 lg:sticky lg:top-[72px] lg:w-80 lg:shrink-0"
                     >
                         <!-- Свойства стола -->
                         <template v-if="selTable">

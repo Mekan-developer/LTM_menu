@@ -7,9 +7,9 @@ import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { useIdleLogout } from '@/composables/useIdleLogout';
 
-defineProps({
+const props = defineProps({
     title: { type: String, default: '' },
-    // Узкая полоса иконок 56 px вместо сайдбара — для широких экранов вроде схемы зала.
+    // Свернуть сайдбар по умолчанию (полоса иконок 56 px) — для широких экранов вроде схемы зала.
     compact: { type: Boolean, default: false },
 });
 
@@ -17,6 +17,34 @@ const page = usePage();
 const { t } = useI18n();
 const { warning, left } = useIdleLogout();
 const navOpen = ref(false);
+
+// Сайдбар на компьютере сворачивается в полосу иконок и разворачивается обратно.
+// Выбор пользователя запоминается в браузере; без выбора — как просит страница (compact).
+const collapsed = ref(props.compact);
+const desktop = () => window.matchMedia('(min-width: 1024px)').matches;
+onMounted(() => {
+    try {
+        const saved = localStorage.getItem('admin-sidebar');
+        if (saved) collapsed.value = saved === 'collapsed';
+    } catch {
+        /* приватный режим */
+    }
+});
+function toggleNav() {
+    if (!desktop()) {
+        navOpen.value = !navOpen.value;
+        return;
+    }
+    collapsed.value = !collapsed.value;
+    try {
+        localStorage.setItem(
+            'admin-sidebar',
+            collapsed.value ? 'collapsed' : 'expanded',
+        );
+    } catch {
+        /* */
+    }
+}
 
 const can = (p) =>
     [p].flat().some((x) => page.props.auth.user?.permissions?.includes(x));
@@ -162,13 +190,15 @@ onUnmounted(() => {
         </div>
 
         <header
-            class="no-print flex min-h-14 flex-wrap items-center gap-3 border-b border-line bg-surface px-4 sm:px-6"
+            class="no-print sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-3 border-b border-line bg-surface px-4 sm:px-6"
         >
             <button
                 type="button"
-                class="flex size-9 items-center justify-center rounded-md hover:bg-surface-2 lg:hidden"
-                :aria-label="t('nav.open')"
-                @click="navOpen = !navOpen"
+                class="flex size-9 items-center justify-center rounded-md hover:bg-surface-2"
+                :aria-label="t('nav.toggle')"
+                :aria-expanded="navOpen || !collapsed"
+                aria-controls="admin-nav"
+                @click="toggleNav"
             >
                 <Icon name="menu" />
             </button>
@@ -218,11 +248,12 @@ onUnmounted(() => {
 
         <div class="flex flex-wrap">
             <nav
+                id="admin-nav"
                 :aria-label="t('nav.sections')"
-                class="no-print w-full border-b border-line bg-surface py-4 lg:block lg:min-h-[calc(100vh-56px)] lg:border-r lg:border-b-0"
+                class="no-print w-full border-b border-line bg-surface py-4 transition-[width] duration-150 lg:sticky lg:top-14 lg:block lg:h-[calc(100vh-56px)] lg:self-start lg:overflow-y-auto lg:border-r lg:border-b-0"
                 :class="[
                     navOpen ? 'block' : 'hidden',
-                    compact ? 'px-3 lg:w-14 lg:px-1.5' : 'px-3 lg:w-[232px]',
+                    collapsed ? 'px-3 lg:w-14 lg:px-1.5' : 'px-3 lg:w-[232px]',
                 ]"
             >
                 <div
@@ -232,7 +263,7 @@ onUnmounted(() => {
                 >
                     <span
                         class="px-2.5 pb-1 font-mono text-[10px] tracking-[0.08em] text-ink-3 uppercase"
-                        :class="compact ? 'lg:sr-only' : ''"
+                        :class="collapsed ? 'lg:sr-only' : ''"
                         >{{ group.title }}</span
                     >
                     <Link
@@ -244,19 +275,19 @@ onUnmounted(() => {
                             active(item.route)
                                 ? 'bg-brand-soft font-semibold'
                                 : 'hover:bg-surface-2',
-                            compact ? 'lg:justify-center lg:px-0' : '',
+                            collapsed ? 'lg:justify-center lg:px-0' : '',
                         ]"
-                        :title="compact ? item.label : undefined"
+                        :title="collapsed ? item.label : undefined"
                     >
                         <Icon :name="item.icon" class="shrink-0 text-ink-2" />
-                        <span :class="compact ? 'lg:sr-only' : ''">{{
+                        <span :class="collapsed ? 'lg:sr-only' : ''">{{
                             item.label
                         }}</span>
                         <span
                             v-if="item.badge"
                             class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 font-mono text-[11px] font-semibold text-white"
                             :class="
-                                compact
+                                collapsed
                                     ? 'lg:absolute lg:-top-1 lg:right-0 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[10px]'
                                     : ''
                             "

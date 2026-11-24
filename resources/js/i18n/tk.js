@@ -27,6 +27,7 @@ export default {
         logs: 'Hereketler žurnaly',
         settings: 'Sazlamalar',
         logout: 'Çykmak',
+        toggle: 'Menýuny ýygnamak / açmak',
         open: 'Menýuny aç',
         sections: 'Bölümler',
         reports: 'Hasabatlar',
