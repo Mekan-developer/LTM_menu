@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import FlashToast from '@/Components/FlashToast.vue';
 import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { useIdleLogout } from '@/composables/useIdleLogout';
+import { useTheme } from '@/composables/useTheme';
 
 defineProps({ title: { type: String, default: '' } });
 
@@ -12,20 +13,9 @@ const { t } = useI18n();
 const { warning, left } = useIdleLogout();
 const online = ref(true);
 
-// Ночная смена: тема переключается кнопкой и запоминается на устройстве.
-const night = ref(true);
-// Класс на <html>, чтобы тема доходила и до модалок (Teleport в body).
-const applyTheme = (v) =>
-    document.documentElement.classList.toggle('theme-night', v);
+// Ночная смена: по умолчанию тёмная тема, выбор запоминается на устройстве (useTheme).
+const { dark: night, toggleTheme } = useTheme({ preferDark: true });
 onMounted(() => {
-    try {
-        night.value = localStorage.getItem('waiter-theme') !== 'day';
-    } catch {
-        /* приватный режим */
-    }
-    // При переходе между страницами официанта onUnmounted старого layout срабатывает после setup нового,
-    // поэтому класс ставим в onMounted — он выполняется уже после снятия класса старым экземпляром.
-    applyTheme(night.value);
     online.value = navigator.onLine;
     window.addEventListener('online', () => {
         online.value = true;
@@ -34,17 +24,6 @@ onMounted(() => {
         online.value = false;
     });
 });
-watch(night, applyTheme);
-onUnmounted(() => document.documentElement.classList.remove('theme-night'));
-
-const toggleTheme = () => {
-    night.value = !night.value;
-    try {
-        localStorage.setItem('waiter-theme', night.value ? 'night' : 'day');
-    } catch {
-        /* */
-    }
-};
 </script>
 
 <template>
@@ -103,7 +82,7 @@ const toggleTheme = () => {
                 class="flex h-14 flex-col items-center justify-center gap-1 text-xs text-ink-2"
                 @click="toggleTheme"
             >
-                <Icon name="settings" :size="22" />{{
+                <Icon :name="night ? 'sun' : 'moon'" :size="22" />{{
                     night ? t('waiter.day_theme') : t('waiter.night_theme')
                 }}
             </button>

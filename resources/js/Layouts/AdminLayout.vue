@@ -3,9 +3,11 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import FlashToast from '@/Components/FlashToast.vue';
 import LangSwitch from '@/Components/LangSwitch.vue';
+import ThemeToggle from '@/Components/ThemeToggle.vue';
 import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { useIdleLogout } from '@/composables/useIdleLogout';
+import { useTheme } from '@/composables/useTheme';
 
 const props = defineProps({
     title: { type: String, default: '' },
@@ -16,6 +18,7 @@ const props = defineProps({
 const page = usePage();
 const { t } = useI18n();
 const { warning, left } = useIdleLogout();
+useTheme();
 const navOpen = ref(false);
 
 // Сайдбар на компьютере сворачивается в полосу иконок и разворачивается обратно.
@@ -226,6 +229,7 @@ onUnmounted(() => {
                 }}</span>
             </Link>
             <div class="ml-auto flex items-center gap-3">
+                <ThemeToggle />
                 <LangSwitch />
                 <div
                     class="hidden items-center gap-2 border-l border-line pl-3 sm:flex"
@@ -297,7 +301,7 @@ onUnmounted(() => {
                         }}</span>
                         <span
                             v-if="item.badge"
-                            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 font-mono text-[11px] font-semibold text-white"
+                            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 font-mono text-[11px] font-semibold text-paper"
                             :class="
                                 collapsed
                                     ? 'lg:absolute lg:-top-1 lg:right-0 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[10px]'

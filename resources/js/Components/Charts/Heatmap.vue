@@ -10,14 +10,12 @@ const props = defineProps({
     title: { type: String, required: true },
 });
 
-// Последовательная шкала зелёного: пустая ячейка — цвет поверхности 2, полная — тёмный зелёный.
-const LOW = [235, 227, 213]; // --color-surface-2
-const HIGH = [26, 92, 63];
+// Последовательная шкала зелёного: пустая ячейка — цвет поверхности 2, полная — --color-chart-heat.
+// Смешивание в CSS, поэтому шкала сама подстраивается под светлую и тёмную тему.
 const color = (v) => {
     if (!v || !props.max) return 'var(--color-surface-2)';
-    const k = 0.15 + 0.85 * Math.min(1, v / props.max);
-    const c = LOW.map((lo, i) => Math.round(lo + (HIGH[i] - lo) * k));
-    return `rgb(${c.join(' ')})`;
+    const k = 15 + 85 * Math.min(1, v / props.max);
+    return `color-mix(in oklab, var(--color-chart-heat) ${k.toFixed(1)}%, var(--color-surface-2))`;
 };
 
 const hover = ref(null); // [day, hour]

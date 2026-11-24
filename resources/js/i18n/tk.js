@@ -36,6 +36,11 @@ export default {
         guests: 'Myhmanlar',
         bookings: 'Bronlar',
     },
+    theme: {
+        dark: 'Garaňky tema',
+        to_dark: 'Garaňky temany açmak',
+        to_light: 'Ýagty temany açmak',
+    },
     auth: {
         title: 'Giriş',
         subtitle: 'Işgäriň logini we paroly',

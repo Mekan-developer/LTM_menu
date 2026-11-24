@@ -108,7 +108,7 @@ const colW = computed(() => iwRef.value / Math.max(1, props.points.length - 1));
                 <path
                     :d="path('prev')"
                     fill="none"
-                    :stroke="SERIES.previous"
+                    :style="{ stroke: SERIES.previous }"
                     stroke-width="2"
                     stroke-dasharray="5 5"
                     stroke-linejoin="round"
@@ -116,7 +116,7 @@ const colW = computed(() => iwRef.value / Math.max(1, props.points.length - 1));
                 <path
                     :d="path('value')"
                     fill="none"
-                    :stroke="SERIES.primary"
+                    :style="{ stroke: SERIES.primary }"
                     stroke-width="2"
                     stroke-linejoin="round"
                     stroke-linecap="round"
@@ -134,7 +134,7 @@ const colW = computed(() => iwRef.value / Math.max(1, props.points.length - 1));
                         :cx="x(hover)"
                         :cy="y(hp.prev)"
                         r="4"
-                        :fill="SERIES.previous"
+                        :style="{ fill: SERIES.previous }"
                         stroke="var(--color-surface)"
                         stroke-width="2"
                     />
@@ -142,7 +142,7 @@ const colW = computed(() => iwRef.value / Math.max(1, props.points.length - 1));
                         :cx="x(hover)"
                         :cy="y(hp.value)"
                         r="5"
-                        :fill="SERIES.primary"
+                        :style="{ fill: SERIES.primary }"
                         stroke="var(--color-surface)"
                         stroke-width="2"
                     />
