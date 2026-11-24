@@ -38,7 +38,8 @@ RUN composer dump-autoload --no-dev --optimize --ignore-platform-req=ext-* \
 FROM php:8.3-fpm-alpine AS app
 
 # Runtime-библиотеки — остаются в образе
-RUN apk add --no-cache libpq libpng libjpeg-turbo libwebp freetype icu-libs unzip
+# postgresql17-client — pg_dump для резервных копий (ТЗ 3.1), версия как у сервера postgres:17
+RUN apk add --no-cache libpq libpng libjpeg-turbo libwebp freetype icu-libs unzip postgresql17-client
 
 # Build-зависимости ставятся во временный пакет и удаляются в том же слое
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \

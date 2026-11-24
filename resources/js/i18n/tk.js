@@ -211,6 +211,16 @@ export default {
         reviews_enabled: 'Tölegden soň myhmandan baha soramak',
         reviews_hint:
             'Myhman bir gezeklik salgyny sargyt ýagdaýy sahypasynda we çekdäki QR-kodda alýar. Push/SMS goşulandan soň — habarnama bilen.',
+        backup: 'Ätiýaçlyk nusgalar',
+        backup_ok: 'kadaly',
+        backup_stale: 'köne ýa-da ýok',
+        backup_last: 'Soňky nusga',
+        backup_none: 'entek ýok',
+        backup_count: 'Saklanýar',
+        backup_schedule: 'Her gün',
+        backup_path: 'Ýer',
+        backup_hint:
+            'Nusga her gün awtomatik edilýär, soňky 14 sanysy saklanýar. Hepdede bir gezek bir nusgany restorandan daşary äkidiň (ogurlyk ýa-da ýangyn ýagdaýy üçin).',
     },
     log: {
         when: 'Haçan',

@@ -37,6 +37,20 @@ services:
         depends_on:
             - postgres
 
+    # Планировщик: резервная копия БД раз в сутки (ТЗ 3.1) и другие задачи по расписанию
+    scheduler:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+        container_name: LTM_scheduler
+        restart: unless-stopped
+        working_dir: /var/www
+        command: php artisan schedule:work
+        volumes:
+            - .:/var/www
+        depends_on:
+            - postgres
+
     nginx:
         image: nginx:alpine
         container_name: LTM_nginx

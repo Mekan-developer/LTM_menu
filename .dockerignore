@@ -13,3 +13,19 @@ tests
 resources/js/actions
 resources/js/routes
 resources/js/wayfinder
+
+# Данные рантайма не попадают в образ: фото блюд, бэкапы, сессии, кэш.
+# .gitignore оставляем, чтобы структура папок storage была в образе.
+storage/app/private/*
+!storage/app/private/.gitignore
+storage/app/public/*
+!storage/app/public/.gitignore
+storage/app/backups
+storage/framework/cache/data/*
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/framework/testing
+storage/inertia-devtools
+storage/pail

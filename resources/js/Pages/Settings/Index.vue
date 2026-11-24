@@ -5,8 +5,12 @@ import Btn from '@/Components/Btn.vue';
 import Field from '@/Components/Field.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useI18n } from '@/i18n';
+import { dateTime } from '@/utils/format';
 
-const props = defineProps({ settings: { type: Object, required: true } });
+const props = defineProps({
+    settings: { type: Object, required: true },
+    backup: { type: Object, default: null },
+});
 const { t } = useI18n();
 
 const form = useForm({
@@ -139,6 +143,55 @@ const submit = () =>
                         mono
                     />
                 </Field>
+            </section>
+
+            <!-- Резервные копии (ТЗ 3.1): только статус, делает их планировщик -->
+            <section
+                v-if="backup"
+                class="flex flex-col gap-3 rounded-lg border bg-surface p-5"
+                :class="backup.stale ? 'border-danger' : 'border-line'"
+            >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-lg font-semibold">
+                        {{ t('settings.backup') }}
+                    </h2>
+                    <span
+                        class="rounded-sm px-2 py-0.5 font-mono text-xs"
+                        :class="
+                            backup.stale
+                                ? 'bg-danger-soft text-danger'
+                                : 'bg-ok-soft text-ok'
+                        "
+                        >{{
+                            backup.stale
+                                ? t('settings.backup_stale')
+                                : t('settings.backup_ok')
+                        }}</span
+                    >
+                </div>
+                <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+                    <dt class="text-ink-2">{{ t('settings.backup_last') }}</dt>
+                    <dd class="font-mono">
+                        {{
+                            backup.last_at
+                                ? `${dateTime(backup.last_at)} · ${(backup.last_size / 1048576).toFixed(2).replace('.', ',')} MB`
+                                : t('settings.backup_none')
+                        }}
+                    </dd>
+                    <dt class="text-ink-2">{{ t('settings.backup_count') }}</dt>
+                    <dd class="font-mono">
+                        {{ backup.count }} / {{ backup.keep }}
+                    </dd>
+                    <dt class="text-ink-2">
+                        {{ t('settings.backup_schedule') }}
+                    </dt>
+                    <dd class="font-mono">{{ backup.at }}</dd>
+                    <dt class="text-ink-2">{{ t('settings.backup_path') }}</dt>
+                    <dd class="font-mono break-all">{{ backup.path }}</dd>
+                </dl>
+                <p class="text-xs text-ink-3">
+                    {{ t('settings.backup_hint') }}
+                </p>
             </section>
 
             <div class="flex justify-end">

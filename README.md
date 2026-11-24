@@ -108,14 +108,15 @@ REVERB_HOST=reverb   # приложение публикует события в
 docker compose up -d --build
 ```
 
-| Сервис     | Что делает                                            | Порт на хосте (override)              |
-| ---------- | ----------------------------------------------------- | ------------------------------------- |
-| `nginx`    | Веб-сервер                                            | **http://localhost:8090**             |
-| `app`      | PHP-FPM                                               | только внутри сети Docker, `app:9000` |
-| `queue`    | `php artisan queue:work` (конвертация фото в WebP)    | —                                     |
-| `reverb`   | `php artisan reverb:start --host=0.0.0.0 --port=8080` | `8080`                                |
-| `postgres` | PostgreSQL 17                                         | `5435`                                |
-| `redis`    | Redis 7                                               | `6379`                                |
+| Сервис      | Что делает                                               | Порт на хосте (override)              |
+| ----------- | -------------------------------------------------------- | ------------------------------------- |
+| `nginx`     | Веб-сервер                                               | **http://localhost:8090**             |
+| `app`       | PHP-FPM                                                  | только внутри сети Docker, `app:9000` |
+| `queue`     | `php artisan queue:work` (конвертация фото в WebP)       | —                                     |
+| `reverb`    | `php artisan reverb:start --host=0.0.0.0 --port=8080`    | `8080`                                |
+| `scheduler` | `php artisan schedule:work` (резервная копия БД в 03:00) | —                                     |
+| `postgres`  | PostgreSQL 17                                            | `5435`                                |
+| `redis`     | Redis 7                                                  | `6379`                                |
 
 Порты на хосте можно переопределить в `.env`, если они заняты другими проектами: `APP_PORT`, `FORWARD_DB_PORT`, `FORWARD_REDIS_PORT`, `REVERB_FORWARD_PORT`. При смене `REVERB_FORWARD_PORT` поменяйте и `VITE_REVERB_PORT`, затем пересоберите фронтенд.
 
@@ -287,6 +288,30 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 - [ ] настроен HTTPS в Nginx (сейчас в `docker/nginx/conf.d/default.conf` только `listen 80`)
 
 В продакшене `AppServiceProvider` запрещает опасные команды БД (`migrate:fresh`, `db:wipe` и т.п.).
+
+---
+
+## Резервные копии
+
+По ТЗ 3.1 база копируется раз в сутки, хранятся 14 последних копий. Копию делает сервис `scheduler` командой `crm:backup` (по умолчанию в 03:00 по Ашхабаду). Для PostgreSQL — `pg_dump` в сжатом формате `custom`, для SQLite — сжатая копия файла. Статус последней копии виден в «Настройках»; если копии нет больше суток, блок подсвечивается красным.
+
+| Переменная               | По умолчанию            | Назначение                                                                                 |
+| ------------------------ | ----------------------- | ------------------------------------------------------------------------------------------ |
+| `BACKUP_PATH`            | `storage/app/backups`   | Папка с копиями                                                                            |
+| `BACKUP_KEEP`            | `14`                    | Сколько копий хранить                                                                      |
+| `BACKUP_AT`              | `03:00`                 | Время ежедневной копии                                                                     |
+| `BACKUP_HOST_DIR` (prod) | `/var/backups/restoran` | Папка на **отдельном диске** сервера, монтируется в `/backups` (`docker-compose.prod.yml`) |
+
+```bash
+docker compose exec app php artisan crm:backup          # сделать копию сейчас
+docker compose exec app php artisan crm:backup --list   # список копий
+
+# Восстановление (PostgreSQL): копия restoran_ГГГГ-ММ-ДД_ЧЧММСС.dump
+docker compose exec app sh -c 'PGPASSWORD="$DB_PASSWORD" pg_restore --clean --if-exists --no-owner \
+  -h "$DB_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" storage/app/backups/restoran_2026-11-24_030000.dump'
+```
+
+Раз в неделю уносите одну копию из ресторана (флешка, другой компьютер) — на случай кражи или пожара.
 
 ---
 

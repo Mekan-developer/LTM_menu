@@ -17,3 +17,18 @@ services:
         restart: always
         ports:
             - '8080:8080'
+
+    # Резервные копии — на отдельный диск (ТЗ 3.1). BACKUP_HOST_DIR — папка на этом диске.
+    # app видит копии для статуса в «Настройках», scheduler их создаёт.
+    app:
+        environment:
+            BACKUP_PATH: /backups
+        volumes:
+            - ${BACKUP_HOST_DIR:-/var/backups/restoran}:/backups
+
+    scheduler:
+        restart: always
+        environment:
+            BACKUP_PATH: /backups
+        volumes:
+            - ${BACKUP_HOST_DIR:-/var/backups/restoran}:/backups

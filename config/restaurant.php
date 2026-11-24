@@ -23,6 +23,16 @@ return [
         'webp_quality' => 78,
     ],
 
+    // Резервные копии БД (ТЗ 3.1): раз в сутки, хранятся 14 последних.
+    // На продакшене BACKUP_PATH — отдельный диск (см. docker-compose.prod.yml).
+    'backup' => [
+        'path' => env('BACKUP_PATH', storage_path('app/backups')),
+        'keep' => (int) env('BACKUP_KEEP', 14),
+        'at' => env('BACKUP_AT', '03:00'),
+        'connection' => env('BACKUP_CONNECTION'), // пусто — основное подключение
+        'stale_hours' => 26, // копия старше — предупреждение в настройках
+    ],
+
     // Подсказка для владельца при первом запуске (см. OwnerSeeder).
     'owner' => [
         'login' => env('OWNER_LOGIN', 'owner'),
