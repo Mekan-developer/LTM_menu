@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PinLoginController;
+use App\Http\Controllers\Bookings\BookingController;
 use App\Http\Controllers\Cashier\CashierController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Guest\BookingController as GuestBookingController;
 use App\Http\Controllers\Guest\GuestController;
 use App\Http\Controllers\Guest\ReviewController as GuestReviewController;
 use App\Http\Controllers\Guests\GuestController as GuestBaseController;
@@ -34,6 +36,8 @@ Route::name('guest.')->group(function () {
     Route::post('/t/{token}/orders', [GuestController::class, 'store'])->middleware('throttle:guest-orders')->name('orders.store');
     Route::get('/o/{publicToken}', [GuestController::class, 'show'])->name('order');
     Route::get('/o/{publicToken}/status.json', [GuestController::class, 'status'])->name('order.status');
+    Route::get('/book', [GuestBookingController::class, 'create'])->name('booking');
+    Route::post('/book', [GuestBookingController::class, 'store'])->middleware('throttle:guest-orders')->name('booking.store');
     Route::get('/r/{token}', [GuestReviewController::class, 'show'])->name('review');
     Route::post('/r/{token}', [GuestReviewController::class, 'store'])->middleware('throttle:guest-orders')->name('review.store');
 });
@@ -89,6 +93,15 @@ Route::middleware('auth')->group(function () {
         Route::put('/{hall}', [HallController::class, 'update'])->name('update');
         Route::delete('/{hall}', [HallController::class, 'destroy'])->name('destroy');
         Route::put('/{hall}/layout', [HallController::class, 'layout'])->name('layout');
+    });
+
+    // Брони (ТЗ 2.2)
+    Route::middleware('permission:bookings')->prefix('bookings')->name('bookings.')->group(function () {
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+        Route::get('/free-tables', [BookingController::class, 'freeTables'])->name('free-tables');
+        Route::post('/', [BookingController::class, 'store'])->name('store');
+        Route::put('/{booking}', [BookingController::class, 'update'])->name('update');
+        Route::post('/{booking}/status', [BookingController::class, 'status'])->name('status');
     });
 
     // База гостей (ТЗ 2.1); экспорт — отдельное право

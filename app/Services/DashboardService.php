@@ -3,15 +3,17 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Repositories\BookingRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\ReportRepository;
 
-/** Главная админки (ТЗ 2.10): цифры за сегодня и выручка за 7 дней. */
+/** Главная админки (ТЗ 2.10): выручка, счета, средний чек, брони, занятые столы за сегодня; выручка за 7 дней. */
 class DashboardService
 {
     public function __construct(
         private readonly PaymentRepository $payments,
         private readonly ReportRepository $reports,
+        private readonly BookingRepository $bookings,
     ) {}
 
     /** @return array<string, mixed> */
@@ -51,6 +53,7 @@ class DashboardService
                 'card' => (int) $todayPayments->sum('card_amount'),
                 'open_tables' => $this->reports->activeOrdersCount(),
                 'tables' => $this->reports->tablesCount(),
+                'bookings' => $this->bookings->countForDay($today), // брони на сегодня (ТЗ 2.10)
             ],
             'series' => $series,
             'top_dishes' => $this->reports->topDishes($today, now()->endOfDay())->map(fn ($r) => [

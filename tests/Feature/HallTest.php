@@ -199,6 +199,8 @@ it('число SQL-запросов доски не растёт с количе
     $waiter = staff(SystemRole::Waiter);
     $waiter->loadMissing('role.permissions');
     $service = app(HallService::class);
+    // Прогрев: настройки читаются из БД один раз и дальше берутся из кэша — это не зависит от столов.
+    $service->board(Hall::factory()->create(), $waiter);
 
     $count = function (int $n) use ($waiter, $service) {
         $hall = Hall::factory()->create();

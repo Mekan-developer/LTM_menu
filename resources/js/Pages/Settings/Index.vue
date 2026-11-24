@@ -17,6 +17,7 @@ const form = useForm({
     ...props.settings,
     qr_confirmation: Boolean(props.settings.qr_confirmation),
     reviews_enabled: Boolean(props.settings.reviews_enabled),
+    online_booking: Boolean(props.settings.online_booking),
 });
 const submit = () =>
     form.put(route('settings.update'), { preserveScroll: true });
@@ -99,6 +100,51 @@ const submit = () =>
                             mono
                     /></Field>
                 </div>
+            </section>
+
+            <section
+                class="flex flex-col gap-4 rounded-lg border border-line bg-surface p-5"
+            >
+                <h2 class="text-lg font-semibold">
+                    {{ t('settings.bookings') }}
+                </h2>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field
+                        :label="t('settings.booking_minutes')"
+                        for="s-bm"
+                        :error="form.errors.booking_minutes"
+                        ><TextInput
+                            id="s-bm"
+                            v-model="form.booking_minutes"
+                            type="number"
+                            mono
+                    /></Field>
+                    <Field
+                        :label="t('settings.booking_reserve_before')"
+                        for="s-brb"
+                        :error="form.errors.booking_reserve_before"
+                        ><TextInput
+                            id="s-brb"
+                            v-model="form.booking_reserve_before"
+                            type="number"
+                            mono
+                    /></Field>
+                </div>
+                <label class="flex items-start gap-3">
+                    <input
+                        v-model="form.online_booking"
+                        type="checkbox"
+                        class="mt-0.5 size-[18px] accent-[var(--color-brand)]"
+                    />
+                    <span class="flex flex-col"
+                        ><span class="text-sm font-medium">{{
+                            t('settings.online_booking')
+                        }}</span
+                        ><span class="text-xs text-ink-3">{{
+                            t('settings.online_booking_hint')
+                        }}</span></span
+                    >
+                </label>
             </section>
 
             <section

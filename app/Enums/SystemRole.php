@@ -53,7 +53,7 @@ enum SystemRole: string
             self::Owner => [],
             self::HallAdmin => [
                 Permission::RemoveAfterKitchen, Permission::TransferTables, Permission::StopList,
-                Permission::Tables, Permission::AreaWaiter, Permission::Reviews, Permission::Guests,
+                Permission::Tables, Permission::AreaWaiter, Permission::Reviews, Permission::Guests, Permission::Bookings,
             ],
             self::Waiter => [Permission::AreaWaiter],
             self::Cook => [Permission::StopList, Permission::AreaKitchen],

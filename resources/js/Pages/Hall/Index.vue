@@ -21,7 +21,7 @@ import {
     sinceLabel,
 } from '@/Components/Hall/hall';
 import { useI18n } from '@/i18n';
-import { money, time } from '@/utils/format';
+import { money, phone, time } from '@/utils/format';
 import { useRealtime } from '@/composables/useRealtime';
 
 const props = defineProps({
@@ -61,7 +61,7 @@ const selectedId = ref(Number(query.get('table')) || null);
 const picking = ref(false);
 
 const counts = computed(() => {
-    const c = { free: 0, occupied: 0, bill: 0, qr: 0 };
+    const c = { free: 0, occupied: 0, bill: 0, reserved: 0, qr: 0 };
     for (const tb of props.board.tables) {
         c[tb.status] = (c[tb.status] ?? 0) + 1;
         if (tb.qr_pending) c.qr++;
@@ -72,7 +72,7 @@ const selected = computed(() =>
     props.board.tables.find((tb) => tb.id === selectedId.value),
 );
 const freeTables = computed(() =>
-    props.board.tables.filter((tb) => tb.status === 'free'),
+    props.board.tables.filter((tb) => ['free', 'reserved'].includes(tb.status)),
 );
 
 function loadDetail(id) {
@@ -91,7 +91,7 @@ function loadDetail(id) {
 
 function onSelect(tb) {
     if (picking.value) {
-        if (tb.status === 'free') moveTo(tb.id);
+        if (['free', 'reserved'].includes(tb.status)) moveTo(tb.id);
         return;
     }
     loadDetail(selectedId.value === tb.id ? null : tb.id);
@@ -115,6 +115,13 @@ const itemTone = (s) =>
     })[s] ?? 'neutral';
 
 const openTable = () => router.post(route('waiter.open', selectedId.value));
+// «Гость пришёл»: заказ по брони открывается на этом столе, предзаказ уходит на кухню.
+const arrive = (bk) =>
+    router.post(
+        route('bookings.status', bk.id),
+        { status: 'arrived' },
+        { preserveScroll: true, onSuccess: () => loadDetail(selectedId.value) },
+    );
 const requestBill = () =>
     router.post(
         route('waiter.bill', order.value.id),
@@ -595,6 +602,14 @@ function deleteHall() {
                     >
                     <span class="flex items-center gap-2"
                         ><span
+                            class="size-4 rounded-sm border-2 border-ochre bg-ochre-soft"
+                        />{{ t('hall.status_reserved') }}
+                        <b class="font-mono text-ink">{{
+                            counts.reserved
+                        }}</b></span
+                    >
+                    <span class="flex items-center gap-2"
+                        ><span
                             class="rounded-sm bg-accent px-1 font-mono text-[10px] font-bold text-accent-ink"
                             >QR</span
                         >{{ t('hall.qr') }}
@@ -675,12 +690,21 @@ function deleteHall() {
 
                         <!-- Свободный стол -->
                         <div
-                            v-else-if="selected.status === 'free'"
+                            v-else-if="
+                                ['free', 'reserved'].includes(selected.status)
+                            "
                             class="flex flex-col gap-3"
                         >
-                            <Badge tone="outline">{{
-                                t('hall.status_free')
-                            }}</Badge>
+                            <Badge
+                                :tone="
+                                    selected.status === 'reserved'
+                                        ? 'ochre'
+                                        : 'outline'
+                                "
+                                >{{
+                                    t(`hall.status_${selected.status}`)
+                                }}</Badge
+                            >
                             <Btn
                                 v-if="can.work"
                                 size="lg"
@@ -830,6 +854,51 @@ function deleteHall() {
                                     >
                                 </div>
                             </template>
+                        </div>
+
+                        <!-- Брони стола на сегодня (ТЗ 2.2) -->
+                        <div
+                            v-if="
+                                detail &&
+                                detail.id === selected.id &&
+                                detail.bookings?.length
+                            "
+                            class="mt-3 flex flex-col gap-2 border-t border-line pt-3"
+                        >
+                            <span class="text-[13px] font-medium">{{
+                                t('hall.bookings_today')
+                            }}</span>
+                            <div
+                                v-for="bk in detail.bookings"
+                                :key="bk.id"
+                                class="flex flex-col gap-1.5 rounded-md border border-ochre bg-ochre-soft p-2.5 text-sm text-ochre-ink"
+                            >
+                                <span class="flex justify-between gap-2"
+                                    ><b class="font-mono">{{
+                                        time(bk.starts_at)
+                                    }}</b
+                                    ><span>{{
+                                        t('bookings.guests_n', {
+                                            n: bk.guests_count,
+                                        })
+                                    }}</span></span
+                                >
+                                <span class="text-ink"
+                                    >{{ bk.name }} ·
+                                    <span class="font-mono">{{
+                                        phone(bk.phone)
+                                    }}</span></span
+                                >
+                                <Btn
+                                    v-if="
+                                        selected.status !== 'occupied' &&
+                                        selected.status !== 'bill'
+                                    "
+                                    size="sm"
+                                    @click="arrive(bk)"
+                                    >{{ t('bookings.do_arrived') }}</Btn
+                                >
+                            </div>
                         </div>
 
                         <!-- QR стола -->

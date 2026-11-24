@@ -22,6 +22,9 @@ class SettingsRequest extends FormRequest
             'kitchen_late_minutes' => ['required', 'integer', 'gt:kitchen_warn_minutes', 'max:240'],
             'shared_idle_seconds' => ['required', 'integer', 'min:15', 'max:3600'],
             'reviews_enabled' => ['required', 'boolean'],
+            'booking_minutes' => ['required', 'integer', 'min:30', 'max:720'],
+            'booking_reserve_before' => ['required', 'integer', 'min:0', 'max:360'],
+            'online_booking' => ['required', 'boolean'],
         ];
     }
 }

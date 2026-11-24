@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Guests\GuestRequest;
 use App\Models\Guest;
+use App\Repositories\BookingRepository;
 use App\Repositories\GuestRepository;
 use App\Services\GuestService;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,7 @@ class GuestController extends Controller
     public function __construct(
         private readonly GuestRepository $guests,
         private readonly GuestService $service,
+        private readonly BookingRepository $bookings,
     ) {}
 
     public function index(Request $request): Response
@@ -59,6 +61,13 @@ class GuestController extends Controller
                 'table' => $o->table,
                 'waiter' => $o->waiter,
             ]),
+            'bookings' => $this->bookings->forGuest($guest)->map(fn ($b) => [
+                'id' => $b->id,
+                'starts_at' => $b->starts_at->toIso8601String(),
+                'guests_count' => $b->guests_count,
+                'status' => $b->status->value,
+                'table' => $b->table?->number,
+            ])->values(),
             'reviews' => $this->guests->reviews($guest)->map(fn ($r) => [
                 'id' => (int) $r->id,
                 'rating' => (int) $r->rating,

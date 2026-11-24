@@ -12,9 +12,11 @@ use App\Models\DiningTable;
 use App\Models\Hall;
 use App\Models\HallElement;
 use App\Models\User;
+use App\Repositories\BookingRepository;
 use App\Repositories\HallRepository;
 use App\Repositories\OrderRepository;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -34,6 +36,8 @@ class HallService
         private readonly OrderRepository $orders,
         private readonly ActionLogger $logger,
         private readonly Realtime $realtime,
+        private readonly BookingRepository $bookings,
+        private readonly SettingsService $settings,
     ) {}
 
     /**
@@ -50,8 +54,11 @@ class HallService
         $counts = $this->halls->itemCounts($orderIds)->groupBy('order_id');
         $seeAll = $viewer->hasPermission(Permission::TransferTables);
         $editor = $viewer->hasPermission(Permission::Tables);
+        // Брони, из-за которых свободный стол сейчас «забронирован» — один запрос на зал.
+        $reserved = $this->bookings->reservedInHall($hall, now(), (int) $this->settings->get('booking_reserve_before'));
+        $seeGuest = $viewer->hasPermission(Permission::Bookings);
 
-        $tables = $rows->map(function (\stdClass $r) use ($counts, $seeAll, $editor, $viewer) {
+        $tables = $rows->map(function (\stdClass $r) use ($counts, $seeAll, $editor, $viewer, $reserved, $seeGuest) {
             $orderId = $r->order_id !== null ? (int) $r->order_id : null;
             $waiterId = $r->waiter_id !== null ? (int) $r->waiter_id : null;
             $mine = $waiterId === null || $waiterId === $viewer->id;
@@ -61,8 +68,9 @@ class HallService
             $status = match (true) {
                 $r->order_status === OrderStatus::BillRequested->value => TableStatus::Bill,
                 $orderId !== null => TableStatus::Occupied,
-                default => $this->reservedStatus((int) $r->id) ?? TableStatus::Free,
+                default => $this->reservedStatus((int) $r->id, $reserved) ?? TableStatus::Free,
             };
+            $booking = $status === TableStatus::Reserved ? $reserved->get((int) $r->id) : null;
 
             return [
                 'id' => (int) $r->id,
@@ -86,6 +94,13 @@ class HallService
                 'opened_at' => $details && $r->opened_at ? Carbon::parse($r->opened_at)->toIso8601String() : null,
                 'total' => $details && $r->total !== null ? (int) $r->total : null,
                 'guests_hint' => null, // число гостей в заказе не хранится; показываем время с открытия
+                // Ближайшая бронь «забронированного» стола; имя гостя — только с правом «Брони».
+                'booking' => $booking ? [
+                    'id' => (int) $booking->id,
+                    'starts_at' => Carbon::parse($booking->starts_at)->toIso8601String(),
+                    'guests_count' => (int) $booking->guests_count,
+                    'name' => $seeGuest ? $booking->name : null,
+                ] : null,
                 'waiter' => $details && $waiterId !== null ? [
                     'id' => $waiterId,
                     'name' => $r->waiter_name,
@@ -100,12 +115,14 @@ class HallService
     }
 
     /**
-     * Точка расширения для броней (ТЗ 2.2): за 1 час до брони стол станет «забронирован».
-     * На этом этапе броней нет — всегда null.
+     * Брони (ТЗ 2.2): за booking_reserve_before минут (1 час) до брони свободный стол
+     * становится «забронирован» и остаётся им до прихода гостя или конца брони.
+     *
+     * @param  Collection<int, \stdClass>  $reserved  брони зала по id стола
      */
-    public function reservedStatus(int $tableId): ?TableStatus
+    public function reservedStatus(int $tableId, Collection $reserved): ?TableStatus
     {
-        return null;
+        return $reserved->has($tableId) ? TableStatus::Reserved : null;
     }
 
     /**
@@ -126,6 +143,17 @@ class HallService
             'hall_id' => $table->hall_id,
             'qr_url' => route('guest.menu', $table->qr_token),
             'details' => $details,
+            // Брони этого стола на сегодня; гостя видит только право «Брони».
+            'bookings' => $viewer->hasPermission(Permission::Bookings)
+                ? $this->bookings->upcomingForTable($table->id, now())->map(fn ($b) => [
+                    'id' => $b->id,
+                    'starts_at' => $b->starts_at->toIso8601String(),
+                    'guests_count' => $b->guests_count,
+                    'status' => $b->status->value,
+                    'name' => $b->guest?->name,
+                    'phone' => $b->guest?->phone,
+                ])->values()->all()
+                : [],
             'order' => $order !== null && $details
                 ? (new OrderResource($this->orders->loadForScreen($order)))->resolve()
                 : null,

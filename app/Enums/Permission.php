@@ -15,6 +15,7 @@ enum Permission: string
     case ActionLog = 'action_log';
     case Reviews = 'reviews';
     case Guests = 'guests';
+    case Bookings = 'bookings';
     case ExportGuests = 'export_guests';
     case CancelPayment = 'cancel_payment';
     case DiscountUnlimited = 'discount_unlimited';
@@ -32,7 +33,7 @@ enum Permission: string
     {
         return match ($this) {
             self::AreaWaiter, self::AreaKitchen, self::AreaCashier => 'areas',
-            self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests => 'management',
+            self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests, self::Bookings => 'management',
             self::Reports, self::ActionLog, self::Reviews, self::ExportGuests => 'control',
             default => 'operations',
         };

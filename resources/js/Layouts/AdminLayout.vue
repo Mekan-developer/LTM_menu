@@ -74,6 +74,12 @@ const groups = computed(() =>
                     perm: ['area_waiter', 'tables', 'reports'],
                 },
                 {
+                    label: t('nav.bookings'),
+                    route: 'bookings.index',
+                    icon: 'calendar',
+                    perm: 'bookings',
+                },
+                {
                     label: t('nav.guests'),
                     route: 'guests.index',
                     icon: 'guests',

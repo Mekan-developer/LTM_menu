@@ -9,10 +9,20 @@ import GuestFormModal from '@/Components/GuestFormModal.vue';
 import { useI18n } from '@/i18n';
 import { date, dateTime, money, phone } from '@/utils/format';
 
+const bookingTone = (st) =>
+    ({
+        new: 'ochre',
+        confirmed: 'brand',
+        arrived: 'ok',
+        cancelled: 'muted',
+        no_show: 'danger',
+    })[st] ?? 'neutral';
+
 const props = defineProps({
     guest: { type: Object, required: true },
     orders: { type: Array, default: () => [] },
     reviews: { type: Array, default: () => [] },
+    bookings: { type: Array, default: () => [] },
 });
 const { t } = useI18n();
 
@@ -206,6 +216,43 @@ const avgRating = computed(() =>
                                 </tr>
                             </tbody>
                         </table>
+                    </section>
+
+                    <!-- Брони -->
+                    <section class="rounded-lg border border-line bg-surface">
+                        <h2
+                            class="border-b border-line px-4 py-3 text-base font-semibold"
+                        >
+                            {{ t('nav.bookings') }}
+                        </h2>
+                        <div
+                            v-for="bk in bookings"
+                            :key="bk.id"
+                            class="flex items-center justify-between gap-3 border-t border-line px-4 py-2.5 text-sm first:border-t-0"
+                        >
+                            <span class="font-mono text-xs text-ink-2">{{
+                                dateTime(bk.starts_at)
+                            }}</span>
+                            <span class="flex-1"
+                                >{{
+                                    t('bookings.guests_n', {
+                                        n: bk.guests_count,
+                                    })
+                                }}<template v-if="bk.table">
+                                    · {{ t('tables.table') }}
+                                    {{ bk.table }}</template
+                                ></span
+                            >
+                            <Badge :tone="bookingTone(bk.status)">{{
+                                t(`bookings.status_${bk.status}`)
+                            }}</Badge>
+                        </div>
+                        <p
+                            v-if="!bookings.length"
+                            class="px-4 py-6 text-center text-sm text-ink-3"
+                        >
+                            {{ t('guests.no_bookings') }}
+                        </p>
                     </section>
 
                     <!-- Отзывы -->

@@ -23,6 +23,7 @@ const actions = [
     'table_moved',
     'hall_layout_saved',
     'guests_exported',
+    'booking_cancelled',
     'stop_added',
     'stop_removed',
     'role_permissions_changed',

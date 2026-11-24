@@ -27,6 +27,8 @@ class ActionLogger
 
     public const GUESTS_EXPORTED = 'guests_exported';
 
+    public const BOOKING_CANCELLED = 'booking_cancelled';
+
     public const STOP_ADDED = 'stop_added';
 
     public const STOP_REMOVED = 'stop_removed';

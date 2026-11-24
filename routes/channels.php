@@ -16,3 +16,5 @@ Broadcast::channel('reviews', fn (User $user) => $user->hasPermission(Permission
 Broadcast::channel('hall', fn (User $user) => $user->hasPermission(Permission::AreaWaiter)
     || $user->hasPermission(Permission::Tables)
     || $user->hasPermission(Permission::Reports));
+
+Broadcast::channel('bookings', fn (User $user) => $user->hasPermission(Permission::Bookings));

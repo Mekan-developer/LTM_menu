@@ -58,7 +58,8 @@ const goHall = (id) =>
     );
 // Тап по своему столу — заказ, по свободному — открыть стол. Чужие столы не трогаем.
 function onHallTap(tb) {
-    if (tb.status === 'free') router.post(route('waiter.open', tb.id));
+    if (['free', 'reserved'].includes(tb.status))
+        router.post(route('waiter.open', tb.id));
     else if (tb.details && tb.order_id)
         router.visit(route('waiter.order', tb.order_id));
 }

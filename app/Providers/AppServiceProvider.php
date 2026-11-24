@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Booking;
 use App\Models\Category;
 use App\Models\DiningTable;
 use App\Models\Dish;
@@ -53,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
             'payment' => Payment::class,
             'hall' => Hall::class,
             'guest' => Guest::class,
+            'booking' => Booking::class,
         ]);
 
         // Любое право из App\Enums\Permission можно проверять через Gate / @can.

@@ -3,6 +3,7 @@
 // свободен — пунктир на фоне поверхности, занят — тёмная заливка brand, счёт — accent.
 import { computed } from 'vue';
 import { useI18n } from '@/i18n';
+import { time } from '@/utils/format';
 import { box, sinceLabel } from './hall';
 
 const props = defineProps({
@@ -15,7 +16,8 @@ defineEmits(['select']);
 
 const { t } = useI18n();
 const b = computed(() => box(props.table));
-const free = computed(() => props.table.status === 'free');
+// «Забронирован» — стол пока свободен: его можно выбрать для переноса и открыть.
+const free = computed(() => ['free', 'reserved'].includes(props.table.status));
 const pickable = computed(() => props.picking && free.value);
 
 const cls = computed(() => {
@@ -23,6 +25,8 @@ const cls = computed(() => {
     const out = [props.table.shape === 'round' ? 'rounded-full' : 'rounded-md'];
     if (s === 'free')
         out.push('border-2 border-dashed border-free bg-surface text-ink-2');
+    else if (s === 'reserved')
+        out.push('border-2 border-ochre bg-ochre-soft text-ochre-ink');
     else if (s === 'bill') out.push('bg-accent text-accent-ink');
     else out.push('bg-brand text-brand-ink');
     if (props.table.qr_pending)
@@ -39,6 +43,8 @@ const cls = computed(() => {
 const line = computed(() => {
     const tb = props.table;
     if (tb.status === 'free') return `${tb.seats} ${t('tables.seats_short')}`;
+    if (tb.status === 'reserved' && tb.booking)
+        return `${time(tb.booking.starts_at)} · ${tb.booking.guests_count}`;
     if (!tb.details) return t('hall.busy');
     if (tb.status === 'bill') return t('hall.bill');
     return [sinceLabel(tb.opened_at, props.now), tb.waiter?.initials]

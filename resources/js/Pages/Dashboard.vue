@@ -38,6 +38,8 @@ const kpis = computed(() => [
             ? props.today.open_tables / props.today.tables
             : 0,
     },
+    // Брони на сегодня (ТЗ 2.10)
+    { label: t('dash.bookings'), value: String(props.today.bookings ?? 0) },
 ]);
 
 // График 7 дней: линия текущей недели + пунктир прошлой.
@@ -85,7 +87,7 @@ const weekday = (iso) => {
             </div>
 
             <div
-                class="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-4"
+                class="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-5"
             >
                 <div
                     v-for="k in kpis"

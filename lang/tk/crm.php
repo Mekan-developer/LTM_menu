@@ -128,4 +128,14 @@ return [
         'last_visit' => 'Soňky gelşi',
         'since' => 'Bazada şundan bäri',
     ],
+
+    'bookings' => [
+        'created' => 'Bron döredildi',
+        'status_saved' => 'Bronuň ýagdaýy üýtgedildi',
+        'not_editable' => 'Bu brony indi üýtgedip bolmaýar',
+        'bad_transition' => 'Bronuň ýagdaýyny beýle üýtgedip bolmaýar',
+        'no_table' => 'Ilki bron üçin stol belläň',
+        'in_past' => 'Geçen wagta bronlap bolmaýar',
+        'table_taken' => ':n stol bu wagtda eýýäm bronlanan',
+    ],
 ];
