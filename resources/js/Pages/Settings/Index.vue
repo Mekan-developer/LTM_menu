@@ -23,6 +23,7 @@ const form = useForm({
     online_booking: Boolean(props.settings.online_booking),
     online_delivery: Boolean(props.settings.online_delivery),
     bonus_enabled: Boolean(props.settings.bonus_enabled),
+    shift_clock_required: Boolean(props.settings.shift_clock_required),
     // Стоимость доставки хранится в тенге, в форме — TMT.
     delivery_fee: money(props.settings.delivery_fee ?? 0),
 });
@@ -261,6 +262,43 @@ const submit = () =>
                             inputmode="numeric"
                     /></Field>
                 </div>
+            </section>
+
+            <section
+                class="flex flex-col gap-4 rounded-lg border border-line bg-surface p-5"
+            >
+                <h2 class="text-lg font-semibold">
+                    {{ t('settings.shifts') }}
+                </h2>
+                <label class="flex items-start gap-3">
+                    <input
+                        v-model="form.shift_clock_required"
+                        type="checkbox"
+                        class="mt-0.5 size-[18px] accent-[var(--color-brand)]"
+                    />
+                    <span class="flex flex-col"
+                        ><span class="text-sm font-medium">{{
+                            t('settings.shift_clock_required')
+                        }}</span
+                        ><span class="text-xs text-ink-3">{{
+                            t('settings.shift_clock_required_hint')
+                        }}</span></span
+                    >
+                </label>
+                <Field
+                    class="sm:max-w-xs"
+                    :label="t('settings.shift_grace')"
+                    for="s-grace"
+                    :hint="t('settings.shift_grace_hint')"
+                    :error="form.errors.shift_grace_minutes"
+                    ><TextInput
+                        id="s-grace"
+                        v-model="form.shift_grace_minutes"
+                        type="number"
+                        mono
+                        placeholder="5"
+                        inputmode="numeric"
+                /></Field>
             </section>
 
             <section

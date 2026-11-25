@@ -188,6 +188,17 @@ return [
         'no_combine' => 'Arzanladyş we bonus jemlenmeýär — birini saýlaň.',
         'too_much' => ':max TMT-den köp ulanyp bolmaýar.',
     ],
+    'shifts' => [
+        'overlap' => 'Işgäriň bu wagtda eýýäm smenasy bar.',
+        'bad_period' => 'Soňy başyndan öň.',
+        'out_before_in' => 'Gidiş gelişden soň bolmaly.',
+        'clock_in_first' => ':name gelenini bellemedi — ilki planşetde belläň.',
+        'clocked_in' => ':name: geldi :time.',
+        'clocked_out' => ':name: gitdi :time. Işlenen :hours sag :minutes min.',
+        'late_by' => 'Gijä galdy :n min.',
+        'copied' => 'Göçürilen smena: :n',
+        'created' => 'Goşulan smena: :n',
+    ],
     'delivery' => [
         'created' => '№:n sargyt kabul edildi',
         'saved' => 'Sargyt täzelendi',

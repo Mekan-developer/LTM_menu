@@ -49,7 +49,9 @@ function toggleNav() {
     }
 }
 
+// perm: null — пункт для всех сотрудников (например, «Мой график»).
 const can = (p) =>
+    p === null ||
     [p].flat().some((x) => page.props.auth.user?.permissions?.includes(x));
 
 // Пункты меню видны только с правом — кнопок, которые нельзя нажать, нет.
@@ -183,6 +185,18 @@ const groups = computed(() =>
                     route: 'roles.index',
                     icon: 'roles',
                     perm: 'staff_permissions',
+                },
+                {
+                    label: t('nav.shifts'),
+                    route: 'shifts.index',
+                    icon: 'calendar',
+                    perm: 'shifts',
+                },
+                {
+                    label: t('nav.my_shifts'),
+                    route: 'my-shifts',
+                    icon: 'staff',
+                    perm: null,
                 },
             ],
         },

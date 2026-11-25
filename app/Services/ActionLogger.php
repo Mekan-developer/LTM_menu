@@ -33,6 +33,8 @@ class ActionLogger
 
     public const BONUS_SPENT = 'bonus_spent';
 
+    public const ATTENDANCE_CORRECTED = 'attendance_corrected';
+
     public const TABLE_TRANSFERRED = 'table_transferred';
 
     public const TABLE_MOVED = 'table_moved';

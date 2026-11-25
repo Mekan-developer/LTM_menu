@@ -31,6 +31,7 @@ class WaiterOrderService
         private readonly OrderCalculator $calculator,
         private readonly ActionLogger $logger,
         private readonly Realtime $realtime,
+        private readonly ShiftService $shifts,
     ) {}
 
     public function openTable(DiningTable $table, User $waiter): Order
@@ -43,6 +44,9 @@ class WaiterOrderService
 
                 return $existing;
             }
+
+            // Новый стол — только после отметки прихода, если это включено (ТЗ 2.12).
+            $this->shifts->assertOnShift($waiter, 'table');
 
             $order = Order::create([
                 'public_token' => Str::lower(Str::random(32)),

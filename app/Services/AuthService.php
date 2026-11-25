@@ -48,6 +48,13 @@ class AuthService
 
     public function attemptPin(User $user, string $pin): void
     {
+        $this->verifyPin($user, $pin);
+        Auth::login($user);
+    }
+
+    /** Проверить PIN без входа (отметка прихода на общем планшете). Счётчик попыток и блокировка — общие со входом. */
+    public function verifyPin(User $user, string $pin): void
+    {
         $max = (int) config('restaurant.auth.max_attempts');
         $lockMinutes = (int) config('restaurant.auth.lock_minutes');
 
@@ -76,7 +83,6 @@ class AuthService
         }
 
         $user->forceFill(['pin_failed_attempts' => 0, 'pin_locked_until' => null])->save();
-        Auth::login($user);
     }
 
     /** Куда отправить сотрудника после входа — на его рабочий экран. */

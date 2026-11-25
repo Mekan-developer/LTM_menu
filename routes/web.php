@@ -24,6 +24,8 @@ use App\Http\Controllers\Menu\TableController;
 use App\Http\Controllers\Orders\OrderController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Reviews\ReviewController;
+use App\Http\Controllers\Shifts\MyShiftsController;
+use App\Http\Controllers\Shifts\ShiftController;
 use App\Http\Controllers\Staff\ActionLogController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SettingsController;
@@ -61,6 +63,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     Route::get('/pin', [PinLoginController::class, 'create'])->name('pin');
     Route::post('/pin', [PinLoginController::class, 'store'])->name('pin.store');
+    Route::post('/pin/clock', [PinLoginController::class, 'clock'])->name('pin.clock');
 });
 
 Route::middleware('auth')->group(function () {
@@ -148,6 +151,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/inventory', [StockController::class, 'storeInventory'])->name('inventory.store');
         Route::put('/products/{product}/min', [StockController::class, 'minimum'])->name('minimum');
     });
+
+    // Смены (ТЗ 2.12): график, шаблоны, табель, исправление отметок
+    Route::middleware('permission:shifts')->prefix('shifts')->name('shifts.')->group(function () {
+        Route::get('/', [ShiftController::class, 'index'])->name('index');
+        Route::post('/', [ShiftController::class, 'store'])->name('store');
+        Route::post('/copy-week', [ShiftController::class, 'copyWeek'])->name('copy-week');
+        Route::post('/pattern', [ShiftController::class, 'pattern'])->name('pattern');
+        Route::post('/attendances/{attendance?}', [ShiftController::class, 'attendance'])->name('attendance');
+        Route::put('/{shift}', [ShiftController::class, 'update'])->name('update');
+        Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('destroy');
+    });
+    // Свой график видит каждый сотрудник
+    Route::get('/my-shifts', MyShiftsController::class)->name('my-shifts');
 
     // Все заказы за период: зал, QR, доставка, самовывоз — для мониторинга
     Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders')->name('orders.index');

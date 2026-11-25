@@ -54,7 +54,7 @@ enum SystemRole: string
             self::HallAdmin => [
                 Permission::RemoveAfterKitchen, Permission::TransferTables, Permission::StopList,
                 Permission::Tables, Permission::AreaWaiter, Permission::Reviews, Permission::Guests, Permission::Bookings,
-                Permission::Delivery, Permission::Orders,
+                Permission::Delivery, Permission::Orders, Permission::Shifts,
             ],
             self::Waiter => [Permission::AreaWaiter],
             self::Cook => [Permission::StopList, Permission::AreaKitchen],

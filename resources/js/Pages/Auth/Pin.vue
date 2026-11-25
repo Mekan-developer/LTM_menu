@@ -9,19 +9,25 @@ defineProps({ staff: { type: Array, default: () => [] } });
 
 const { t } = useI18n();
 const selected = ref(null);
+// Войти в систему или только отметить приход/уход (ТЗ 2.12) — тот же PIN.
+const mode = ref('login');
 const form = useForm({ user_id: null, pin: '' });
 
-function choose(person) {
+function choose(person, nextMode = 'login') {
     selected.value = person;
+    mode.value = nextMode;
     form.clearErrors();
     form.user_id = person.id;
     form.pin = '';
 }
 
 const submit = () =>
-    form.post(route('pin.store'), {
+    form.post(route(mode.value === 'clock' ? 'pin.clock' : 'pin.store'), {
         onError: () => {
             form.pin = '';
+        },
+        onSuccess: () => {
+            if (mode.value === 'clock') selected.value = null;
         },
     });
 </script>
@@ -35,7 +41,13 @@ const submit = () =>
                 </h1>
                 <p class="mt-1 text-sm text-ink-2">
                     {{
-                        selected ? t('auth.enter_pin') : t('auth.pick_yourself')
+                        !selected
+                            ? t('auth.pick_yourself')
+                            : mode === 'clock'
+                              ? selected.on_shift
+                                  ? t('auth.pin_for_clock_out')
+                                  : t('auth.pin_for_clock_in')
+                              : t('auth.enter_pin')
                     }}
                 </p>
             </div>
@@ -62,6 +74,13 @@ const submit = () =>
                         <span class="text-xs text-ink-3">{{
                             person.role
                         }}</span>
+                        <span
+                            v-if="person.on_shift"
+                            class="mt-0.5 flex items-center gap-1 text-xs text-ok"
+                            ><span class="size-1.5 rounded-full bg-ok" />{{
+                                t('shifts.on_shift')
+                            }}</span
+                        >
                     </span>
                 </button>
                 <p
@@ -73,6 +92,43 @@ const submit = () =>
             </div>
 
             <template v-else>
+                <div
+                    class="flex overflow-hidden rounded-md border border-line bg-surface"
+                    role="tablist"
+                >
+                    <button
+                        type="button"
+                        role="tab"
+                        :aria-selected="mode === 'login'"
+                        class="h-11 px-4 text-sm font-medium"
+                        :class="
+                            mode === 'login'
+                                ? 'bg-ink text-paper'
+                                : 'text-ink-2'
+                        "
+                        @click="mode = 'login'"
+                    >
+                        {{ t('auth.mode_login') }}
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        :aria-selected="mode === 'clock'"
+                        class="h-11 border-l border-line px-4 text-sm font-medium"
+                        :class="
+                            mode === 'clock'
+                                ? 'bg-ink text-paper'
+                                : 'text-ink-2'
+                        "
+                        @click="mode = 'clock'"
+                    >
+                        {{
+                            selected.on_shift
+                                ? t('auth.mode_clock_out')
+                                : t('auth.mode_clock_in')
+                        }}
+                    </button>
+                </div>
                 <PinPad
                     v-model="form.pin"
                     :error="form.errors.pin"

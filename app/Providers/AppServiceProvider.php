@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Attendance;
 use App\Models\Booking;
 use App\Models\Category;
 use App\Models\Delivery;
@@ -14,6 +15,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Role;
+use App\Models\Shift;
 use App\Models\StockDocument;
 use App\Models\User;
 use App\Services\SettingsService;
@@ -61,6 +63,8 @@ class AppServiceProvider extends ServiceProvider
             'delivery' => Delivery::class,
             'product' => Product::class,
             'stock_document' => StockDocument::class,
+            'attendance' => Attendance::class,
+            'shift' => Shift::class,
         ]);
 
         // Любое право из App\Enums\Permission можно проверять через Gate / @can.
