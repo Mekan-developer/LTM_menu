@@ -23,6 +23,7 @@ import {
 import { useI18n } from '@/i18n';
 import { money, phone, time } from '@/utils/format';
 import { useRealtime } from '@/composables/useRealtime';
+import Select from '@/Components/Select.vue';
 
 const props = defineProps({
     halls: { type: Array, default: () => [] },
@@ -802,14 +803,12 @@ function deleteHall() {
                                     v-if="picking && freeTables.length"
                                     class="flex gap-2"
                                 >
-                                    <select
+                                    <Select
                                         v-model="moveTarget"
-                                        class="h-10 min-w-0 flex-1 rounded-md border border-line bg-paper px-2 text-sm"
                                         :aria-label="t('waiter.move')"
+                                        class="flex-1"
+                                        :placeholder="t('waiter.pick_table')"
                                     >
-                                        <option :value="null" disabled>
-                                            {{ t('waiter.pick_table') }}
-                                        </option>
                                         <option
                                             v-for="f in freeTables"
                                             :key="f.id"
@@ -819,7 +818,7 @@ function deleteHall() {
                                             {{ f.number }} · {{ f.seats }}
                                             {{ t('tables.seats_short') }}
                                         </option>
-                                    </select>
+                                    </Select>
                                     <Btn
                                         :disabled="!moveTarget"
                                         @click="moveTo(moveTarget)"
@@ -830,14 +829,12 @@ function deleteHall() {
                                     v-if="can.transfer && waiters.length"
                                     class="flex gap-2"
                                 >
-                                    <select
+                                    <Select
                                         v-model="transferTo"
-                                        class="h-10 min-w-0 flex-1 rounded-md border border-line bg-paper px-2 text-sm"
                                         :aria-label="t('waiter.transfer')"
+                                        class="flex-1"
+                                        :placeholder="t('waiter.pick_waiter')"
                                     >
-                                        <option :value="null" disabled>
-                                            {{ t('waiter.transfer') }}
-                                        </option>
                                         <option
                                             v-for="w in waiters"
                                             :key="w.id"
@@ -845,7 +842,7 @@ function deleteHall() {
                                         >
                                             {{ w.name }}
                                         </option>
-                                    </select>
+                                    </Select>
                                     <Btn
                                         variant="secondary"
                                         :disabled="!transferTo"
@@ -995,6 +992,9 @@ function deleteHall() {
                                         id="h-num"
                                         v-model="selTable.number"
                                         mono
+                                        :placeholder="t('tables.number_ph')"
+                                        maxlength="16"
+                                        autocomplete="off"
                                 /></Field>
                                 <Field :label="t('tables.seats')" for="h-seats"
                                     ><TextInput
@@ -1003,14 +1003,13 @@ function deleteHall() {
                                         type="number"
                                         min="1"
                                         mono
+                                        :placeholder="t('tables.seats_ph')"
+                                        max="50"
+                                        inputmode="numeric"
                                 /></Field>
                             </div>
                             <Field :label="t('hall.shape')" for="h-shape">
-                                <select
-                                    id="h-shape"
-                                    v-model="selTable.shape"
-                                    class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm"
-                                >
+                                <Select id="h-shape" v-model="selTable.shape">
                                     <option
                                         v-for="s in ['round', 'square', 'rect']"
                                         :key="s"
@@ -1018,7 +1017,7 @@ function deleteHall() {
                                     >
                                         {{ t(`hall.shape_${s}`) }}
                                     </option>
-                                </select>
+                                </Select>
                             </Field>
                             <div class="grid grid-cols-2 gap-2">
                                 <Btn variant="secondary" @click="rotate"
@@ -1092,11 +1091,17 @@ function deleteHall() {
                                 ><TextInput
                                     id="h-ltm"
                                     v-model="selElement.label_tm"
+                                    :placeholder="t('hall.label_ph')"
+                                    maxlength="64"
+                                    autocomplete="off"
                             /></Field>
                             <Field :label="t('hall.label_ru')" for="h-lru"
                                 ><TextInput
                                     id="h-lru"
                                     v-model="selElement.label_ru"
+                                    :placeholder="t('hall.label_ph')"
+                                    maxlength="64"
+                                    autocomplete="off"
                             /></Field>
                             <Btn variant="danger" @click="removeSelected">{{
                                 t('common.delete')
@@ -1172,13 +1177,23 @@ function deleteHall() {
                     :label="t('hall.name_tm')"
                     for="hf-tm"
                     :error="hallForm.errors.name_tm"
-                    ><TextInput id="hf-tm" v-model="hallForm.name_tm"
+                    ><TextInput
+                        id="hf-tm"
+                        v-model="hallForm.name_tm"
+                        :placeholder="t('hall.name_ph')"
+                        maxlength="64"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('hall.name_ru')"
                     for="hf-ru"
                     :error="hallForm.errors.name_ru"
-                    ><TextInput id="hf-ru" v-model="hallForm.name_ru"
+                    ><TextInput
+                        id="hf-ru"
+                        v-model="hallForm.name_ru"
+                        :placeholder="t('hall.name_ph')"
+                        maxlength="64"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('hall.width')"
@@ -1189,6 +1204,8 @@ function deleteHall() {
                         v-model.number="hallForm.width"
                         type="number"
                         mono
+                        placeholder="400–4000"
+                        inputmode="numeric"
                 /></Field>
                 <Field
                     :label="t('hall.height')"
@@ -1199,6 +1216,8 @@ function deleteHall() {
                         v-model.number="hallForm.height"
                         type="number"
                         mono
+                        placeholder="300–4000"
+                        inputmode="numeric"
                 /></Field>
                 <p
                     v-if="hallForm.errors.hall || $page.props.errors?.hall"

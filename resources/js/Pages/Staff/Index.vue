@@ -35,12 +35,14 @@ const toggle = (u) =>
                 >
                     {{ t('nav.staff') }}
                 </h1>
-                <div class="flex gap-2">
-                    <div class="w-64">
+                <div class="flex flex-wrap gap-2">
+                    <div class="w-full sm:w-64">
                         <TextInput
                             v-model="q"
                             :placeholder="t('staff.search')"
                             :aria-label="t('staff.search')"
+                            type="search"
+                            icon="search"
                         />
                     </div>
                     <Btn :href="route('staff.create')"

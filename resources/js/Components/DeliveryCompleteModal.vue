@@ -6,9 +6,10 @@ import { useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Btn from '@/Components/Btn.vue';
 import Field from '@/Components/Field.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { useI18n } from '@/i18n';
 import { money, toMinor } from '@/utils/format';
+import Select from '@/Components/Select.vue';
+import MoneyInput from '@/Components/MoneyInput.vue';
 
 const props = defineProps({
     delivery: { type: Object, default: null },
@@ -114,13 +115,10 @@ function submit() {
                     :label="t('delivery.cash_part')"
                     for="dc-cash"
                     :error="form.errors.cash_amount"
-                    ><TextInput
+                    ><MoneyInput
                         id="dc-cash"
                         v-model="form.cash_amount"
-                        mono
                         size="lg"
-                        inputmode="decimal"
-                        placeholder="0,00"
                 /></Field>
                 <div class="flex flex-col gap-1.5">
                     <span class="text-[13px] font-medium">{{
@@ -138,22 +136,17 @@ function submit() {
                     :label="t('delivery.tip')"
                     for="dc-tip"
                     :error="form.errors.tip_amount"
-                    ><TextInput
-                        id="dc-tip"
-                        v-model="form.tip_amount"
-                        mono
-                        inputmode="decimal"
-                        placeholder="0,00"
+                    ><MoneyInput id="dc-tip" v-model="form.tip_amount"
                 /></Field>
-                <Field :label="t('cashier.tip_method')" for="dc-tm">
-                    <select
-                        id="dc-tm"
-                        v-model="form.tip_method"
-                        class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm"
-                    >
+                <Field
+                    :label="t('cashier.tip_method')"
+                    for="dc-tm"
+                    :error="form.errors.tip_method"
+                >
+                    <Select id="dc-tm" v-model="form.tip_method">
                         <option value="cash">{{ t('pay.cash') }}</option>
                         <option value="card">{{ t('pay.card') }}</option>
-                    </select>
+                    </Select>
                 </Field>
             </div>
             <p

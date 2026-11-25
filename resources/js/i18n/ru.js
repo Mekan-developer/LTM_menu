@@ -43,6 +43,8 @@ export default {
         to_light: 'Включить светлую тему',
     },
     auth: {
+        login_ph: 'Введите логин',
+        password_ph: 'Введите пароль',
         title: 'Вход',
         subtitle: 'Логин и пароль сотрудника',
         login: 'Логин',
@@ -81,6 +83,7 @@ export default {
         bookings: 'Брони на сегодня',
     },
     menu: {
+        category_name_ph: 'Например: Горячие блюда',
         title: 'Меню',
         add_category: 'Категория',
         add_dish: 'Блюдо',
@@ -103,6 +106,21 @@ export default {
         choose_photo: 'Выбрать фото',
         remove_photo: 'Убрать фото',
         photo_hint: 'JPG, PNG или WebP до 8 МБ. Сожмём в WebP автоматически.',
+        section_info: 'Информация о блюде',
+        section_pricing: 'Цена и категория',
+        section_preparation: 'Приготовление',
+        section_visibility: 'Видимость в меню',
+        name_ph: 'Например: Куриный шашлык',
+        description_ph: 'Укажите состав блюда и его особенности...',
+        price_ph: 'Например, 25,00',
+        weight_ph: 'Например, 350 г или 500 мл',
+        category_ph: 'Выберите категорию',
+        station_hint: 'Заказ на это блюдо появится на экране выбранного цеха.',
+        visible_hint: 'Если выключить, гости и официанты не увидят это блюдо.',
+        replace_photo: 'Заменить фото',
+        drop_photo: 'или перетащите файл сюда',
+        photo_type_error: 'Подходят только JPG, PNG и WebP.',
+        photo_size_error: 'Файл больше 8 МБ. Выберите фото поменьше.',
         confirm_delete_category: 'Удалить категорию «{name}» вместе с блюдами?',
         confirm_delete_dish: 'Удалить блюдо «{name}»?',
     },
@@ -124,6 +142,8 @@ export default {
         empty: 'Всё в наличии',
     },
     tables: {
+        number_ph: 'Например: 12',
+        seats_ph: 'Например: 4',
         table: 'Стол',
         add: 'Стол',
         edit: 'Стол',
@@ -146,6 +166,11 @@ export default {
         confirm_delete: 'Удалить стол {n}?',
     },
     staff: {
+        name_ph: 'Например: Мерет Аманов',
+        login_ph: 'Например: meret',
+        password_ph: 'Придумайте пароль',
+        password_new_ph: 'Введите новый пароль',
+        pin_ph: 'Введите 4 цифры',
         add: 'Сотрудник',
         edit: 'Сотрудник',
         search: 'Имя или логин',
@@ -169,6 +194,7 @@ export default {
             'Один сотрудник = одна роль. Права роли — в разделе «Роли и права».',
     },
     roles: {
+        name_ph: 'Например: Старший официант',
         add: 'Новая роль',
         permission: 'Право',
         people: 'чел.',
@@ -208,6 +234,12 @@ export default {
         area_courier: 'Экран курьера',
     },
     settings: {
+        restaurant_name_ph: 'Например: Тамдыр',
+        discount_k_hint: 'От 0 до 100',
+        kitchen_warn_hint: 'От 1 до 180 минут',
+        kitchen_late_hint: 'Больше порога «охра», до 240',
+        booking_minutes_hint: 'От 30 до 720 минут',
+        booking_reserve_hint: 'От 0 до 360 минут',
         general: 'Общие',
         restaurant_name: 'Название ресторана',
         orders: 'Заказы и касса',
@@ -271,6 +303,8 @@ export default {
         courier_cash_received: 'Наличные от курьера',
     },
     waiter: {
+        pick_waiter: 'Кому передать?',
+        reason_min: 'Не меньше 3 символов',
         my_tables: 'Мои столы',
         tables: 'Столы',
         online: 'онлайн',
@@ -335,6 +369,8 @@ export default {
         mixed_hint: 'две суммы',
     },
     cashier: {
+        cancel_reason_ph: 'Например: ошибка в счёте',
+        reason_min: 'Не меньше 3 символов',
         to_pay: 'К оплате',
         bill_requested: 'просят счёт',
         open: 'открыт',
@@ -393,6 +429,7 @@ export default {
         review: 'Оцените нас — отсканируйте QR',
     },
     guest: {
+        name_ph: 'Например: Мерет',
         no_registration: 'Меню и заказ без регистрации',
         add: 'В корзину',
         in_cart: 'В корзине',
@@ -538,6 +575,8 @@ export default {
         channel_pickup: 'Самовывоз',
     },
     hall: {
+        name_ph: 'Например: Терраса',
+        label_ph: 'Например: Вход',
         mode_work: 'Работа',
         mode_edit: 'Редактор',
         status_free: 'Свободно',
@@ -594,6 +633,9 @@ export default {
         bookings_today: 'Брони на сегодня',
     },
     guests: {
+        name_ph: 'Например: Мерет Аманов',
+        address_ph: 'Улица, дом, подъезд',
+        comment_ph: 'Что важно помнить о госте…',
         add: 'Гость',
         edit: 'Изменить гостя',
         total: 'В базе гостей: {n}',
@@ -624,6 +666,7 @@ export default {
         no_bookings: 'Броней пока нет',
     },
     bookings: {
+        guests_count_ph: 'Например: 4',
         add: 'Бронь',
         edit: 'Изменить бронь',
         prev_day: 'Предыдущий день',
@@ -658,6 +701,7 @@ export default {
         confirm_now: 'Сразу подтвердить (принята по телефону)',
     },
     book: {
+        name_ph: 'Например: Мерет',
         title: 'Забронировать стол',
         subtitle:
             'Без регистрации. Администратор подтвердит бронь и подберёт стол.',
@@ -677,6 +721,7 @@ export default {
         guests_n: 'гостей: {n}',
     },
     delivery: {
+        comment_ph: 'Например: позвонить у подъезда',
         add: 'Заказ',
         new_title: 'Новый заказ',
         type_delivery: 'Доставка',

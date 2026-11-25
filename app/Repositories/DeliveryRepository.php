@@ -40,7 +40,7 @@ class DeliveryRepository
             ->where(fn ($q) => $q->whereIn('status', DeliveryStatus::activeValues())
                 ->orWhere('finished_at', '>=', $since))
             ->where('status', '!=', DeliveryStatus::Cancelled->value)
-            ->with(['order.items', 'order.activePayment'])
+            ->with(['order.items', 'order.activePayment', 'courier:id,name'])
             ->orderByRaw('case when finished_at is null then 0 else 1 end')
             ->orderBy('created_at')
             ->get();

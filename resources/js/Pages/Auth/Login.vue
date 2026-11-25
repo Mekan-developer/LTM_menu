@@ -35,6 +35,8 @@ const submit = () =>
                     size="lg"
                     autocomplete="username"
                     autofocus
+                    :placeholder="t('auth.login_ph')"
+                    maxlength="64"
                 />
             </Field>
             <Field
@@ -48,6 +50,8 @@ const submit = () =>
                     type="password"
                     size="lg"
                     autocomplete="current-password"
+                    :placeholder="t('auth.password_ph')"
+                    maxlength="128"
                 />
             </Field>
             <label class="flex items-center gap-2 text-sm text-ink-2">

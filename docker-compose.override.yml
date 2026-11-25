@@ -5,7 +5,7 @@ services:
 
     postgres:
         ports:
-            - '${FORWARD_DB_PORT:-5435}:5432'
+            - '${FORWARD_DB_PORT:-5432}:5432'
 
     redis:
         ports:

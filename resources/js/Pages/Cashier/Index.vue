@@ -11,6 +11,7 @@ import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { money, time, toMinor } from '@/utils/format';
 import { useRealtime } from '@/composables/useRealtime';
+import MoneyInput from '@/Components/MoneyInput.vue';
 
 const props = defineProps({
     queue: { type: Array, default: () => [] },
@@ -465,6 +466,8 @@ function receiveCash(c) {
                         mono
                         size="lg"
                         :invalid="overLimit"
+                        placeholder="0"
+                        inputmode="numeric"
                     />
                 </Field>
 
@@ -501,13 +504,7 @@ function receiveCash(c) {
                     class="grid grid-cols-2 gap-3"
                 >
                     <Field :label="t('cashier.received')" for="k-got"
-                        ><TextInput
-                            id="k-got"
-                            v-model="received"
-                            mono
-                            size="lg"
-                            inputmode="decimal"
-                            placeholder="0,00"
+                        ><MoneyInput id="k-got" v-model="received" size="lg"
                     /></Field>
                     <div class="flex flex-col gap-1.5">
                         <span class="text-[13px] font-medium">{{
@@ -527,13 +524,10 @@ function receiveCash(c) {
                         :label="t('pay.cash')"
                         for="k-mc"
                         :error="form.errors.cash_amount"
-                        ><TextInput
+                        ><MoneyInput
                             id="k-mc"
                             v-model="form.cash_amount"
-                            mono
                             size="lg"
-                            inputmode="decimal"
-                            placeholder="0,00"
                     /></Field>
                     <div class="flex flex-col gap-1.5">
                         <span class="text-[13px] font-medium">{{
@@ -553,7 +547,9 @@ function receiveCash(c) {
                 </p>
 
                 <!-- Гость по телефону: счёт попадёт в его карточку (ТЗ 2.1) -->
-                <div class="grid grid-cols-2 gap-2 border-t border-line pt-4">
+                <div
+                    class="grid grid-cols-1 gap-2 border-t border-line pt-4 sm:grid-cols-2"
+                >
                     <Field
                         :label="t('cashier.guest_phone')"
                         for="k-gphone"
@@ -564,9 +560,20 @@ function receiveCash(c) {
                             mono
                             inputmode="tel"
                             placeholder="+993 6X XXXXXX"
+                            type="tel"
+                            autocomplete="off"
+                            maxlength="32"
                     /></Field>
-                    <Field :label="t('cashier.guest_name')" for="k-gname"
-                        ><TextInput id="k-gname" v-model="form.guest_name"
+                    <Field
+                        :label="t('cashier.guest_name')"
+                        for="k-gname"
+                        :error="form.errors.guest_name"
+                        ><TextInput
+                            id="k-gname"
+                            v-model="form.guest_name"
+                            :placeholder="t('guests.name_ph')"
+                            maxlength="120"
+                            autocomplete="off"
                     /></Field>
                 </div>
 
@@ -575,15 +582,13 @@ function receiveCash(c) {
                     <span class="text-[13px] font-medium">{{
                         t('cashier.tip')
                     }}</span>
-                    <div class="grid grid-cols-[1fr_auto] gap-2">
-                        <TextInput
+                    <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                        <MoneyInput
                             id="k-tip"
                             v-model="form.tip_amount"
-                            mono
-                            inputmode="decimal"
-                            placeholder="0,00"
                             :aria-label="t('cashier.tip')"
                             :invalid="Boolean(form.errors.tip_amount)"
+                            size="lg"
                         />
                         <div
                             role="radiogroup"
@@ -650,7 +655,12 @@ function receiveCash(c) {
                 :label="t('waiter.reason_ph')"
                 for="k-reason"
                 :error="cancelForm.errors.reason"
-                ><TextInput id="k-reason" v-model="cancelForm.reason"
+                :hint="t('cashier.reason_min')"
+                ><TextInput
+                    id="k-reason"
+                    v-model="cancelForm.reason"
+                    :placeholder="t('cashier.cancel_reason_ph')"
+                    maxlength="200"
             /></Field>
             <template #footer>
                 <Btn variant="ghost" @click="cancelling = null">{{

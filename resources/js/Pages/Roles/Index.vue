@@ -194,13 +194,23 @@ const create = () =>
                     :label="t('menu.name_tm')"
                     for="r-tm"
                     :error="form.errors.name_tm"
-                    ><TextInput id="r-tm" v-model="form.name_tm"
+                    ><TextInput
+                        id="r-tm"
+                        v-model="form.name_tm"
+                        :placeholder="t('roles.name_ph')"
+                        maxlength="80"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('menu.name_ru')"
                     for="r-ru"
                     :error="form.errors.name_ru"
-                    ><TextInput id="r-ru" v-model="form.name_ru"
+                    ><TextInput
+                        id="r-ru"
+                        v-model="form.name_ru"
+                        :placeholder="t('roles.name_ph')"
+                        maxlength="80"
+                        autocomplete="off"
                 /></Field>
                 <div class="flex flex-col gap-2">
                     <label

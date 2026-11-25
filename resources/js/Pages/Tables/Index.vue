@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput.vue';
 import Modal from '@/Components/Modal.vue';
 import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
+import Select from '@/Components/Select.vue';
 
 const props = defineProps({
     tables: { type: Array, default: () => [] },
@@ -202,7 +203,13 @@ function remove(table) {
                     :label="t('tables.number')"
                     for="t-n"
                     :error="form.errors.number"
-                    ><TextInput id="t-n" v-model="form.number" mono
+                    ><TextInput
+                        id="t-n"
+                        v-model="form.number"
+                        mono
+                        :placeholder="t('tables.number_ph')"
+                        maxlength="16"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('tables.seats')"
@@ -214,17 +221,16 @@ function remove(table) {
                         type="number"
                         min="1"
                         mono
+                        :placeholder="t('tables.seats_ph')"
+                        max="50"
+                        inputmode="numeric"
                 /></Field>
                 <div class="col-span-2">
                     <Field
                         :label="t('tables.hall')"
                         for="t-h"
                         :error="form.errors.hall_id"
-                        ><select
-                            id="t-h"
-                            v-model="form.hall_id"
-                            class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm"
-                        >
+                        ><Select id="t-h" v-model="form.hall_id">
                             <option
                                 v-for="h in halls"
                                 :key="h.id"
@@ -232,7 +238,7 @@ function remove(table) {
                             >
                                 {{ loc(h, 'name') }}
                             </option>
-                        </select></Field
+                        </Select></Field
                     >
                 </div>
                 <label class="col-span-2 flex items-center gap-2 text-sm"

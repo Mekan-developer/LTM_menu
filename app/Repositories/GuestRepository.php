@@ -80,7 +80,7 @@ class GuestRepository
             ->whereIn('orders.status', [OrderStatus::Paid->value, OrderStatus::Refunded->value])
             ->orderByDesc('orders.paid_at')
             ->limit($limit)
-            ->get(['orders.id', 'orders.status', 'orders.total', 'orders.discount_percent', 'orders.paid_at',
+            ->get(['orders.id', 'orders.status', 'orders.channel', 'orders.total', 'orders.discount_percent', 'orders.paid_at',
                 'dining_tables.number as table', 'users.name as waiter']);
     }
 

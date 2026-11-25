@@ -15,21 +15,44 @@ export function useIdleLogout() {
     let last = Date.now();
     let timer = null;
 
+    // Сеанс один на все вкладки, поэтому и активность общая: иначе вкладка, оставленная
+    // в фоне, выкинула бы сотрудника, пока он работает в соседней.
+    const KEY = 'staff-last-activity';
+    let shared = 0;
+    const share = () => {
+        if (last - shared < 1000) return;
+        shared = last;
+        try {
+            localStorage.setItem(KEY, String(last));
+        } catch {
+            /* приватный режим */
+        }
+    };
+    const latest = () => {
+        try {
+            return Math.max(last, Number(localStorage.getItem(KEY)) || 0);
+        } catch {
+            return last;
+        }
+    };
+
     const touch = () => {
         last = Date.now();
         left.value = limit.value;
+        share();
     };
     const events = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
 
     onMounted(() => {
         if (!enabled.value) return;
+        touch();
         events.forEach((e) =>
             window.addEventListener(e, touch, { passive: true }),
         );
         timer = setInterval(() => {
             left.value = Math.max(
                 0,
-                limit.value - Math.floor((Date.now() - last) / 1000),
+                limit.value - Math.floor((Date.now() - latest()) / 1000),
             );
             if (left.value === 0) {
                 clearInterval(timer);

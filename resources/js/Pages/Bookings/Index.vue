@@ -12,6 +12,7 @@ import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { money, phone, time } from '@/utils/format';
 import { useRealtime } from '@/composables/useRealtime';
+import Select from '@/Components/Select.vue';
 
 const props = defineProps({
     date: { type: String, required: true },
@@ -199,13 +200,15 @@ function save() {
                 >
                     ‹
                 </button>
-                <input
-                    type="date"
-                    :value="date"
-                    class="h-9 rounded-md border border-line bg-surface px-2 font-mono text-sm"
-                    :aria-label="t('bookings.day')"
-                    @change="goDay($event.target.value)"
-                />
+                <div class="w-44">
+                    <TextInput
+                        type="date"
+                        :model-value="date"
+                        mono
+                        :aria-label="t('bookings.day')"
+                        @change="goDay($event.target.value)"
+                    />
+                </div>
                 <button
                     type="button"
                     class="flex size-9 items-center justify-center rounded-md border border-line bg-surface hover:bg-surface-2"
@@ -394,7 +397,7 @@ function save() {
         >
             <form
                 id="booking-form"
-                class="grid grid-cols-2 gap-3"
+                class="grid grid-cols-1 gap-3 sm:grid-cols-2"
                 @submit.prevent="save"
             >
                 <Field
@@ -428,12 +431,20 @@ function save() {
                         mono
                         inputmode="tel"
                         placeholder="+993 6X XXXXXX"
+                        type="tel"
+                        autocomplete="off"
+                        maxlength="32"
                 /></Field>
                 <Field
                     :label="t('guests.name')"
                     for="b-name"
                     :error="form.errors.name"
-                    ><TextInput id="b-name" v-model="form.name"
+                    ><TextInput
+                        id="b-name"
+                        v-model="form.name"
+                        :placeholder="t('guests.name_ph')"
+                        maxlength="120"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('bookings.guests_count')"
@@ -445,16 +456,18 @@ function save() {
                         type="number"
                         min="1"
                         mono
+                        :placeholder="t('bookings.guests_count_ph')"
+                        max="100"
+                        inputmode="numeric"
                 /></Field>
                 <Field
                     :label="t('tables.table')"
                     for="b-table"
                     :error="form.errors.dining_table_id"
                 >
-                    <select
+                    <Select
                         id="b-table"
                         v-model="form.dining_table_id"
-                        class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm"
                         :disabled="loadingTables"
                     >
                         <option :value="null">
@@ -469,9 +482,9 @@ function save() {
                             {{ tb.seats }} {{ t('tables.seats_short') }} ·
                             {{ tb.hall }}
                         </option>
-                    </select>
+                    </Select>
                 </Field>
-                <div class="col-span-2">
+                <div class="sm:col-span-2">
                     <Field
                         :label="t('guests.comment')"
                         for="b-comment"
@@ -480,25 +493,24 @@ function save() {
                             id="b-comment"
                             v-model="form.comment"
                             :placeholder="t('bookings.comment_ph')"
+                            maxlength="500"
                     /></Field>
                 </div>
 
                 <!-- Предзаказ -->
                 <div
-                    class="col-span-2 flex flex-col gap-2 rounded-md border border-line p-3"
+                    class="sm:col-span-2 flex flex-col gap-2 rounded-md border border-line p-3"
                 >
                     <span class="text-[13px] font-medium">{{
                         t('bookings.preorder')
                     }}</span>
                     <div class="flex gap-2">
-                        <select
+                        <Select
                             v-model="pick"
-                            class="h-10 min-w-0 flex-1 rounded-md border border-line bg-paper px-2 text-sm"
                             :aria-label="t('bookings.add_dish')"
+                            class="flex-1"
+                            :placeholder="menu ? t('bookings.add_dish') : '…'"
                         >
-                            <option :value="null" disabled>
-                                {{ menu ? t('bookings.add_dish') : '…' }}
-                            </option>
                             <option
                                 v-for="d in dishes"
                                 :key="d.id"
@@ -508,7 +520,7 @@ function save() {
                                 {{ d.category }} · {{ loc(d, 'name') }} ·
                                 {{ money(d.price) }}
                             </option>
-                        </select>
+                        </Select>
                         <Btn
                             variant="secondary"
                             :disabled="!pick"
@@ -565,7 +577,7 @@ function save() {
 
                 <label
                     v-if="editing === 'new'"
-                    class="col-span-2 flex items-center gap-2 text-sm"
+                    class="sm:col-span-2 flex items-center gap-2 text-sm"
                 >
                     <input
                         v-model="form.confirm"

@@ -41,6 +41,8 @@ const paths = {
     guests: '<circle cx="6.5" cy="6" r="2.5"/><path d="M2 15c0-2.6 2-4 4.5-4s4.5 1.4 4.5 4"/><circle cx="12.5" cy="6.5" r="2"/><path d="M12.5 11c2 0 3.5 1.1 3.5 3.3"/>',
     star: '<path d="M9 2.2l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 13l-4.2 2.2.8-4.7-3.4-3.3 4.7-.7z"/>',
     chart: '<path d="M2.5 15.5h13"/><path d="M4.5 12.5V9M8 12.5V5M11.5 12.5V7.5M15 12.5V3.5"/>',
+    search: '<circle cx="8" cy="8" r="5"/><path d="m12 12 3.5 3.5"/>',
+    upload: '<path d="M9 12V3M5.5 6.5 9 3l3.5 3.5"/><path d="M3 11.5V15h12v-3.5"/>',
     excel: '<path d="M4 2h7l3 3v11H4z"/><path d="M11 2v3h3"/><path d="M6.5 9l3 4M9.5 9l-3 4"/>',
 };
 </script>
