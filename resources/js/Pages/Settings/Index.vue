@@ -1,11 +1,14 @@
 <script setup>
+import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useFirstError } from '@/composables/useFirstError';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Btn from '@/Components/Btn.vue';
 import Field from '@/Components/Field.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useI18n } from '@/i18n';
 import { dateTime, money } from '@/utils/format';
+import MoneyInput from '@/Components/MoneyInput.vue';
 
 const props = defineProps({
     settings: { type: Object, required: true },
@@ -22,13 +25,19 @@ const form = useForm({
     // Стоимость доставки хранится в тенге, в форме — TMT.
     delivery_fee: money(props.settings.delivery_fee ?? 0),
 });
+const formElement = ref(null);
+const showFirstError = useFirstError(formElement);
 const submit = () =>
-    form.put(route('settings.update'), { preserveScroll: true });
+    form.put(route('settings.update'), {
+        preserveScroll: true,
+        onError: showFirstError,
+    });
 </script>
 
 <template>
     <AdminLayout :title="t('nav.settings')">
         <form
+            ref="formElement"
             class="mx-auto flex max-w-2xl flex-col gap-5"
             @submit.prevent="submit"
         >
@@ -46,7 +55,11 @@ const submit = () =>
                     :label="t('settings.restaurant_name')"
                     for="s-name"
                     :error="form.errors.restaurant_name"
-                    ><TextInput id="s-name" v-model="form.restaurant_name"
+                    ><TextInput
+                        id="s-name"
+                        v-model="form.restaurant_name"
+                        :placeholder="t('settings.restaurant_name_ph')"
+                        maxlength="120"
                 /></Field>
             </section>
 
@@ -75,32 +88,41 @@ const submit = () =>
                     <Field
                         :label="t('settings.discount_k')"
                         for="s-k"
+                        :hint="t('settings.discount_k_hint')"
                         :error="form.errors.discount_limit_k"
                         ><TextInput
                             id="s-k"
                             v-model="form.discount_limit_k"
                             type="number"
                             mono
+                            placeholder="10"
+                            inputmode="numeric"
                     /></Field>
                     <Field
                         :label="t('settings.kitchen_warn')"
                         for="s-w"
+                        :hint="t('settings.kitchen_warn_hint')"
                         :error="form.errors.kitchen_warn_minutes"
                         ><TextInput
                             id="s-w"
                             v-model="form.kitchen_warn_minutes"
                             type="number"
                             mono
+                            placeholder="10"
+                            inputmode="numeric"
                     /></Field>
                     <Field
                         :label="t('settings.kitchen_late')"
                         for="s-l"
+                        :hint="t('settings.kitchen_late_hint')"
                         :error="form.errors.kitchen_late_minutes"
                         ><TextInput
                             id="s-l"
                             v-model="form.kitchen_late_minutes"
                             type="number"
                             mono
+                            placeholder="20"
+                            inputmode="numeric"
                     /></Field>
                 </div>
             </section>
@@ -115,22 +137,28 @@ const submit = () =>
                     <Field
                         :label="t('settings.booking_minutes')"
                         for="s-bm"
+                        :hint="t('settings.booking_minutes_hint')"
                         :error="form.errors.booking_minutes"
                         ><TextInput
                             id="s-bm"
                             v-model="form.booking_minutes"
                             type="number"
                             mono
+                            placeholder="120"
+                            inputmode="numeric"
                     /></Field>
                     <Field
                         :label="t('settings.booking_reserve_before')"
                         for="s-brb"
+                        :hint="t('settings.booking_reserve_hint')"
                         :error="form.errors.booking_reserve_before"
                         ><TextInput
                             id="s-brb"
                             v-model="form.booking_reserve_before"
                             type="number"
                             mono
+                            placeholder="60"
+                            inputmode="numeric"
                     /></Field>
                 </div>
                 <label class="flex items-start gap-3">
@@ -161,12 +189,7 @@ const submit = () =>
                     for="s-dfee"
                     :hint="t('settings.delivery_fee_hint')"
                     :error="form.errors.delivery_fee"
-                    ><TextInput
-                        id="s-dfee"
-                        v-model="form.delivery_fee"
-                        inputmode="decimal"
-                        mono
-                        class="sm:max-w-[200px]"
+                    ><MoneyInput id="s-dfee" v-model="form.delivery_fee"
                 /></Field>
                 <label class="flex items-start gap-3">
                     <input
@@ -225,6 +248,8 @@ const submit = () =>
                         v-model="form.shared_idle_seconds"
                         type="number"
                         mono
+                        placeholder="60"
+                        inputmode="numeric"
                     />
                 </Field>
             </section>

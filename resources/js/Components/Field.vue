@@ -1,10 +1,15 @@
 <script setup>
-defineProps({
+import { provide } from 'vue';
+import { FIELD } from '@/composables/useFieldControl';
+
+const props = defineProps({
     label: { type: String, default: '' },
     for: { type: String, default: null },
     error: { type: String, default: null },
     hint: { type: String, default: null },
 });
+
+provide(FIELD, props);
 </script>
 
 <template>
@@ -16,7 +21,20 @@ defineProps({
             >{{ label }}</label
         >
         <slot />
-        <p v-if="error" class="text-xs text-danger" role="alert">{{ error }}</p>
-        <p v-else-if="hint" class="text-xs text-ink-3">{{ hint }}</p>
+        <p
+            v-if="error"
+            :id="$props.for ? `${$props.for}-error` : undefined"
+            class="text-xs text-danger"
+            role="alert"
+        >
+            {{ error }}
+        </p>
+        <p
+            v-else-if="hint"
+            :id="$props.for ? `${$props.for}-hint` : undefined"
+            class="text-xs text-ink-3"
+        >
+            {{ hint }}
+        </p>
     </div>
 </template>

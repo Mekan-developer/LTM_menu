@@ -55,6 +55,7 @@ class GuestController extends Controller
             'orders' => $this->guests->orders($guest)->map(fn ($o) => [
                 'id' => (int) $o->id,
                 'status' => $o->status,
+                'channel' => $o->channel, // доставка и самовывоз — без стола (ТЗ 2.6)
                 'total' => (int) $o->total,
                 'discount_percent' => (int) $o->discount_percent,
                 'paid_at' => $o->paid_at ? Carbon::parse($o->paid_at)->toIso8601String() : null,

@@ -44,6 +44,8 @@ export default {
         to_light: 'Ýagty temany açmak',
     },
     auth: {
+        login_ph: 'Loginiňizi ýazyň',
+        password_ph: 'Parolyňyzy ýazyň',
         title: 'Giriş',
         subtitle: 'Işgäriň logini we paroly',
         login: 'Login',
@@ -82,6 +84,7 @@ export default {
         bookings: 'Şu günki bronlar',
     },
     menu: {
+        category_name_ph: 'Mysal: Gyzgyn tagamlar',
         title: 'Menýu',
         add_category: 'Kategoriýa',
         add_dish: 'Nahar',
@@ -105,6 +108,21 @@ export default {
         remove_photo: 'Suraty aýyr',
         photo_hint:
             'JPG, PNG ýa-da WebP, 8 MB çenli. Awtomatik WebP-e gysylýar.',
+        section_info: 'Nahar barada maglumat',
+        section_pricing: 'Bahasy we kategoriýasy',
+        section_preparation: 'Taýýarlanyşy',
+        section_visibility: 'Menýuda görnüşi',
+        name_ph: 'Mysal: Towuk şişligi',
+        description_ph: 'Naharyň düzümini we aýratynlyklaryny ýazyň...',
+        price_ph: 'Mysal: 25,00',
+        weight_ph: 'Mysal: 350 g ýa-da 500 ml',
+        category_ph: 'Kategoriýany saýlaň',
+        station_hint: 'Bu naharyň sargydy saýlanan sehiň ekranynda görner.',
+        visible_hint: 'Öçürilse, myhmanlar we ofisiantlar bu nahary görmez.',
+        replace_photo: 'Suraty çalyş',
+        drop_photo: 'ýa-da faýly şu ýere süýräň',
+        photo_type_error: 'Diňe JPG, PNG we WebP bolýar.',
+        photo_size_error: 'Faýl 8 MB-dan uly. Kiçiräk surat saýlaň.',
         confirm_delete_category:
             '«{name}» kategoriýasyny naharlary bilen pozmalymy?',
         confirm_delete_dish: '«{name}» naharyny pozmalymy?',
@@ -127,6 +145,8 @@ export default {
         empty: 'Hemme zat bar',
     },
     tables: {
+        number_ph: 'Mysal: 12',
+        seats_ph: 'Mysal: 4',
         table: 'Stol',
         add: 'Stol',
         edit: 'Stol',
@@ -148,6 +168,11 @@ export default {
         confirm_delete: '{n} stoly pozmalymy?',
     },
     staff: {
+        name_ph: 'Mysal: Meret Amanow',
+        login_ph: 'Mysal: meret',
+        password_ph: 'Parol oýlap tapyň',
+        password_new_ph: 'Täze parol ýazyň',
+        pin_ph: '4 san giriziň',
         add: 'Işgär',
         edit: 'Işgär',
         search: 'Ady ýa-da login',
@@ -171,6 +196,7 @@ export default {
             'Bir işgär = bir rol. Roluň hukuklary «Rollar we hukuklar» bölüminde.',
     },
     roles: {
+        name_ph: 'Mysal: Uly ofisiant',
         add: 'Täze rol',
         permission: 'Hukuk',
         people: 'adam',
@@ -210,6 +236,12 @@ export default {
         area_courier: 'Kurýer ekrany',
     },
     settings: {
+        restaurant_name_ph: 'Mysal: Tamdyr',
+        discount_k_hint: '0-dan 100-e çenli',
+        kitchen_warn_hint: '1-den 180 minuda çenli',
+        kitchen_late_hint: 'Sary çäkden uly, 240-a çenli',
+        booking_minutes_hint: '30-dan 720 minuda çenli',
+        booking_reserve_hint: '0-dan 360 minuda çenli',
         general: 'Umumy',
         restaurant_name: 'Restoranyň ady',
         orders: 'Sargytlar we kassa',
@@ -273,6 +305,8 @@ export default {
         courier_cash_received: 'Kurýerden nagt',
     },
     waiter: {
+        pick_waiter: 'Kime bermeli?',
+        reason_min: 'Azyndan 3 simwol',
         my_tables: 'Meniň stollarym',
         tables: 'Stollar',
         online: 'onlaýn',
@@ -337,6 +371,8 @@ export default {
         mixed_hint: 'iki mukdar',
     },
     cashier: {
+        cancel_reason_ph: 'Mysal: hasapda ýalňyşlyk',
+        reason_min: 'Azyndan 3 simwol',
         to_pay: 'Tölemeli',
         bill_requested: 'hasap soraýarlar',
         open: 'açyk',
@@ -394,6 +430,7 @@ export default {
         review: 'Bize baha beriň — QR-y skanirläň',
     },
     guest: {
+        name_ph: 'Mysal: Meret',
         no_registration: 'Menýu we sargyt hasaba durmazdan',
         add: 'Sebede',
         in_cart: 'Sebetde',
@@ -538,6 +575,8 @@ export default {
         channel_pickup: 'Özüň alyp gitmek',
     },
     hall: {
+        name_ph: 'Mysal: Terrasa',
+        label_ph: 'Mysal: Giriş',
         mode_work: 'Iş',
         mode_edit: 'Redaktor',
         status_free: 'Boş',
@@ -594,6 +633,9 @@ export default {
         bookings_today: 'Şu günki bronlar',
     },
     guests: {
+        name_ph: 'Mysal: Meret Amanow',
+        address_ph: 'Köçe, jaý, podýezd',
+        comment_ph: 'Myhman barada ýatda saklamaly zatlar…',
         add: 'Myhman',
         edit: 'Myhmany üýtgetmek',
         total: 'Bazada {n} myhman',
@@ -625,6 +667,7 @@ export default {
         no_bookings: 'Entek bron ýok',
     },
     bookings: {
+        guests_count_ph: 'Mysal: 4',
         add: 'Bron',
         edit: 'Brony üýtgetmek',
         prev_day: 'Öňki gün',
@@ -659,6 +702,7 @@ export default {
         confirm_now: 'Şu wagt tassykla (telefon arkaly kabul edildi)',
     },
     book: {
+        name_ph: 'Mysal: Meret',
         title: 'Stol bronlamak',
         subtitle:
             'Hasaba durmazdan. Administrator brony tassyklar we stol saýlar.',
@@ -678,6 +722,7 @@ export default {
         guests_n: '{n} myhman',
     },
     delivery: {
+        comment_ph: 'Mysal: podýezde baranda jaň ediň',
         add: 'Sargyt',
         new_title: 'Täze sargyt',
         type_delivery: 'Eltip bermek',

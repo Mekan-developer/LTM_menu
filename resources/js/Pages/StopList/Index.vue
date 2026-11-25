@@ -124,6 +124,8 @@ const untilLabel = (e) =>
                         v-model="search"
                         :placeholder="t('stop.search')"
                         :aria-label="t('stop.search')"
+                        type="search"
+                        icon="search"
                     />
                     <div
                         class="flex max-h-72 flex-col overflow-y-auto rounded-md border border-line"

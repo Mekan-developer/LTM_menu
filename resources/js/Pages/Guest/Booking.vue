@@ -209,6 +209,9 @@ const submit = () =>
                             type="text"
                             autocomplete="name"
                             class="field"
+                            :placeholder="t('book.name_ph')"
+                            maxlength="120"
+                            :aria-invalid="Boolean(form.errors.name)"
                         />
                         <span
                             v-if="form.errors.name"
@@ -227,6 +230,13 @@ const submit = () =>
                             inputmode="tel"
                             placeholder="+993 6X XXXXXX"
                             class="field font-mono"
+                            maxlength="32"
+                            :aria-invalid="
+                                Boolean(
+                                    form.errors.phone ||
+                                    form.errors.guest_phone,
+                                )
+                            "
                         />
                         <span
                             v-if="form.errors.phone || form.errors.guest_phone"
@@ -344,7 +354,7 @@ const submit = () =>
                     class="h-14 rounded-xl bg-g-accent text-[17px] font-semibold text-white shadow-[0_10px_24px_-10px_rgba(126,53,25,0.6)] transition active:scale-[0.98] disabled:opacity-50"
                     :disabled="form.processing || !form.name || !form.phone"
                 >
-                    {{ t('book.send') }}
+                    {{ form.processing ? t('guest.sending') : t('book.send') }}
                 </button>
                 <p class="text-center text-[13px] text-g-muted">
                     {{ t('book.admin_confirms') }}
@@ -370,8 +380,25 @@ const submit = () =>
     font-size: 1rem;
     outline: none;
 }
+/* Многострочному полю фиксированная высота обрезала текст. */
+textarea.field {
+    height: auto;
+    min-height: 4.75rem;
+    line-height: 1.5rem;
+}
+.field::placeholder {
+    color: color-mix(in srgb, var(--color-g-muted) 70%, transparent);
+}
+.field:hover {
+    border-color: var(--color-g-muted);
+}
 .field:focus {
     border-color: var(--color-g-accent);
+    box-shadow: 0 0 0 1px var(--color-g-accent);
+}
+.field[aria-invalid='true'] {
+    border-color: var(--color-g-accent-dark);
+    box-shadow: 0 0 0 1px var(--color-g-accent-dark);
 }
 .step {
     display: flex;

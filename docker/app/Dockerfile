@@ -63,6 +63,15 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# www-data с тем же UID/GID, что у пользователя хоста (по умолчанию 1000):
+# файлы в смонтированных storage/ и bootstrap/cache доступны на запись и контейнеру, и хосту
+ARG WWWUID=1000
+ARG WWWGID=1000
+RUN apk add --no-cache shadow \
+ && groupmod -o -g ${WWWGID} www-data \
+ && usermod -o -u ${WWWUID} -g ${WWWGID} www-data \
+ && apk del shadow
+
 WORKDIR /var/www
 
 # Сначала только зависимости — слой кешируется, пока не меняется composer.lock
@@ -79,6 +88,9 @@ RUN composer dump-autoload --no-dev --optimize \
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Лимиты загрузки и памяти для фото блюд
+COPY docker/php/uploads.ini $PHP_INI_DIR/conf.d/uploads.ini
 
 ENTRYPOINT ["entrypoint.sh"]
 EXPOSE 9000

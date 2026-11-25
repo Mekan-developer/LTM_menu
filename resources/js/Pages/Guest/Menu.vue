@@ -649,6 +649,8 @@ async function submit() {
                                 autocomplete="name"
                                 maxlength="120"
                                 class="guest-input"
+                                :placeholder="t('guest.name_ph')"
+                                :aria-invalid="Boolean(fieldErrors.name)"
                             />
                             <span
                                 v-if="fieldErrors.name"
@@ -667,6 +669,8 @@ async function submit() {
                                 inputmode="tel"
                                 placeholder="+993 6X XXXXXX"
                                 class="guest-input num"
+                                maxlength="32"
+                                :aria-invalid="Boolean(fieldErrors.phone)"
                             />
                             <span
                                 v-if="fieldErrors.phone"
@@ -688,6 +692,7 @@ async function submit() {
                                 autocomplete="street-address"
                                 :placeholder="t('guest.address_ph')"
                                 class="guest-input resize-none py-3 leading-6"
+                                :aria-invalid="Boolean(fieldErrors.address)"
                             />
                             <span
                                 v-if="fieldErrors.address"
@@ -814,9 +819,22 @@ async function submit() {
     outline: none;
 }
 
+.guest-input::placeholder {
+    color: color-mix(in srgb, var(--color-g-muted) 70%, transparent);
+}
+
+.guest-input:hover {
+    border-color: var(--color-g-muted);
+}
+
 .guest-input:focus {
     outline: 2px solid var(--color-g-accent);
     outline-offset: 0;
+}
+
+.guest-input[aria-invalid='true'] {
+    border-color: var(--color-g-accent-dark);
+    box-shadow: 0 0 0 1px var(--color-g-accent-dark);
 }
 
 .no-scrollbar::-webkit-scrollbar {

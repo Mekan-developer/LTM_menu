@@ -7,6 +7,7 @@ import Icon from '@/Components/Icon.vue';
 import GuestFormModal from '@/Components/GuestFormModal.vue';
 import { useI18n } from '@/i18n';
 import { date, money, phone } from '@/utils/format';
+import TextInput from '@/Components/TextInput.vue';
 
 const props = defineProps({
     q: { type: String, default: '' },
@@ -63,13 +64,16 @@ const creating = ref(false);
                 </div>
             </div>
 
-            <input
-                v-model="search"
-                type="search"
-                class="h-11 w-full max-w-md rounded-md border border-line bg-surface px-3 text-sm outline-none focus:border-brand"
-                :placeholder="t('guests.search')"
-                :aria-label="t('guests.search')"
-            />
+            <div class="w-full max-w-md">
+                <TextInput
+                    v-model="search"
+                    type="search"
+                    :placeholder="t('guests.search')"
+                    :aria-label="t('guests.search')"
+                    icon="search"
+                    size="lg"
+                />
+            </div>
 
             <div
                 class="overflow-x-auto rounded-lg border border-line bg-surface"

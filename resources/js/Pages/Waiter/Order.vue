@@ -9,6 +9,8 @@ import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { money } from '@/utils/format';
 import { useRealtime } from '@/composables/useRealtime';
+import TextInput from '@/Components/TextInput.vue';
+import Select from '@/Components/Select.vue';
 
 const props = defineProps({
     order: { type: Object, required: true },
@@ -329,13 +331,11 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                             <Icon name="plus" />
                         </button>
                     </div>
-                    <input
+                    <TextInput
                         v-model="picks[p.dish.id].comment"
-                        type="text"
                         maxlength="200"
                         :placeholder="t('waiter.comment_ph')"
                         :aria-label="t('waiter.comment_ph')"
-                        class="h-9 rounded-md border border-line bg-paper px-3 text-sm outline-none focus:border-brand"
                     />
                 </div>
             </section>
@@ -436,14 +436,16 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                 {{ removing ? loc(removing, 'name') : '' }} —
                 {{ t('waiter.remove_hint') }}
             </p>
-            <input
+            <TextInput
                 v-model="reason"
-                type="text"
                 maxlength="200"
                 :placeholder="t('waiter.reason_ph')"
                 :aria-label="t('waiter.reason_ph')"
-                class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm outline-none focus:border-brand"
+                size="lg"
             />
+            <p class="mt-1.5 text-xs text-ink-3">
+                {{ t('waiter.reason_min') }}
+            </p>
             <template #footer>
                 <Btn variant="ghost" @click="removing = null">{{
                     t('common.cancel')
@@ -483,14 +485,12 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                     t('waiter.move')
                 }}</label>
                 <template v-if="freeTables.length">
-                    <select
+                    <Select
                         id="move"
                         v-model="moveTo"
-                        class="h-11 rounded-md border border-line bg-paper px-3 text-sm"
+                        size="lg"
+                        :placeholder="t('waiter.pick_table')"
                     >
-                        <option :value="null" disabled>
-                            {{ t('waiter.pick_table') }}
-                        </option>
                         <option
                             v-for="tb in freeTables"
                             :key="tb.id"
@@ -499,7 +499,7 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                             {{ t('tables.table') }} {{ tb.number }} ·
                             {{ tb.seats }} {{ t('tables.seats_short') }}
                         </option>
-                    </select>
+                    </Select>
                     <Btn
                         variant="secondary"
                         :disabled="!moveTo"
@@ -515,15 +515,16 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                     <label for="transfer" class="text-[13px] font-medium">{{
                         t('waiter.transfer')
                     }}</label>
-                    <select
+                    <Select
                         id="transfer"
                         v-model="transferTo"
-                        class="h-11 rounded-md border border-line bg-paper px-3 text-sm"
+                        size="lg"
+                        :placeholder="t('waiter.pick_waiter')"
                     >
                         <option v-for="w in waiters" :key="w.id" :value="w.id">
                             {{ w.name }}
                         </option>
-                    </select>
+                    </Select>
                     <Btn :disabled="!transferTo" @click="transfer">{{
                         t('waiter.transfer_do')
                     }}</Btn>

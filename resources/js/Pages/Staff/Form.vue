@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { useFirstError } from '@/composables/useFirstError';
 import { useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Btn from '@/Components/Btn.vue';
@@ -27,15 +28,26 @@ const form = useForm({
         null,
 });
 
-const submit = () =>
-    editing.value
-        ? form.put(route('staff.update', props.user.id))
-        : form.post(route('staff.store'));
+// PIN — только цифры.
+function onPin(e) {
+    form.pin = e.target.value.replace(/\D/g, '');
+    e.target.value = form.pin;
+}
+
+const formElement = ref(null);
+const showFirstError = useFirstError(formElement);
+
+function submit() {
+    const options = { onError: showFirstError };
+    if (editing.value) form.put(route('staff.update', props.user.id), options);
+    else form.post(route('staff.store'), options);
+}
 </script>
 
 <template>
     <AdminLayout :title="editing ? t('staff.edit') : t('staff.add')">
         <form
+            ref="formElement"
             class="mx-auto flex max-w-2xl flex-col gap-5"
             @submit.prevent="submit"
         >
@@ -50,7 +62,12 @@ const submit = () =>
                     :label="t('staff.name')"
                     for="u-name"
                     :error="form.errors.name"
-                    ><TextInput id="u-name" v-model="form.name"
+                    ><TextInput
+                        id="u-name"
+                        v-model="form.name"
+                        :placeholder="t('staff.name_ph')"
+                        maxlength="120"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('staff.login')"
@@ -61,6 +78,10 @@ const submit = () =>
                         v-model="form.login"
                         mono
                         autocomplete="off"
+                        :placeholder="t('staff.login_ph')"
+                        maxlength="64"
+                        autocapitalize="none"
+                        spellcheck="false"
                 /></Field>
                 <Field
                     :label="t('staff.password')"
@@ -77,6 +98,13 @@ const submit = () =>
                         v-model="form.password"
                         type="password"
                         autocomplete="new-password"
+                        :placeholder="
+                            t(
+                                editing
+                                    ? 'staff.password_new_ph'
+                                    : 'staff.password_ph',
+                            )
+                        "
                     />
                 </Field>
                 <Field
@@ -92,6 +120,8 @@ const submit = () =>
                         inputmode="numeric"
                         maxlength="4"
                         autocomplete="off"
+                        :placeholder="t('staff.pin_ph')"
+                        @input="onPin"
                     />
                 </Field>
                 <label
@@ -145,7 +175,7 @@ const submit = () =>
             </section>
 
             <div class="flex justify-end gap-2">
-                <Btn variant="ghost" :href="route('staff.index')">{{
+                <Btn variant="ghost" size="lg" :href="route('staff.index')">{{
                     t('common.cancel')
                 }}</Btn>
                 <Btn type="submit" size="lg" :loading="form.processing">{{

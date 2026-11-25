@@ -14,6 +14,8 @@ import { useI18n } from '@/i18n';
 import { useRealtime } from '@/composables/useRealtime';
 import { useSound } from '@/composables/useSound';
 import { minutesSince, money, phone, time, toMinor } from '@/utils/format';
+import Select from '@/Components/Select.vue';
+import MoneyInput from '@/Components/MoneyInput.vue';
 
 const props = defineProps({
     deliveries: { type: Array, default: () => [] },
@@ -396,13 +398,13 @@ function save() {
                                 <span class="text-ink-2">{{
                                     t('delivery.courier')
                                 }}</span>
-                                <select
-                                    class="h-9 min-w-0 flex-1 rounded-md border border-line bg-paper px-2 text-sm"
-                                    :value="d.courier?.id ?? ''"
-                                    @change="
+                                <Select
+                                    class="flex-1"
+                                    :model-value="d.courier?.id ?? ''"
+                                    :aria-label="t('delivery.courier')"
+                                    @update:model-value="
                                         act(d, 'courier', {
-                                            courier_id:
-                                                $event.target.value || null,
+                                            courier_id: $event || null,
                                         })
                                     "
                                 >
@@ -416,7 +418,7 @@ function save() {
                                     >
                                         {{ c.name }}
                                     </option>
-                                </select>
+                                </Select>
                             </label>
                             <span
                                 v-else-if="d.courier"
@@ -530,12 +532,12 @@ function save() {
         >
             <form
                 id="delivery-form"
-                class="grid grid-cols-2 gap-3"
+                class="grid grid-cols-1 gap-3 sm:grid-cols-2"
                 @submit.prevent="save"
             >
                 <div
                     role="radiogroup"
-                    class="col-span-2 grid grid-cols-2 gap-2"
+                    class="sm:col-span-2 grid grid-cols-2 gap-2"
                 >
                     <button
                         v-for="tp in ['delivery', 'pickup']"
@@ -565,17 +567,28 @@ function save() {
                         inputmode="tel"
                         placeholder="+993 6X XXXXXX"
                         @blur="lookupGuest"
+                        type="tel"
+                        autocomplete="off"
+                        maxlength="32"
                 /></Field>
                 <Field
                     :label="t('delivery.name')"
                     for="d-name"
                     :error="form.errors.name"
-                    ><TextInput id="d-name" v-model="form.name"
+                    ><TextInput
+                        id="d-name"
+                        v-model="form.name"
+                        :placeholder="t('guests.name_ph')"
+                        maxlength="120"
+                        autocomplete="off"
                 /></Field>
-                <p v-if="knownGuest" class="col-span-2 -mt-1 text-xs text-ok">
+                <p
+                    v-if="knownGuest"
+                    class="sm:col-span-2 -mt-1 text-xs text-ok"
+                >
                     {{ t('delivery.known_guest') }}
                 </p>
-                <div v-if="form.type === 'delivery'" class="col-span-2">
+                <div v-if="form.type === 'delivery'" class="sm:col-span-2">
                     <Field
                         :label="t('delivery.address')"
                         for="d-address"
@@ -584,6 +597,8 @@ function save() {
                             id="d-address"
                             v-model="form.address"
                             :placeholder="t('delivery.address_ph')"
+                            maxlength="500"
+                            autocomplete="off"
                     /></Field>
                 </div>
                 <Field
@@ -591,51 +606,45 @@ function save() {
                     for="d-method"
                     :error="form.errors.method"
                 >
-                    <select
-                        id="d-method"
-                        v-model="form.method"
-                        class="h-11 w-full rounded-md border border-line bg-paper px-3 text-sm"
-                    >
+                    <Select id="d-method" v-model="form.method">
                         <option value="cash">{{ t('pay.cash') }}</option>
                         <option value="card">{{ t('pay.card') }}</option>
-                    </select>
+                    </Select>
                 </Field>
                 <Field
                     v-if="form.type === 'delivery'"
                     :label="t('delivery.fee_tmt')"
                     for="d-fee"
                     :error="form.errors.delivery_fee"
-                    ><TextInput
-                        id="d-fee"
-                        v-model="form.delivery_fee"
-                        mono
-                        inputmode="decimal"
+                    ><MoneyInput id="d-fee" v-model="form.delivery_fee"
                 /></Field>
-                <div class="col-span-2">
+                <div class="sm:col-span-2">
                     <Field
                         :label="t('delivery.comment')"
                         for="d-comment"
                         :error="form.errors.comment"
-                        ><TextInput id="d-comment" v-model="form.comment"
+                        ><TextInput
+                            id="d-comment"
+                            v-model="form.comment"
+                            :placeholder="t('delivery.comment_ph')"
+                            maxlength="500"
                     /></Field>
                 </div>
 
                 <!-- Блюда -->
                 <div
-                    class="col-span-2 flex flex-col gap-2 rounded-md border border-line p-3"
+                    class="sm:col-span-2 flex flex-col gap-2 rounded-md border border-line p-3"
                 >
                     <span class="text-[13px] font-medium">{{
                         t('delivery.items')
                     }}</span>
                     <div class="flex gap-2">
-                        <select
+                        <Select
                             v-model="pick"
-                            class="h-10 min-w-0 flex-1 rounded-md border border-line bg-paper px-2 text-sm"
                             :aria-label="t('delivery.add_dish')"
+                            class="flex-1"
+                            :placeholder="menu ? t('delivery.add_dish') : '…'"
                         >
-                            <option :value="null" disabled>
-                                {{ menu ? t('delivery.add_dish') : '…' }}
-                            </option>
                             <option
                                 v-for="dish in dishes"
                                 :key="dish.id"
@@ -645,7 +654,7 @@ function save() {
                                 {{ dish.category }} · {{ loc(dish, 'name') }} ·
                                 {{ money(dish.price) }}
                             </option>
-                        </select>
+                        </Select>
                         <Btn
                             variant="secondary"
                             :disabled="!pick"
@@ -699,7 +708,7 @@ function save() {
                     >
                 </div>
                 <div
-                    class="col-span-2 flex items-baseline justify-between border-t border-line pt-3"
+                    class="sm:col-span-2 flex items-baseline justify-between border-t border-line pt-3"
                 >
                     <span class="text-sm text-ink-2">{{
                         t('delivery.total')

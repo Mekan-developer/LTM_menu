@@ -8,6 +8,7 @@ import Field from '@/Components/Field.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useI18n } from '@/i18n';
 import { phone as fmtPhone } from '@/utils/format';
+import Textarea from '@/Components/Textarea.vue';
 
 const props = defineProps({
     show: { type: Boolean, default: false },
@@ -59,7 +60,12 @@ function save() {
                 :label="t('guests.name')"
                 for="g-name"
                 :error="form.errors.name"
-                ><TextInput id="g-name" v-model="form.name" autocomplete="off"
+                ><TextInput
+                    id="g-name"
+                    v-model="form.name"
+                    autocomplete="off"
+                    :placeholder="t('guests.name_ph')"
+                    maxlength="120"
             /></Field>
             <Field
                 :label="t('guests.phone')"
@@ -72,6 +78,9 @@ function save() {
                     mono
                     inputmode="tel"
                     placeholder="+993 6X XXXXXX"
+                    type="tel"
+                    autocomplete="off"
+                    maxlength="32"
             /></Field>
             <Field
                 :label="t('guests.birthday')"
@@ -83,7 +92,12 @@ function save() {
                 :label="t('guests.address')"
                 for="g-addr"
                 :error="form.errors.address"
-                ><TextInput id="g-addr" v-model="form.address"
+                ><TextInput
+                    id="g-addr"
+                    v-model="form.address"
+                    :placeholder="t('guests.address_ph')"
+                    maxlength="255"
+                    autocomplete="off"
             /></Field>
             <div class="sm:col-span-2">
                 <Field
@@ -92,12 +106,12 @@ function save() {
                     :error="form.errors.comment"
                     :hint="t('guests.comment_hint')"
                 >
-                    <textarea
+                    <Textarea
                         id="g-comment"
                         v-model="form.comment"
                         rows="3"
                         maxlength="1000"
-                        class="w-full resize-none rounded-md border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-brand"
+                        :placeholder="t('guests.comment_ph')"
                     />
                 </Field>
             </div>

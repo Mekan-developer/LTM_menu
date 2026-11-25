@@ -172,7 +172,13 @@ const avgRating = computed(() =>
                                                 : '—'
                                         }}
                                     </td>
-                                    <td class="px-4">
+                                    <td
+                                        v-if="o.channel && o.channel !== 'hall'"
+                                        class="px-4"
+                                    >
+                                        {{ t(`delivery.type_${o.channel}`) }}
+                                    </td>
+                                    <td v-else class="px-4">
                                         {{ t('tables.table') }}
                                         {{ o.table ?? '—' }}
                                         <span class="text-ink-3"

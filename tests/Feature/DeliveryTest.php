@@ -121,6 +121,16 @@ it('полный путь доставки: кухня, курьер, вруче
         ->and($d->fresh()->cash_received_at)->not->toBeNull();
 });
 
+it('экран курьера открывается, когда у него несколько заказов', function () {
+    $courier = staff(SystemRole::Courier);
+    foreach ([phoneOrder(), phoneOrder()] as $d) {
+        deliveryAction($d, 'courier', ['courier_id' => $courier->id])->assertSessionHasNoErrors();
+    }
+
+    $this->actingAs($courier)->get(route('courier.index'))->assertOk()
+        ->assertInertia(fn ($p) => $p->has('deliveries', 2)->where('deliveries.0.courier.name', $courier->name));
+});
+
 it('курьер не видит и не меняет чужие заказы', function () {
     $d = phoneOrder();
     deliveryAction($d, 'kitchen');

@@ -11,6 +11,7 @@ import HBars from '@/Components/Charts/HBars.vue';
 import { axisMoney, shortDate } from '@/Components/Charts/chart';
 import { useI18n } from '@/i18n';
 import { date, money, phone } from '@/utils/format';
+import TextInput from '@/Components/TextInput.vue';
 
 const props = defineProps({
     period: { type: Object, required: true },
@@ -224,18 +225,22 @@ const rating = (v) => (v === null ? '—' : String(v).replace('.', ','));
                 <span class="mx-1 hidden h-6 w-px bg-line sm:block" />
                 <label class="flex items-center gap-1.5 text-[13px] text-ink-2"
                     >{{ t('reports.from')
-                    }}<input
-                        v-model="from"
-                        type="date"
-                        class="h-8 rounded-sm border border-line bg-paper px-2 font-mono text-[13px] text-ink"
-                /></label>
+                    }}<span class="block w-36"
+                        ><TextInput
+                            v-model="from"
+                            type="date"
+                            size="sm"
+                            mono /></span
+                ></label>
                 <label class="flex items-center gap-1.5 text-[13px] text-ink-2"
                     >{{ t('reports.to')
-                    }}<input
-                        v-model="to"
-                        type="date"
-                        class="h-8 rounded-sm border border-line bg-paper px-2 font-mono text-[13px] text-ink"
-                /></label>
+                    }}<span class="block w-36"
+                        ><TextInput
+                            v-model="to"
+                            type="date"
+                            size="sm"
+                            mono /></span
+                ></label>
                 <button
                     type="button"
                     class="h-8 rounded-sm bg-brand px-3 text-[13px] font-semibold text-brand-ink"

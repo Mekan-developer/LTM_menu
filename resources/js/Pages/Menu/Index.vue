@@ -247,13 +247,23 @@ function removeDish(dish) {
                     :label="t('menu.name_tm')"
                     for="c-tm"
                     :error="form.errors.name_tm"
-                    ><TextInput id="c-tm" v-model="form.name_tm"
+                    ><TextInput
+                        id="c-tm"
+                        v-model="form.name_tm"
+                        :placeholder="t('menu.category_name_ph')"
+                        maxlength="120"
+                        autocomplete="off"
                 /></Field>
                 <Field
                     :label="t('menu.name_ru')"
                     for="c-ru"
                     :error="form.errors.name_ru"
-                    ><TextInput id="c-ru" v-model="form.name_ru"
+                    ><TextInput
+                        id="c-ru"
+                        v-model="form.name_ru"
+                        :placeholder="t('menu.category_name_ph')"
+                        maxlength="120"
+                        autocomplete="off"
                 /></Field>
                 <label class="flex items-center gap-2 text-sm"
                     ><input

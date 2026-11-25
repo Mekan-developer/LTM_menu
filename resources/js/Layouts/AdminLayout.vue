@@ -105,12 +105,14 @@ const groups = computed(() =>
                     route: 'waiter.index',
                     icon: 'waiter',
                     perm: 'area_waiter',
+                    newTab: true,
                 },
                 {
                     label: t('nav.kitchen'),
                     route: 'kitchen.index',
                     icon: 'kitchen',
                     perm: 'area_kitchen',
+                    newTab: true,
                 },
                 {
                     label: t('nav.cashier'),
@@ -294,10 +296,15 @@ onUnmounted(() => {
                         :class="collapsed ? 'lg:sr-only' : ''"
                         >{{ group.title }}</span
                     >
-                    <Link
+                    <!-- Рабочие экраны (официант, кухня) открываются в новой вкладке:
+                         обычная ссылка, потому что Link не умеет target="_blank". -->
+                    <component
+                        :is="item.newTab ? 'a' : Link"
                         v-for="item in group.items"
                         :key="item.route"
                         :href="route(item.route)"
+                        :target="item.newTab ? '_blank' : undefined"
+                        :rel="item.newTab ? 'noopener' : undefined"
                         class="relative flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-sm"
                         :class="[
                             active(item.route)
@@ -322,7 +329,7 @@ onUnmounted(() => {
                             :aria-label="t('reviews.unseen', { n: item.badge })"
                             >{{ item.badge }}</span
                         >
-                    </Link>
+                    </component>
                 </div>
             </nav>
 
