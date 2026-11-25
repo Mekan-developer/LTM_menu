@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PinLoginController;
 use App\Http\Controllers\Bookings\BookingController;
 use App\Http\Controllers\Cashier\CashierController;
+use App\Http\Controllers\Costing\CostingController;
+use App\Http\Controllers\Costing\ProductController;
 use App\Http\Controllers\Courier\CourierController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Deliveries\DeliveryController;
@@ -119,6 +121,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [DeliveryController::class, 'store'])->name('store');
         Route::post('/{delivery}/action', [DeliveryController::class, 'action'])->name('action');
         Route::post('/{delivery}/complete', [DeliveryController::class, 'complete'])->name('complete');
+    });
+
+    // Калькуляция (ТЗ 2.3): продукты и состав блюд
+    Route::middleware('permission:costing')->prefix('costing')->name('costing.')->group(function () {
+        Route::get('/', [CostingController::class, 'index'])->name('index');
+        Route::get('/export', [CostingController::class, 'export'])->name('export');
+        Route::get('/dishes/{dish}', [CostingController::class, 'edit'])->name('edit');
+        Route::put('/dishes/{dish}', [CostingController::class, 'update'])->name('update');
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     });
 
     // Все заказы за период: зал, QR, доставка, самовывоз — для мониторинга

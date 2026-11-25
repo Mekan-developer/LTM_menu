@@ -12,6 +12,7 @@ use App\Models\Hall;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\SettingsService;
@@ -57,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
             'guest' => Guest::class,
             'booking' => Booking::class,
             'delivery' => Delivery::class,
+            'product' => Product::class,
         ]);
 
         // Любое право из App\Enums\Permission можно проверять через Gate / @can.

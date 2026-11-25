@@ -10,6 +10,7 @@ use Database\Factories\DishFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Storage;
 
@@ -67,6 +68,13 @@ class Dish extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /** Состав на одну порцию (калькуляция, ТЗ 2.3). У готовой продукции — один товар. */
+    /** @return HasMany<DishIngredient, $this> */
+    public function ingredients(): HasMany
+    {
+        return $this->hasMany(DishIngredient::class)->orderBy('id');
     }
 
     /** @return MorphOne<StopListEntry, $this> */

@@ -138,6 +138,18 @@ const groups = computed(() =>
                     perm: 'menu_prices',
                 },
                 {
+                    label: t('nav.costing'),
+                    route: 'costing.index',
+                    icon: 'chart',
+                    perm: 'costing',
+                },
+                {
+                    label: t('nav.products'),
+                    route: 'costing.products.index',
+                    icon: 'bag',
+                    perm: 'costing',
+                },
+                {
                     label: t('nav.stop_list'),
                     route: 'stop-list.index',
                     icon: 'stop',

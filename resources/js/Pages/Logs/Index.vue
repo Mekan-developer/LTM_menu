@@ -20,6 +20,8 @@ const actions = [
     'payment_cancelled',
     'price_changed',
     'sale_changed',
+    'product_price_changed',
+    'recipe_changed',
     'table_transferred',
     'table_moved',
     'hall_layout_saved',
@@ -58,6 +60,10 @@ function details(log) {
             return `${money(p.total, true)} · ${p.reason}`;
         case 'price_changed':
             return `${p.name}: ${money(p.old)} → ${money(p.new)}`;
+        case 'product_price_changed':
+            return `${p.name}: ${money(p.old)} → ${money(p.new)} / ${t(`costing.unit_${p.unit}`)}`;
+        case 'recipe_changed':
+            return p.name;
         case 'sale_changed':
             return `${p.name}: ${saleText(p.old)} → ${saleText(p.new)}`;
         case 'table_moved':
