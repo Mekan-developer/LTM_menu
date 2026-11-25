@@ -170,6 +170,18 @@ return [
         'resale_one' => 'Taýýar önümiň düzüminde bir haryt bolýar.',
         'duplicate' => 'Önüm düzümde eýýäm bar — onuň setirinde mukdaryny üýtgediň.',
     ],
+    'stock' => [
+        'to_buy' => 'Satyn almaly',
+        'balance' => 'Galyndy',
+        'minimum' => 'Iň az',
+        'need' => 'Satyn al',
+        'no_lines' => 'Iň bolmanda bir önüm goşuň.',
+        'note_required' => '«Başga» sebäbi üçin teswir ýazyň.',
+        'product_has_history' => 'Önüm boýunça ammarda hereket bar — pozup bolmaýar.',
+        'receipt_saved' => 'Gelen haryt ýatda saklandy',
+        'write_off_saved' => 'Hasapdan çykarmak ýatda saklandy',
+        'inventory_saved' => 'Inwentarizasiýa geçirildi',
+    ],
     'delivery' => [
         'created' => '№:n sargyt kabul edildi',
         'saved' => 'Sargyt täzelendi',

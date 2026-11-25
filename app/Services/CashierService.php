@@ -34,6 +34,7 @@ class CashierService
         private readonly ReviewService $reviews,
         private readonly GuestService $guests,
         private readonly DeliveryRepository $deliveries,
+        private readonly StockService $stock,
     ) {}
 
     /**
@@ -136,6 +137,9 @@ class CashierService
                 'closed_at' => now(),
             ])->save();
 
+            // Продукты списываются со склада по составу блюд (ТЗ 2.3).
+            $this->stock->consumeOrder($order, $cashier);
+
             // Гость назвал телефон — счёт попадает в его историю (ТЗ 2.1).
             if (filled($guestPhone)) {
                 $this->guests->attachToOrder($order, (string) $guestPhone, $data['guest_name'] ?? null, $cashier);
@@ -190,6 +194,8 @@ class CashierService
             ])->save();
 
             $payment->order()->update(['status' => OrderStatus::Refunded->value]);
+            // Списанное по счёту возвращается на склад; испорченное — ручным списанием.
+            $this->stock->restoreOrder($payment->order, $user);
 
             $this->logger->log(ActionLogger::PAYMENT_CANCELLED, $payment, [
                 'order_id' => $payment->order_id, 'total' => $payment->total, 'reason' => $reason,

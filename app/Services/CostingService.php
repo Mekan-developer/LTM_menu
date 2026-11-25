@@ -6,6 +6,8 @@ use App\Enums\DishKind;
 use App\Models\Dish;
 use App\Models\DishIngredient;
 use App\Models\Product;
+use App\Models\StockBalance;
+use App\Models\StockMovement;
 use App\Models\User;
 use App\Repositories\ProductRepository;
 use App\Support\Money;
@@ -49,7 +51,7 @@ class CostingService
         return $product;
     }
 
-    /** Продукт из состава блюд не удаляем — сначала уберите его из рецептов. */
+    /** Продукт из состава блюд или с историей склада не удаляем. */
     public function deleteProduct(Product $product): void
     {
         $used = $product->ingredients()->count();
@@ -58,7 +60,15 @@ class CostingService
             throw ValidationException::withMessages(['product' => __('crm.costing.product_in_use', ['n' => $used])]);
         }
 
-        $this->products->delete($product);
+        // По продукту были приходы или продажи — история склада должна остаться.
+        if (StockMovement::query()->where('product_id', $product->id)->exists()) {
+            throw ValidationException::withMessages(['product' => __('crm.stock.product_has_history')]);
+        }
+
+        DB::transaction(function () use ($product) {
+            StockBalance::query()->where('product_id', $product->id)->delete();
+            $this->products->delete($product);
+        });
     }
 
     /**

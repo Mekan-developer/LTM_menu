@@ -150,6 +150,12 @@ const groups = computed(() =>
                     perm: 'costing',
                 },
                 {
+                    label: t('nav.stock'),
+                    route: 'stock.index',
+                    icon: 'tables',
+                    perm: 'stock',
+                },
+                {
                     label: t('nav.stop_list'),
                     route: 'stop-list.index',
                     icon: 'stop',

@@ -14,6 +14,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Role;
+use App\Models\StockDocument;
 use App\Models\User;
 use App\Services\SettingsService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -59,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
             'booking' => Booking::class,
             'delivery' => Delivery::class,
             'product' => Product::class,
+            'stock_document' => StockDocument::class,
         ]);
 
         // Любое право из App\Enums\Permission можно проверять через Gate / @can.

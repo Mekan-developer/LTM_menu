@@ -20,6 +20,7 @@ enum Permission: string
     case Delivery = 'delivery';
     case Orders = 'orders'; // все заказы за период — мониторинг
     case Costing = 'costing'; // продукты, состав блюд, себестоимость и наценка (ТЗ 2.3)
+    case Stock = 'stock'; // остатки: приход, списание, инвентаризация, «Нужно закупить» (ТЗ 2.3)
     case CancelPayment = 'cancel_payment';
     case DiscountUnlimited = 'discount_unlimited';
     case DiscountUpToK = 'discount_up_to_k';
@@ -37,7 +38,7 @@ enum Permission: string
     {
         return match ($this) {
             self::AreaWaiter, self::AreaKitchen, self::AreaCashier, self::AreaCourier => 'areas',
-            self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests, self::Bookings, self::Delivery, self::Costing => 'management',
+            self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests, self::Bookings, self::Delivery, self::Costing, self::Stock => 'management',
             self::Reports, self::ActionLog, self::Reviews, self::ExportGuests, self::Orders => 'control',
             default => 'operations',
         };

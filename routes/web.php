@@ -28,6 +28,7 @@ use App\Http\Controllers\Staff\ActionLogController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SettingsController;
 use App\Http\Controllers\Staff\UserController;
+use App\Http\Controllers\Stock\StockController;
 use App\Http\Controllers\Waiter\WaiterController;
 use App\Services\ReportExporter;
 use Illuminate\Support\Facades\Route;
@@ -133,6 +134,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    });
+
+    // Склад (ТЗ 2.3): остатки, приход, списание, инвентаризация, «Нужно закупить»
+    Route::middleware('permission:stock')->prefix('stock')->name('stock.')->group(function () {
+        Route::get('/', [StockController::class, 'index'])->name('index');
+        Route::get('/history', [StockController::class, 'history'])->name('history');
+        Route::get('/to-buy/export', [StockController::class, 'exportToBuy'])->name('to-buy.export');
+        Route::get('/new/{type}', [StockController::class, 'create'])->whereIn('type', ['receipt', 'write_off'])->name('create');
+        Route::post('/receipts', [StockController::class, 'storeReceipt'])->name('receipts.store');
+        Route::post('/write-offs', [StockController::class, 'storeWriteOff'])->name('write-offs.store');
+        Route::get('/inventory', [StockController::class, 'inventory'])->name('inventory');
+        Route::post('/inventory', [StockController::class, 'storeInventory'])->name('inventory.store');
+        Route::put('/products/{product}/min', [StockController::class, 'minimum'])->name('minimum');
     });
 
     // Все заказы за период: зал, QR, доставка, самовывоз — для мониторинга
