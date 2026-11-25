@@ -18,6 +18,7 @@ enum Permission: string
     case Bookings = 'bookings';
     case ExportGuests = 'export_guests';
     case Delivery = 'delivery';
+    case Orders = 'orders'; // все заказы за период — мониторинг
     case CancelPayment = 'cancel_payment';
     case DiscountUnlimited = 'discount_unlimited';
     case DiscountUpToK = 'discount_up_to_k';
@@ -36,7 +37,7 @@ enum Permission: string
         return match ($this) {
             self::AreaWaiter, self::AreaKitchen, self::AreaCashier, self::AreaCourier => 'areas',
             self::Settings, self::Menu, self::Staff, self::Tables, self::StopList, self::Guests, self::Bookings, self::Delivery => 'management',
-            self::Reports, self::ActionLog, self::Reviews, self::ExportGuests => 'control',
+            self::Reports, self::ActionLog, self::Reviews, self::ExportGuests, self::Orders => 'control',
             default => 'operations',
         };
     }

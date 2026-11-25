@@ -54,13 +54,13 @@ enum SystemRole: string
             self::HallAdmin => [
                 Permission::RemoveAfterKitchen, Permission::TransferTables, Permission::StopList,
                 Permission::Tables, Permission::AreaWaiter, Permission::Reviews, Permission::Guests, Permission::Bookings,
-                Permission::Delivery,
+                Permission::Delivery, Permission::Orders,
             ],
             self::Waiter => [Permission::AreaWaiter],
             self::Cook => [Permission::StopList, Permission::AreaKitchen],
             self::Cashier => [Permission::DiscountUpToK, Permission::AreaCashier],
             self::Courier => [Permission::AreaCourier],
-            self::Accountant => [Permission::Reports],
+            self::Accountant => [Permission::Reports, Permission::Orders],
         };
     }
 }

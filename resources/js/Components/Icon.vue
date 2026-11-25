@@ -44,6 +44,7 @@ const paths = {
     search: '<circle cx="8" cy="8" r="5"/><path d="m12 12 3.5 3.5"/>',
     upload: '<path d="M9 12V3M5.5 6.5 9 3l3.5 3.5"/><path d="M3 11.5V15h12v-3.5"/>',
     excel: '<path d="M4 2h7l3 3v11H4z"/><path d="M11 2v3h3"/><path d="M6.5 9l3 4M9.5 9l-3 4"/>',
+    orders: '<path d="M4 2.5h10v13l-1.7-1.2-1.6 1.2L9 14.3l-1.7 1.2-1.6-1.2L4 15.5z"/><path d="M6.5 6h5M6.5 9h5M6.5 12h3"/>',
 };
 </script>
 

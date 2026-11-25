@@ -19,6 +19,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Menu\MenuController;
 use App\Http\Controllers\Menu\StopListController;
 use App\Http\Controllers\Menu\TableController;
+use App\Http\Controllers\Orders\OrderController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Reviews\ReviewController;
 use App\Http\Controllers\Staff\ActionLogController;
@@ -119,6 +120,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/{delivery}/action', [DeliveryController::class, 'action'])->name('action');
         Route::post('/{delivery}/complete', [DeliveryController::class, 'complete'])->name('complete');
     });
+
+    // Все заказы за период: зал, QR, доставка, самовывоз — для мониторинга
+    Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders')->name('orders.index');
 
     // Экран курьера: только свои заказы — проверяет DeliveryService
     Route::middleware('permission:area_courier')->prefix('courier')->name('courier.')->group(function () {
