@@ -154,6 +154,7 @@ return [
         'saved' => 'Sargyt täzelendi',
         'delivered' => 'Sargyt eltildi',
         'bad_status' => 'Sargyt eýýäm başga ýagdaýda — ekrany täzeläň',
+        'confirm_first' => 'Ilki myhmana jaň edip, sargydy tassyklaň',
         'not_ready' => 'Özüň alyp gitmek taýýar bolanda berlende tölenýär',
         'courier_pays' => 'Eltip bermegi kurýer gowşuranda töleýär',
         'address_required' => 'Eltip bermek salgysyny görkeziň',

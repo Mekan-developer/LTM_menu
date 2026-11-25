@@ -453,17 +453,26 @@ function save() {
                                 v-if="g.key !== 'done'"
                                 class="flex flex-wrap items-center gap-1.5 border-t border-line pt-3"
                             >
+                                <!-- Заказ со страницы: на кухню — только после звонка гостю -->
+                                <template v-if="d.status === 'new'">
+                                    <span
+                                        class="flex w-full items-center gap-1.5 rounded-md bg-ochre-soft px-2.5 py-1.5 text-sm text-ink"
+                                        ><Icon name="phone" :size="14" />{{
+                                            t('delivery.call_first')
+                                        }}</span
+                                    >
+                                    <Btn
+                                        size="sm"
+                                        :href="`tel:${d.phone}`"
+                                        variant="secondary"
+                                        >{{ t('delivery.do_call') }}</Btn
+                                    >
+                                    <Btn size="sm" @click="act(d, 'accept')">{{
+                                        t('delivery.do_confirm_call')
+                                    }}</Btn>
+                                </template>
                                 <Btn
-                                    v-if="d.status === 'new'"
-                                    size="sm"
-                                    variant="secondary"
-                                    @click="act(d, 'accept')"
-                                    >{{ t('delivery.do_accept') }}</Btn
-                                >
-                                <Btn
-                                    v-if="
-                                        ['new', 'accepted'].includes(d.status)
-                                    "
+                                    v-if="d.status === 'accepted'"
                                     size="sm"
                                     @click="act(d, 'kitchen')"
                                     >{{ t('delivery.do_kitchen') }}</Btn

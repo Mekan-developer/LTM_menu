@@ -49,10 +49,11 @@ class Order extends Model
         ];
     }
 
+    /** С удалёнными столами — номер стола нужен в истории заказов. */
     /** @return BelongsTo<DiningTable, $this> */
     public function table(): BelongsTo
     {
-        return $this->belongsTo(DiningTable::class, 'dining_table_id');
+        return $this->belongsTo(DiningTable::class, 'dining_table_id')->withTrashed();
     }
 
     /** @return BelongsTo<User, $this> */

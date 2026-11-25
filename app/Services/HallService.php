@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\HallRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\TableRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,7 @@ class HallService
         private readonly Realtime $realtime,
         private readonly BookingRepository $bookings,
         private readonly SettingsService $settings,
+        private readonly TableRepository $tables,
     ) {}
 
     /**
@@ -176,13 +178,13 @@ class HallService
             $keep = collect($tables)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
             $busy = $this->halls->busyTableIds($hall);
 
-            // Удалённые со схемы столы: с активным заказом — нельзя, с историей — выключаем.
+            // Удалённые со схемы столы: с активным заказом — нельзя, с историей — мягкое удаление.
             foreach ($existing->except($keep) as $table) {
                 if (in_array($table->id, $busy, true)) {
                     throw ValidationException::withMessages(['tables' => __('crm.hall.busy_delete', ['n' => $table->number])]);
                 }
 
-                $table->orders()->exists() ? $table->update(['is_active' => false]) : $table->delete();
+                $this->tables->remove($table);
             }
 
             $sort = (int) DiningTable::max('sort');
@@ -338,7 +340,7 @@ class HallService
             }
         }
 
-        // Номер стола уникален во всём ресторане, включая другие залы и выключенные столы.
+        // Номер стола уникален во всём ресторане, включая другие залы и выключенные (но не удалённые) столы.
         $ids = collect($tables)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
         $taken = DiningTable::query()
             ->whereIn('number', collect($tables)->pluck('number')->map(fn ($n) => (string) $n)->all())

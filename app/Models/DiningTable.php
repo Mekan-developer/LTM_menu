@@ -10,12 +10,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-/** Стол: номер, места, QR-код и место на схеме зала (ТЗ 2.2). Размер — без учёта поворота. */
+/**
+ * Стол: номер, места, QR-код и место на схеме зала (ТЗ 2.2). Размер — без учёта поворота.
+ * Стол с историей заказов удаляется мягко: его нет в списках и на схеме, QR не работает.
+ */
 class DiningTable extends Model
 {
     /** @use HasFactory<DiningTableFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'number', 'hall_id', 'seats', 'qr_token', 'is_active', 'sort',

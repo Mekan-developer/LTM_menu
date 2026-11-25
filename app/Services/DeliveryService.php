@@ -122,12 +122,20 @@ class DeliveryService
         $this->transition($delivery, [DeliveryStatus::New], DeliveryStatus::Accepted, ['accepted_at' => now()]);
     }
 
-    /** «На кухню»: позиции уходят на экран кухни, статус «готовится» (ТЗ 2.6). Можно и из «нового». */
+    /**
+     * «На кухню»: позиции уходят на экран кухни, статус «готовится» (ТЗ 2.6).
+     * Только из «принят»: заказ со страницы для гостей сначала подтверждают звонком гостю.
+     */
     public function sendToKitchen(Delivery $delivery, User $user): void
     {
         $stations = DB::transaction(function () use ($delivery) {
             $delivery = $this->lock($delivery);
-            $this->assertStatus($delivery, [DeliveryStatus::New, DeliveryStatus::Accepted]);
+
+            if ($delivery->status === DeliveryStatus::New) {
+                throw ValidationException::withMessages(['status' => __('crm.delivery.confirm_first')]);
+            }
+
+            $this->assertStatus($delivery, [DeliveryStatus::Accepted]);
 
             $order = Order::query()->lockForUpdate()->findOrFail($delivery->order_id);
             $drafts = $order->items()->where('status', OrderItemStatus::Draft->value)->get();
