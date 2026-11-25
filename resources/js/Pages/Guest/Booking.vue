@@ -304,7 +304,12 @@ const submit = () =>
                                     }}</span>
                                     <span
                                         class="font-mono text-[13px] text-g-muted"
-                                        >{{ money(d.price, true) }}</span
+                                        >{{ money(d.price, true)
+                                        }}<s
+                                            v-if="d.old_price"
+                                            class="ml-1.5"
+                                            >{{ money(d.old_price, true) }}</s
+                                        ></span
                                     >
                                 </span>
                                 <span

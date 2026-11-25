@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Menu;
 
+use App\Enums\DishKind;
 use App\Enums\Station;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -16,8 +17,10 @@ class DishRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // «1 234,50» → «1234.50»
-        if ($this->has('price')) {
-            $this->merge(['price' => str_replace([' ', "\u{00A0}", ','], ['', '', '.'], (string) $this->input('price'))]);
+        foreach (['price', 'sale_price'] as $key) {
+            if (filled($this->input($key))) {
+                $this->merge([$key => str_replace([' ', "\u{00A0}", ','], ['', '', '.'], (string) $this->input($key))]);
+            }
         }
     }
 
@@ -31,7 +34,12 @@ class DishRequest extends FormRequest
             'description_tm' => ['nullable', 'string', 'max:1000'],
             'description_ru' => ['nullable', 'string', 'max:1000'],
             'weight' => ['nullable', 'string', 'max:40'],
+            'kind' => ['required', Rule::enum(DishKind::class)],
             'price' => ['required', 'numeric', 'min:0', 'max:999999'],
+            // Акция: цена ниже обычной; период необязателен (пусто — без ограничения).
+            'sale_price' => ['nullable', 'numeric', 'min:0', 'lt:price'],
+            'sale_from' => ['nullable', 'date_format:Y-m-d'],
+            'sale_until' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:sale_from'],
             'station' => ['required', Rule::enum(Station::class)],
             'is_active' => ['boolean'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],

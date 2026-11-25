@@ -89,7 +89,7 @@ class DeliveryService
                     'dish_id' => $dish->id,
                     'name_tm' => $dish->name_tm,
                     'name_ru' => $dish->name_ru,
-                    'price' => $dish->price,
+                    'price' => $dish->currentPrice(),
                     'quantity' => $line['quantity'],
                     'station' => $dish->station->value,
                     'status' => OrderItemStatus::Draft->value,
@@ -402,8 +402,8 @@ class DeliveryService
 
             if ($dish === null || $this->stopList->isStopped($dish)) {
                 $problems[] = ['dish_id' => (int) $line['dish_id'], 'type' => 'unavailable'];
-            } elseif ($checkPrices && $dish->price !== (int) ($line['price'] ?? $dish->price)) {
-                $problems[] = ['dish_id' => $dish->id, 'type' => 'price_changed', 'old' => (int) ($line['price'] ?? 0), 'new' => $dish->price];
+            } elseif ($checkPrices && $dish->currentPrice() !== (int) ($line['price'] ?? $dish->currentPrice())) {
+                $problems[] = ['dish_id' => $dish->id, 'type' => 'price_changed', 'old' => (int) ($line['price'] ?? 0), 'new' => $dish->currentPrice()];
             }
         }
 

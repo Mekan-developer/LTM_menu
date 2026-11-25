@@ -9,29 +9,43 @@ import TextInput from '@/Components/TextInput.vue';
 import Modal from '@/Components/Modal.vue';
 import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
-import { money } from '@/utils/format';
+import { date, money } from '@/utils/format';
 
 const props = defineProps({ categories: { type: Array, default: () => [] } });
 
 const { t, loc } = useI18n();
 
-// Фильтр: одна категория или все + поиск по названию блюда (обе локали).
+// Фильтр: категория, тип продукции и поиск по названию блюда (обе локали).
 const activeCat = ref(null);
+const activeKind = ref(null); // null | made | resale
 const search = ref('');
 const shown = computed(() => {
     const q = search.value.trim().toLowerCase();
+    const narrowed = Boolean(q || activeKind.value);
     return props.categories
         .filter((c) => activeCat.value === null || c.id === activeCat.value)
         .map((c) => ({
             ...c,
-            dishes: q
-                ? c.dishes.filter((d) =>
-                      `${d.name_tm} ${d.name_ru}`.toLowerCase().includes(q),
-                  )
-                : c.dishes,
+            dishes: c.dishes.filter(
+                (d) =>
+                    (!activeKind.value || d.kind === activeKind.value) &&
+                    (!q ||
+                        `${d.name_tm} ${d.name_ru}`.toLowerCase().includes(q)),
+            ),
         }))
-        .filter((c) => !q || c.dishes.length);
+        .filter((c) => !narrowed || c.dishes.length);
 });
+
+// Акция задана, но сегодня не действует: ещё не началась или уже закончилась.
+const today = new Date().toLocaleDateString('sv-SE', {
+    timeZone: 'Asia/Ashgabat',
+});
+function saleNote(dish) {
+    if (dish.sale_price == null || dish.on_sale) return null;
+    if (dish.sale_from && dish.sale_from > today)
+        return t('menu.sale_planned', { d: date(dish.sale_from) });
+    return t('menu.sale_ended');
+}
 
 const editing = ref(null); // null | 'new' | category
 const form = useForm({ name_tm: '', name_ru: '', is_active: true });
@@ -104,14 +118,41 @@ function removeDish(dish) {
             </div>
 
             <div v-else class="flex flex-col gap-3">
-                <div class="w-full max-w-sm">
-                    <TextInput
-                        v-model="search"
-                        :placeholder="t('menu.search_dish')"
-                        :aria-label="t('menu.search_dish')"
-                        type="search"
-                        icon="search"
-                    />
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="w-full max-w-sm">
+                        <TextInput
+                            v-model="search"
+                            :placeholder="t('menu.search_dish')"
+                            :aria-label="t('menu.search_dish')"
+                            type="search"
+                            icon="search"
+                        />
+                    </div>
+                    <div
+                        class="flex overflow-hidden rounded-md border border-line bg-surface"
+                        role="group"
+                        :aria-label="t('menu.kind')"
+                    >
+                        <button
+                            v-for="k in [null, 'made', 'resale']"
+                            :key="k ?? 'all'"
+                            type="button"
+                            class="h-9 border-l border-line px-3 text-sm first:border-l-0"
+                            :class="
+                                activeKind === k
+                                    ? 'bg-ink text-paper'
+                                    : 'hover:bg-surface-2'
+                            "
+                            :aria-pressed="activeKind === k"
+                            @click="activeKind = k"
+                        >
+                            {{
+                                k === null
+                                    ? t('menu.kinds_all')
+                                    : t(`menu.kind_${k}`)
+                            }}
+                        </button>
+                    </div>
                 </div>
                 <div
                     role="tablist"
@@ -239,6 +280,11 @@ function removeDish(dish) {
                                             >{{ t('stop.in_stop') }}</Badge
                                         >
                                         <Badge
+                                            v-if="dish.kind === 'resale'"
+                                            tone="outline"
+                                            >{{ t('menu.kind_resale') }}</Badge
+                                        >
+                                        <Badge
                                             v-if="!dish.is_active"
                                             tone="muted"
                                             >{{ t('common.hidden') }}</Badge
@@ -254,7 +300,37 @@ function removeDish(dish) {
                                     {{ t(`station.${dish.station}`) }}
                                 </td>
                                 <td class="px-4 py-2 text-right font-mono num">
-                                    {{ money(dish.price) }}
+                                    <span
+                                        v-if="dish.on_sale"
+                                        class="flex flex-col items-end leading-tight"
+                                        ><span
+                                            class="font-semibold text-danger"
+                                            >{{
+                                                money(dish.current_price)
+                                            }}</span
+                                        ><span
+                                            class="text-xs text-ink-3 line-through"
+                                            >{{ money(dish.price) }}</span
+                                        ><span
+                                            v-if="dish.sale_until"
+                                            class="text-[11px] text-ink-3"
+                                            >{{
+                                                t('menu.sale_until_short', {
+                                                    d: date(dish.sale_until),
+                                                })
+                                            }}</span
+                                        ></span
+                                    >
+                                    <span
+                                        v-else
+                                        class="flex flex-col items-end leading-tight"
+                                        >{{ money(dish.price)
+                                        }}<span
+                                            v-if="saleNote(dish)"
+                                            class="text-[11px] text-ink-3"
+                                            >{{ saleNote(dish) }}</span
+                                        ></span
+                                    >
                                 </td>
                                 <td class="px-4 py-2">
                                     <div

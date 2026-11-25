@@ -369,8 +369,15 @@ async function submit() {
                             </h3>
                             <span
                                 v-if="hasPhoto(d)"
-                                class="text-[17px] font-bold whitespace-nowrap num"
-                                >{{ money(d.price, true) }}</span
+                                class="flex flex-col items-end text-[17px] font-bold whitespace-nowrap num"
+                                ><span
+                                    :class="d.old_price ? 'text-g-accent' : ''"
+                                    >{{ money(d.price, true) }}</span
+                                ><s
+                                    v-if="d.old_price"
+                                    class="text-[13px] font-normal text-g-muted"
+                                    >{{ money(d.old_price, true) }}</s
+                                ></span
                             >
                         </div>
                         <p
@@ -390,8 +397,13 @@ async function submit() {
                         >
                             <span
                                 v-if="!hasPhoto(d)"
-                                class="text-[20px] font-bold whitespace-nowrap text-g-accent num"
-                                >{{ money(d.price, true) }}</span
+                                class="flex items-baseline gap-2 text-[20px] font-bold whitespace-nowrap text-g-accent num"
+                                ><span>{{ money(d.price, true) }}</span
+                                ><s
+                                    v-if="d.old_price"
+                                    class="text-[14px] font-normal text-g-muted"
+                                    >{{ money(d.old_price, true) }}</s
+                                ></span
                             >
 
                             <div

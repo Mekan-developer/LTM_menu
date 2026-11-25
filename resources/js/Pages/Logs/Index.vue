@@ -3,7 +3,7 @@ import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Badge from '@/Components/Badge.vue';
 import { useI18n } from '@/i18n';
-import { dateTime, money } from '@/utils/format';
+import { date, dateTime, money } from '@/utils/format';
 
 defineProps({
     logs: { type: Array, default: () => [] },
@@ -19,6 +19,9 @@ const actions = [
     'discount_applied',
     'payment_cancelled',
     'price_changed',
+    'sale_changed',
+    'product_price_changed',
+    'recipe_changed',
     'table_transferred',
     'table_moved',
     'hall_layout_saved',
@@ -37,6 +40,15 @@ const setFilter = (a) =>
         preserveState: true,
     });
 
+// Акция в журнале: «45,00 (01.12–07.12)» или «—», если её сняли.
+function saleText(sale) {
+    if (!sale?.price) return '—';
+    const period = [sale.from, sale.until].some(Boolean)
+        ? ` (${sale.from ? date(sale.from) : '…'}–${sale.until ? date(sale.until) : '…'})`
+        : '';
+    return `${money(sale.price)}${period}`;
+}
+
 function details(log) {
     const p = log.payload ?? {};
     switch (log.action) {
@@ -48,6 +60,12 @@ function details(log) {
             return `${money(p.total, true)} · ${p.reason}`;
         case 'price_changed':
             return `${p.name}: ${money(p.old)} → ${money(p.new)}`;
+        case 'product_price_changed':
+            return `${p.name}: ${money(p.old)} → ${money(p.new)} / ${t(`costing.unit_${p.unit}`)}`;
+        case 'recipe_changed':
+            return p.name;
+        case 'sale_changed':
+            return `${p.name}: ${saleText(p.old)} → ${saleText(p.new)}`;
         case 'table_moved':
             return `${t('tables.table')} ${p.from} → ${p.to}`;
         default:

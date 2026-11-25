@@ -78,7 +78,7 @@ class WaiterOrderService
                 'dish_id' => $dish->id,
                 'name_tm' => $dish->name_tm,
                 'name_ru' => $dish->name_ru,
-                'price' => $dish->price,
+                'price' => $dish->currentPrice(),
                 'quantity' => $line['quantity'],
                 'station' => $dish->station->value,
                 'status' => OrderItemStatus::Draft->value,

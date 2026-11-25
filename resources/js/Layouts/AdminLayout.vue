@@ -77,6 +77,12 @@ const groups = computed(() =>
                     perm: ['area_waiter', 'tables', 'reports'],
                 },
                 {
+                    label: t('nav.orders'),
+                    route: 'orders.index',
+                    icon: 'orders',
+                    perm: 'orders',
+                },
+                {
                     label: t('nav.deliveries'),
                     route: 'deliveries.index',
                     icon: 'bag',
@@ -130,6 +136,18 @@ const groups = computed(() =>
                     route: 'menu.index',
                     icon: 'menu',
                     perm: 'menu_prices',
+                },
+                {
+                    label: t('nav.costing'),
+                    route: 'costing.index',
+                    icon: 'chart',
+                    perm: 'costing',
+                },
+                {
+                    label: t('nav.products'),
+                    route: 'costing.products.index',
+                    icon: 'bag',
+                    perm: 'costing',
                 },
                 {
                     label: t('nav.stop_list'),

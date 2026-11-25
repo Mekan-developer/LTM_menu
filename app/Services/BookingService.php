@@ -302,7 +302,7 @@ class BookingService
                 'dish_id' => $dish->id,
                 'name_tm' => $dish->name_tm,
                 'name_ru' => $dish->name_ru,
-                'price' => $dish->price,
+                'price' => $dish->currentPrice(),
                 'quantity' => (int) $item['quantity'],
                 'station' => $dish->station->value,
             ];

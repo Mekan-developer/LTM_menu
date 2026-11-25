@@ -37,7 +37,9 @@ class MenuPresenter
                         'description_tm' => $d->description_tm,
                         'description_ru' => $d->description_ru,
                         'weight' => $d->weight,
-                        'price' => $d->price,
+                        // Акция: price — цена сейчас, old_price — обычная (зачёркнутая).
+                        'price' => $d->currentPrice(),
+                        'old_price' => $d->onSale() ? $d->price : null,
                         'station' => $d->station->value,
                         'photo_url' => $d->photoUrl(),
                         'stopped' => $categoryStopped || isset($index['dishes'][$d->id]),

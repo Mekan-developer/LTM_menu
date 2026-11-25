@@ -43,6 +43,18 @@ class OrderItem extends Model
         return $this->belongsTo(Dish::class);
     }
 
+    /** @return BelongsTo<User, $this> */
+    public function addedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'added_by');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function removedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'removed_by');
+    }
+
     public function lineTotal(): int
     {
         return $this->price * $this->quantity;

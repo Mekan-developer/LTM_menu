@@ -43,7 +43,7 @@ class MenuService
     /** @param array<string, mixed> $data */
     public function createDish(array $data, ?UploadedFile $photo): Dish
     {
-        $data['price'] = Money::toMinor($data['price']);
+        $data = $this->normalizePrices($data);
         $data['sort'] = $this->menu->nextDishSort((int) $data['category_id']);
 
         $dish = $this->menu->createDish($data);
@@ -56,12 +56,17 @@ class MenuService
     public function updateDish(Dish $dish, array $data, ?UploadedFile $photo, bool $removePhoto): Dish
     {
         $oldPrice = $dish->price;
-        $data['price'] = Money::toMinor($data['price']);
+        $oldSale = $this->saleSnapshot($dish);
+        $data = $this->normalizePrices($data);
 
         $this->menu->updateDish($dish, $data);
 
         if ($oldPrice !== $dish->price) {
             $this->logger->log(ActionLogger::PRICE_CHANGED, $dish, ['old' => $oldPrice, 'new' => $dish->price, 'name' => $dish->name_ru]);
+        }
+
+        if ($oldSale !== $this->saleSnapshot($dish)) {
+            $this->logger->log(ActionLogger::SALE_CHANGED, $dish, ['old' => $oldSale, 'new' => $this->saleSnapshot($dish), 'name' => $dish->name_ru]);
         }
 
         if ($removePhoto && $dish->photo_path) {
@@ -102,5 +107,35 @@ class MenuService
         if ($path) {
             Storage::disk('public')->delete($path);
         }
+    }
+
+    /**
+     * Цены из формы (TMT) — в тенге. Без акционной цены период не храним.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizePrices(array $data): array
+    {
+        $data['price'] = Money::toMinor($data['price']);
+
+        if (array_key_exists('sale_price', $data)) {
+            $hasSale = filled($data['sale_price']);
+            $data['sale_price'] = $hasSale ? Money::toMinor($data['sale_price']) : null;
+            $data['sale_from'] = $hasSale ? ($data['sale_from'] ?? null) : null;
+            $data['sale_until'] = $hasSale ? ($data['sale_until'] ?? null) : null;
+        }
+
+        return $data;
+    }
+
+    /** @return array{price: ?int, from: ?string, until: ?string} */
+    private function saleSnapshot(Dish $dish): array
+    {
+        return [
+            'price' => $dish->sale_price,
+            'from' => $dish->sale_from?->toDateString(),
+            'until' => $dish->sale_until?->toDateString(),
+        ];
     }
 }

@@ -19,6 +19,12 @@ class ActionLogger
 
     public const PRICE_CHANGED = 'price_changed';
 
+    public const SALE_CHANGED = 'sale_changed';
+
+    public const PRODUCT_PRICE_CHANGED = 'product_price_changed';
+
+    public const RECIPE_CHANGED = 'recipe_changed';
+
     public const TABLE_TRANSFERRED = 'table_transferred';
 
     public const TABLE_MOVED = 'table_moved';

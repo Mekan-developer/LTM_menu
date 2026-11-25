@@ -386,9 +386,14 @@ useRealtime('waiters', 'waiter.alert', (payload) => {
                     <span class="pr-7 text-sm leading-[18px] font-medium">{{
                         loc(d, 'name')
                     }}</span>
-                    <span class="font-mono text-[13px] text-ink-2">{{
-                        money(d.price)
-                    }}</span>
+                    <span class="font-mono text-[13px] text-ink-2"
+                        ><span :class="d.old_price ? 'text-danger' : ''">{{
+                            money(d.price)
+                        }}</span
+                        ><s v-if="d.old_price" class="ml-1.5 text-ink-3">{{
+                            money(d.old_price)
+                        }}</s></span
+                    >
                     <span
                         v-if="picks[d.id]"
                         class="absolute top-2 right-2 flex size-[26px] items-center justify-center rounded-sm bg-brand font-mono text-sm font-semibold text-brand-ink"
