@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Btn from '@/Components/Btn.vue';
@@ -11,9 +11,27 @@ import Icon from '@/Components/Icon.vue';
 import { useI18n } from '@/i18n';
 import { money } from '@/utils/format';
 
-defineProps({ categories: { type: Array, default: () => [] } });
+const props = defineProps({ categories: { type: Array, default: () => [] } });
 
 const { t, loc } = useI18n();
+
+// Фильтр: одна категория или все + поиск по названию блюда (обе локали).
+const activeCat = ref(null);
+const search = ref('');
+const shown = computed(() => {
+    const q = search.value.trim().toLowerCase();
+    return props.categories
+        .filter((c) => activeCat.value === null || c.id === activeCat.value)
+        .map((c) => ({
+            ...c,
+            dishes: q
+                ? c.dishes.filter((d) =>
+                      `${d.name_tm} ${d.name_ru}`.toLowerCase().includes(q),
+                  )
+                : c.dishes,
+        }))
+        .filter((c) => !q || c.dishes.length);
+});
 
 const editing = ref(null); // null | 'new' | category
 const form = useForm({ name_tm: '', name_ru: '', is_active: true });
@@ -85,8 +103,57 @@ function removeDish(dish) {
                 {{ t('menu.empty') }}
             </div>
 
+            <div v-else class="flex flex-col gap-3">
+                <div class="w-full max-w-sm">
+                    <TextInput
+                        v-model="search"
+                        :placeholder="t('menu.search_dish')"
+                        :aria-label="t('menu.search_dish')"
+                        type="search"
+                        icon="search"
+                    />
+                </div>
+                <div
+                    role="tablist"
+                    :aria-label="t('menu.categories')"
+                    class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
+                >
+                    <button
+                        v-for="c in [{ id: null }, ...categories]"
+                        :key="c.id ?? 'all'"
+                        type="button"
+                        role="tab"
+                        :aria-selected="activeCat === c.id"
+                        class="flex h-10 shrink-0 items-center gap-2 rounded-md border px-3.5 text-sm font-medium"
+                        :class="
+                            activeCat === c.id
+                                ? 'border-ink bg-ink text-paper'
+                                : 'border-line bg-surface hover:bg-surface-2'
+                        "
+                        @click="activeCat = c.id"
+                    >
+                        {{ c.id === null ? t('common.all') : loc(c, 'name') }}
+                        <span class="font-mono text-xs opacity-70">{{
+                            c.id === null
+                                ? categories.reduce(
+                                      (n, x) => n + x.dishes.length,
+                                      0,
+                                  )
+                                : c.dishes.length
+                        }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <p
+                v-if="categories.length && !shown.length"
+                class="py-8 text-center text-sm text-ink-3"
+            >
+                {{ t('menu.nothing_found') }}
+            </p>
+
             <section
-                v-for="category in categories"
+                v-for="category in shown"
                 :key="category.id"
                 class="overflow-hidden rounded-lg border border-line bg-surface"
             >

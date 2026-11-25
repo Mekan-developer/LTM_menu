@@ -208,3 +208,22 @@ it('отчёт «Выручка» делит выручку по каналам'
     [$from, $to] = app(ReportService::class)->period(null, null);
     expect(app(ReportService::class)->channels($from, $to))->toBe(['hall' => 0, 'delivery' => 21500, 'pickup' => 0]);
 });
+
+it('заказ со страницы уходит на кухню только после подтверждения звонком', function () {
+    $dish = Dish::factory()->create(['price' => 12000]);
+    $this->postJson(route('guest.delivery.store'), [
+        'type' => 'pickup', 'name' => 'Aýna', 'phone' => '65111111', 'method' => 'cash',
+        'items' => [['dish_id' => $dish->id, 'quantity' => 1, 'price' => 12000]],
+    ])->assertCreated();
+    $d = Delivery::query()->latest('id')->firstOrFail();
+
+    deliveryAction($d, 'kitchen')->assertSessionHasErrors(['status' => __('crm.delivery.confirm_first')]);
+    expect($d->fresh()->status)->toBe(DeliveryStatus::New)
+        ->and($d->order->items()->where('status', 'draft')->count())->toBe(1);
+
+    deliveryAction($d, 'accept')->assertSessionHasNoErrors();
+    deliveryAction($d, 'kitchen')->assertSessionHasNoErrors();
+
+    expect($d->fresh()->status)->toBe(DeliveryStatus::Cooking)
+        ->and($d->fresh()->accepted_at)->not->toBeNull();
+});

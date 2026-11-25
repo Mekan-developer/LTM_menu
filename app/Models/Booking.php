@@ -33,10 +33,11 @@ class Booking extends Model
         return $this->belongsTo(Guest::class);
     }
 
+    /** С удалёнными столами — номер стола нужен в истории броней. */
     /** @return BelongsTo<DiningTable, $this> */
     public function table(): BelongsTo
     {
-        return $this->belongsTo(DiningTable::class, 'dining_table_id');
+        return $this->belongsTo(DiningTable::class, 'dining_table_id')->withTrashed();
     }
 
     /** @return BelongsTo<Order, $this> */

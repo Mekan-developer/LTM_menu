@@ -37,7 +37,7 @@ class ReportRepository
 
     public function tablesCount(): int
     {
-        return DB::table('dining_tables')->where('is_active', true)->count();
+        return DB::table('dining_tables')->where('is_active', true)->whereNull('deleted_at')->count();
     }
 
     /**

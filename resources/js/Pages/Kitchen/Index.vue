@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import FlashToast from '@/Components/FlashToast.vue';
+import Drawer from '@/Components/Drawer.vue';
+import StopListPanel from '@/Components/StopListPanel.vue';
 import { useI18n } from '@/i18n';
 import { elapsed, minutesSince, time } from '@/utils/format';
 import { useNow } from '@/composables/useNow';
@@ -13,6 +15,7 @@ const props = defineProps({
     station: { type: String, required: true },
     board: { type: Object, required: true },
     thresholds: { type: Object, required: true },
+    stopList: { type: Object, default: null }, // грузится при открытии панели
 });
 
 const { t, loc } = useI18n();
@@ -70,6 +73,13 @@ watch(
 const reload = () => router.reload({ only: ['board'], preserveScroll: true });
 useRealtime(`kitchen.${props.station}`, 'kitchen.changed', reload, 10000);
 
+// Стоп-лист открывается панелью сбоку, экран кухни остаётся под ней.
+const stopOpen = ref(false);
+function openStopList() {
+    stopOpen.value = true;
+    router.reload({ only: ['stopList'], preserveScroll: true });
+}
+
 function ready(ticket) {
     doneKeys.value = new Set(doneKeys.value).add(ticket.key);
     router.post(
@@ -126,12 +136,14 @@ const isDelivery = (x) => Boolean(x.channel) && x.channel !== 'hall';
                 ></span
             >
             <div class="ml-auto flex items-center gap-4">
-                <Link
+                <button
                     v-if="canStop"
-                    :href="route('stop-list.index')"
+                    type="button"
                     class="flex h-14 items-center rounded-md border-2 border-k-warn px-5 text-2xl font-bold text-k-warn uppercase"
-                    >{{ t('nav.stop_list') }}</Link
+                    @click="openStopList"
                 >
+                    {{ t('nav.stop_list') }}
+                </button>
                 <span class="font-mono text-4xl font-semibold">{{
                     clock
                 }}</span>
@@ -246,6 +258,22 @@ const isDelivery = (x) => Boolean(x.channel) && x.channel !== 'hall';
                 }}</span>
             </span>
         </footer>
+
+        <Drawer
+            v-if="canStop"
+            :show="stopOpen"
+            :title="t('nav.stop_list')"
+            @close="stopOpen = false"
+        >
+            <StopListPanel
+                v-if="stopList"
+                :entries="stopList.entries"
+                :categories="stopList.categories"
+                :modes="stopList.modes"
+                :only="['stopList']"
+            />
+            <p v-else class="py-10 text-center text-sm text-ink-3">…</p>
+        </Drawer>
 
         <FlashToast />
     </div>

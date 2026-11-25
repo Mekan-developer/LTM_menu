@@ -35,6 +35,7 @@ class HallRepository
             ->leftJoin('users as u', 'u.id', '=', 'o.waiter_id')
             ->where('t.hall_id', $hall->id)
             ->where('t.is_active', true)
+            ->whereNull('t.deleted_at')
             ->orderBy('t.sort')->orderBy('t.id')->orderByDesc('o.id')
             ->get([
                 't.id', 't.number', 't.seats', 't.qr_token', 't.shape', 't.pos_x', 't.pos_y', 't.width', 't.height', 't.rotation',

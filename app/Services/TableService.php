@@ -67,16 +67,17 @@ class TableService
         return $this->tables->update($table, ['qr_token' => $this->newToken()]);
     }
 
-    /** Стол с историей заказов не удаляем, а выключаем. */
+    /**
+     * Стол с историей заказов или броней удаляется мягко (номер остаётся в истории), без истории — насовсем.
+     * В обоих случаях он пропадает из списка, печати и схемы, а его QR перестаёт работать.
+     */
     public function delete(DiningTable $table): void
     {
         if ($table->activeOrder()->exists()) {
             throw ValidationException::withMessages(['table' => __('crm.tables.busy')]);
         }
 
-        $table->orders()->exists()
-            ? $this->tables->update($table, ['is_active' => false])
-            : $table->delete();
+        $this->tables->remove($table);
     }
 
     private function newToken(): string
