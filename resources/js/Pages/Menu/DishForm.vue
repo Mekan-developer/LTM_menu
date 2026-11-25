@@ -38,12 +38,30 @@ const form = useForm({
     description_tm: props.dish?.description_tm ?? '',
     description_ru: props.dish?.description_ru ?? '',
     weight: props.dish?.weight ?? '',
+    kind: props.dish?.kind ?? 'made',
     price: props.dish ? plainPrice(props.dish.price) : '',
+    sale_price:
+        props.dish?.sale_price != null ? plainPrice(props.dish.sale_price) : '',
+    sale_from: props.dish?.sale_from ?? '',
+    sale_until: props.dish?.sale_until ?? '',
     station: props.dish?.station ?? 'kitchen',
     is_active: props.dish?.is_active ?? true,
     photo: null,
     remove_photo: false,
 });
+
+// Акция: галочка раскрывает поля; без галочки акционная цена не отправляется.
+const kinds = ['made', 'resale'];
+const hasSale = ref(props.dish?.sale_price != null);
+function toggleSale(on) {
+    hasSale.value = on;
+    if (!on) {
+        form.sale_price = '';
+        form.sale_from = '';
+        form.sale_until = '';
+        form.clearErrors('sale_price', 'sale_from', 'sale_until');
+    }
+}
 
 // Фото: preview — то, что увидит пользователь (новый файл или сохранённое фото).
 const fileInput = ref(null);
@@ -227,6 +245,71 @@ const block = 'flex flex-col gap-4 border-t border-line pt-5';
                                     :placeholder="t('menu.price_ph')"
                                 />
                             </Field>
+                            <div
+                                class="flex flex-col gap-3 rounded-md border border-line p-3 @sm:col-span-2"
+                                :class="hasSale ? 'bg-surface-2' : ''"
+                            >
+                                <label
+                                    class="flex cursor-pointer items-start gap-2.5"
+                                >
+                                    <input
+                                        :checked="hasSale"
+                                        type="checkbox"
+                                        class="mt-0.5 size-4 shrink-0 accent-[var(--color-brand)]"
+                                        @change="
+                                            toggleSale($event.target.checked)
+                                        "
+                                    />
+                                    <span class="flex flex-col gap-0.5">
+                                        <span class="text-sm font-medium">{{
+                                            t('menu.sale')
+                                        }}</span>
+                                        <span class="text-xs text-ink-3">{{
+                                            t('menu.sale_hint')
+                                        }}</span>
+                                    </span>
+                                </label>
+                                <div
+                                    v-if="hasSale"
+                                    class="grid grid-cols-1 gap-3 @md:grid-cols-3"
+                                >
+                                    <Field
+                                        :label="t('menu.sale_price')"
+                                        for="d-sale"
+                                        :error="form.errors.sale_price"
+                                    >
+                                        <MoneyInput
+                                            id="d-sale"
+                                            v-model="form.sale_price"
+                                            :placeholder="t('menu.price_ph')"
+                                        />
+                                    </Field>
+                                    <Field
+                                        :label="t('menu.sale_from')"
+                                        for="d-sale-from"
+                                        :error="form.errors.sale_from"
+                                    >
+                                        <TextInput
+                                            id="d-sale-from"
+                                            v-model="form.sale_from"
+                                            type="date"
+                                            mono
+                                        />
+                                    </Field>
+                                    <Field
+                                        :label="t('menu.sale_until')"
+                                        for="d-sale-until"
+                                        :error="form.errors.sale_until"
+                                    >
+                                        <TextInput
+                                            id="d-sale-until"
+                                            v-model="form.sale_until"
+                                            type="date"
+                                            mono
+                                        />
+                                    </Field>
+                                </div>
+                            </div>
                             <Field
                                 class="@sm:col-span-2"
                                 :label="t('menu.weight')"
@@ -248,6 +331,42 @@ const block = 'flex flex-col gap-4 border-t border-line pt-5';
                         <h2 id="d-preparation" :class="heading">
                             {{ t('menu.section_preparation') }}
                         </h2>
+                        <Field
+                            :label="t('menu.kind')"
+                            :error="form.errors.kind"
+                            :hint="t(`menu.kind_${form.kind}_hint`)"
+                        >
+                            <div
+                                class="flex flex-wrap gap-2"
+                                role="radiogroup"
+                                :aria-label="t('menu.kind')"
+                            >
+                                <label
+                                    v-for="k in kinds"
+                                    :key="k"
+                                    class="inline-flex h-9 min-w-28 cursor-pointer items-center justify-center gap-2 rounded-md border px-4 text-sm transition-colors duration-[120ms] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand"
+                                    :class="
+                                        form.kind === k
+                                            ? 'border-ink bg-ink text-paper'
+                                            : 'border-line hover:border-ink-3 hover:bg-surface-2'
+                                    "
+                                >
+                                    <input
+                                        v-model="form.kind"
+                                        type="radio"
+                                        name="kind"
+                                        :value="k"
+                                        class="sr-only"
+                                    />
+                                    <Icon
+                                        v-if="form.kind === k"
+                                        name="check"
+                                        :size="16"
+                                    />
+                                    {{ t(`menu.kind_${k}`) }}
+                                </label>
+                            </div>
+                        </Field>
                         <Field
                             :label="t('menu.station')"
                             :error="form.errors.station"

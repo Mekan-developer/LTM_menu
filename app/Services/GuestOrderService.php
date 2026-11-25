@@ -41,8 +41,8 @@ class GuestOrderService
 
             if ($dish === null || $this->stopList->isStopped($dish)) {
                 $problems[] = ['dish_id' => (int) $line['dish_id'], 'type' => 'unavailable'];
-            } elseif ($dish->price !== (int) $line['price']) {
-                $problems[] = ['dish_id' => $dish->id, 'type' => 'price_changed', 'old' => (int) $line['price'], 'new' => $dish->price];
+            } elseif ($dish->currentPrice() !== (int) $line['price']) {
+                $problems[] = ['dish_id' => $dish->id, 'type' => 'price_changed', 'old' => (int) $line['price'], 'new' => $dish->currentPrice()];
             }
         }
 
@@ -78,7 +78,7 @@ class GuestOrderService
                     'dish_id' => $dish->id,
                     'name_tm' => $dish->name_tm,
                     'name_ru' => $dish->name_ru,
-                    'price' => $dish->price,
+                    'price' => $dish->currentPrice(),
                     'quantity' => $line['quantity'],
                     'station' => $dish->station->value,
                     'status' => $autoSend ? OrderItemStatus::Sent->value : OrderItemStatus::Pending->value,
