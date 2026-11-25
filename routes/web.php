@@ -24,10 +24,13 @@ use App\Http\Controllers\Menu\TableController;
 use App\Http\Controllers\Orders\OrderController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Reviews\ReviewController;
+use App\Http\Controllers\Shifts\MyShiftsController;
+use App\Http\Controllers\Shifts\ShiftController;
 use App\Http\Controllers\Staff\ActionLogController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SettingsController;
 use App\Http\Controllers\Staff\UserController;
+use App\Http\Controllers\Stock\StockController;
 use App\Http\Controllers\Waiter\WaiterController;
 use App\Services\ReportExporter;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +63,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     Route::get('/pin', [PinLoginController::class, 'create'])->name('pin');
     Route::post('/pin', [PinLoginController::class, 'store'])->name('pin.store');
+    Route::post('/pin/clock', [PinLoginController::class, 'clock'])->name('pin.clock');
 });
 
 Route::middleware('auth')->group(function () {
@@ -134,6 +138,32 @@ Route::middleware('auth')->group(function () {
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     });
+
+    // Склад (ТЗ 2.3): остатки, приход, списание, инвентаризация, «Нужно закупить»
+    Route::middleware('permission:stock')->prefix('stock')->name('stock.')->group(function () {
+        Route::get('/', [StockController::class, 'index'])->name('index');
+        Route::get('/history', [StockController::class, 'history'])->name('history');
+        Route::get('/to-buy/export', [StockController::class, 'exportToBuy'])->name('to-buy.export');
+        Route::get('/new/{type}', [StockController::class, 'create'])->whereIn('type', ['receipt', 'write_off'])->name('create');
+        Route::post('/receipts', [StockController::class, 'storeReceipt'])->name('receipts.store');
+        Route::post('/write-offs', [StockController::class, 'storeWriteOff'])->name('write-offs.store');
+        Route::get('/inventory', [StockController::class, 'inventory'])->name('inventory');
+        Route::post('/inventory', [StockController::class, 'storeInventory'])->name('inventory.store');
+        Route::put('/products/{product}/min', [StockController::class, 'minimum'])->name('minimum');
+    });
+
+    // Смены (ТЗ 2.12): график, шаблоны, табель, исправление отметок
+    Route::middleware('permission:shifts')->prefix('shifts')->name('shifts.')->group(function () {
+        Route::get('/', [ShiftController::class, 'index'])->name('index');
+        Route::post('/', [ShiftController::class, 'store'])->name('store');
+        Route::post('/copy-week', [ShiftController::class, 'copyWeek'])->name('copy-week');
+        Route::post('/pattern', [ShiftController::class, 'pattern'])->name('pattern');
+        Route::post('/attendances/{attendance?}', [ShiftController::class, 'attendance'])->name('attendance');
+        Route::put('/{shift}', [ShiftController::class, 'update'])->name('update');
+        Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('destroy');
+    });
+    // Свой график видит каждый сотрудник
+    Route::get('/my-shifts', MyShiftsController::class)->name('my-shifts');
 
     // Все заказы за период: зал, QR, доставка, самовывоз — для мониторинга
     Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders')->name('orders.index');
@@ -219,5 +249,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}/receipt', [CashierController::class, 'receipt'])->name('receipt');
         Route::post('/payments/{payment}/cancel', [CashierController::class, 'cancel'])->name('cancel');
         Route::post('/couriers/{user}/cash', [CashierController::class, 'receiveCash'])->name('courier-cash');
+        Route::get('/guest', [CashierController::class, 'guest'])->name('guest');
     });
 });

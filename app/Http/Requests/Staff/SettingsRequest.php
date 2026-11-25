@@ -36,6 +36,11 @@ class SettingsRequest extends FormRequest
             'online_booking' => ['required', 'boolean'],
             'delivery_fee' => ['required', 'integer', 'min:0', 'max:1000000'],
             'online_delivery' => ['required', 'boolean'],
+            'bonus_enabled' => ['required', 'boolean'],
+            'bonus_accrual_percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'bonus_max_spend_percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'shift_clock_required' => ['required', 'boolean'],
+            'shift_grace_minutes' => ['required', 'integer', 'min:0', 'max:120'],
         ];
     }
 }

@@ -22,6 +22,11 @@ const actions = [
     'sale_changed',
     'product_price_changed',
     'recipe_changed',
+    'stock_receipt',
+    'stock_write_off',
+    'stock_inventory',
+    'bonus_spent',
+    'attendance_corrected',
     'table_transferred',
     'table_moved',
     'hall_layout_saved',
@@ -64,6 +69,16 @@ function details(log) {
             return `${p.name}: ${money(p.old)} → ${money(p.new)} / ${t(`costing.unit_${p.unit}`)}`;
         case 'recipe_changed':
             return p.name;
+        case 'stock_receipt':
+            return `${money(p.total, true)}${p.note ? ` · ${p.note}` : ''}`;
+        case 'stock_write_off':
+            return `${t(`stock.reason_${p.reason}`)} · ${money(-p.total, true)}${p.note ? ` · ${p.note}` : ''}`;
+        case 'attendance_corrected':
+            return `${p.name} · ${p.reason}`;
+        case 'bonus_spent':
+            return `${p.guest} · ${money(p.amount, true)}`;
+        case 'stock_inventory':
+            return `${t('stock.shortage')} ${money(p.shortage, true)} · ${t('stock.surplus')} ${money(p.surplus, true)}`;
         case 'sale_changed':
             return `${p.name}: ${saleText(p.old)} → ${saleText(p.new)}`;
         case 'table_moved':

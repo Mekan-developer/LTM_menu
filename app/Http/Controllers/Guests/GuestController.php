@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Guests;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Guests\GuestRequest;
+use App\Models\BonusTransaction;
 use App\Models\Guest;
 use App\Repositories\BookingRepository;
 use App\Repositories\GuestRepository;
+use App\Services\BonusService;
 use App\Services\GuestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +25,7 @@ class GuestController extends Controller
         private readonly GuestRepository $guests,
         private readonly GuestService $service,
         private readonly BookingRepository $bookings,
+        private readonly BonusService $bonuses,
     ) {}
 
     public function index(Request $request): Response
@@ -68,6 +71,16 @@ class GuestController extends Controller
                 'guests_count' => $b->guests_count,
                 'status' => $b->status->value,
                 'table' => $b->table?->number,
+            ])->values(),
+            // Бонусы (ТЗ 2.8): последние операции с балансом после каждой.
+            'bonuses' => $this->bonuses->history($guest)->map(fn (BonusTransaction $b) => [
+                'id' => $b->id,
+                'type' => $b->type->value,
+                'amount' => $b->amount,
+                'balance_after' => $b->balance_after,
+                'order_id' => $b->order_id,
+                'user' => $b->user?->name,
+                'created_at' => $b->created_at->toIso8601String(),
             ])->values(),
             'reviews' => $this->guests->reviews($guest)->map(fn ($r) => [
                 'id' => (int) $r->id,
@@ -127,6 +140,7 @@ class GuestController extends Controller
             'spent' => $spent,
             'avg_check' => $visits > 0 ? intdiv($spent, $visits) : 0,
             'last_visit' => $last ? Carbon::parse($last)->toIso8601String() : null,
+            'bonus_balance' => $g->bonus_balance,
         ];
     }
 }

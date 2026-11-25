@@ -18,6 +18,8 @@ class PaymentResource extends JsonResource
             'method' => $this->method->value,
             'cash_amount' => $this->cash_amount,
             'card_amount' => $this->card_amount,
+            'bonus_amount' => $this->bonus_amount,
+            'bonus_accrued' => $this->bonus_accrued,
             'total' => $this->total,
             'created_at' => $this->created_at?->toIso8601String(),
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),

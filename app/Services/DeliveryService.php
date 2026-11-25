@@ -42,6 +42,7 @@ class DeliveryService
         private readonly CashierService $cashier,
         private readonly ActionLogger $logger,
         private readonly Realtime $realtime,
+        private readonly ShiftService $shifts,
     ) {}
 
     /**
@@ -203,6 +204,11 @@ class DeliveryService
 
         if ($courier !== null && (! $courier->is_active || $courier->isOwner() || ! $courier->hasPermission(Permission::AreaCourier))) {
             throw ValidationException::withMessages(['courier_id' => __('crm.delivery.bad_courier')]);
+        }
+
+        // Курьер получает заказы только после отметки прихода, если это включено (ТЗ 2.12).
+        if ($courier !== null) {
+            $this->shifts->assertOnShift($courier, 'courier_id');
         }
 
         $previous = DB::transaction(function () use ($delivery, $courier) {

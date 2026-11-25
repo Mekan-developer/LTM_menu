@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
+import axios from 'axios';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Btn from '@/Components/Btn.vue';
@@ -50,20 +51,58 @@ const form = useForm({
     method: 'card',
     discount_percent: 0,
     cash_amount: '',
+    bonus_amount: '',
     tip_amount: '',
     tip_method: 'cash',
     guest_phone: '',
     guest_name: '',
 });
 const received = ref('');
+
+// Бонусы гостя (ТЗ 2.8): баланс по телефону; у счёта из доставки или брони гость уже известен.
+const bonusRules = computed(() => props.rules.bonus ?? { enabled: false });
+const guestInfo = ref(null); // { name, balance } | null
+function prefillGuest() {
+    const g = props.selected?.guest;
+    form.guest_phone = g?.phone ?? '';
+    guestInfo.value = g ? { name: g.name, balance: g.bonus_balance } : null;
+}
+prefillGuest();
 watch(
     () => props.selected?.id,
     () => {
         form.reset();
         form.clearErrors();
         received.value = '';
+        prefillGuest();
     },
 );
+let lookupTimer = null;
+watch(
+    () => form.guest_phone,
+    (phone) => {
+        clearTimeout(lookupTimer);
+        if (!bonusRules.value.enabled) return;
+        const digits = String(phone ?? '').replace(/\D/g, '');
+        if (digits.length < 8) {
+            guestInfo.value = null;
+            form.bonus_amount = '';
+            return;
+        }
+        lookupTimer = setTimeout(async () => {
+            try {
+                const { data } = await axios.get(route('cashier.guest'), {
+                    params: { phone },
+                });
+                guestInfo.value = data;
+                if (!data) form.bonus_amount = '';
+            } catch {
+                guestInfo.value = null;
+            }
+        }, 350);
+    },
+);
+onUnmounted(() => clearTimeout(lookupTimer));
 
 const discountAmount = computed(() =>
     Math.floor(
@@ -78,11 +117,38 @@ const overLimit = computed(
         Number(form.discount_percent) > props.rules.discount_limit_k &&
         !props.rules.can_discount_unlimited,
 );
+// Списать можно не больше M % счёта и не больше баланса; скидка и бонусы не суммируются.
+const maxBonus = computed(() =>
+    guestInfo.value && bonusRules.value.enabled
+        ? Math.max(
+              0,
+              Math.min(
+                  guestInfo.value.balance,
+                  Math.floor(
+                      (total.value * bonusRules.value.max_spend_percent) / 100,
+                  ),
+              ),
+          )
+        : 0,
+);
+const bonus = computed(() => Math.min(toMinor(form.bonus_amount), total.value));
+const bonusTooMuch = computed(
+    () => toMinor(form.bonus_amount) > maxBonus.value,
+);
+const moneyDue = computed(() => Math.max(0, total.value - bonus.value));
+const accrual = computed(() =>
+    guestInfo.value && bonusRules.value.enabled
+        ? Math.floor((moneyDue.value * bonusRules.value.accrual_percent) / 100)
+        : 0,
+);
+const useMaxBonus = () =>
+    (form.bonus_amount = money(maxBonus.value).replace(/\s/g, ''));
+
 const change = computed(() =>
-    Math.max(0, toMinor(received.value) - total.value),
+    Math.max(0, toMinor(received.value) - moneyDue.value),
 );
 const mixedCard = computed(() =>
-    Math.max(0, total.value - toMinor(form.cash_amount)),
+    Math.max(0, moneyDue.value - toMinor(form.cash_amount)),
 );
 
 const pay = () =>
@@ -371,6 +437,17 @@ function receiveCash(c) {
                                 >
                             </div>
                             <div
+                                v-if="bonus > 0"
+                                class="flex justify-between text-sm"
+                            >
+                                <span class="text-ink-2">{{
+                                    t('cashier.paid_bonus')
+                                }}</span
+                                ><span class="font-mono text-danger num"
+                                    >−{{ money(bonus) }}</span
+                                >
+                            </div>
+                            <div
                                 class="flex items-baseline justify-between pt-1.5"
                             >
                                 <span class="text-base font-semibold">{{
@@ -378,7 +455,7 @@ function receiveCash(c) {
                                 }}</span
                                 ><span
                                     class="font-mono text-[32px] leading-9 font-semibold num"
-                                    >{{ money(total) }}
+                                    >{{ money(moneyDue) }}
                                     <span class="text-[15px] text-ink-3"
                                         >TMT</span
                                     ></span
@@ -466,6 +543,7 @@ function receiveCash(c) {
                         mono
                         size="lg"
                         :invalid="overLimit"
+                        :disabled="bonus > 0"
                         placeholder="0"
                         inputmode="numeric"
                     />
@@ -540,7 +618,13 @@ function receiveCash(c) {
                     </div>
                 </div>
                 <p
-                    v-if="form.method === 'card'"
+                    v-if="moneyDue === 0 && bonus > 0"
+                    class="text-xs leading-[17px] text-ok"
+                >
+                    {{ t('cashier.all_by_bonus') }}
+                </p>
+                <p
+                    v-else-if="form.method === 'card'"
                     class="text-xs leading-[17px] text-ink-2"
                 >
                     {{ t('cashier.card_hint') }}
@@ -575,6 +659,68 @@ function receiveCash(c) {
                             maxlength="120"
                             autocomplete="off"
                     /></Field>
+                </div>
+
+                <!-- Бонусы гостя: часть счёта или весь счёт (до M %) -->
+                <div
+                    v-if="bonusRules.enabled && guestInfo"
+                    class="flex flex-col gap-2 rounded-md bg-surface-2 p-3"
+                >
+                    <div
+                        class="flex flex-wrap items-baseline justify-between gap-2 text-sm"
+                    >
+                        <span
+                            >{{ guestInfo.name }} ·
+                            {{ t('cashier.bonus_balance') }}
+                            <b class="font-mono num">{{
+                                money(guestInfo.balance)
+                            }}</b></span
+                        >
+                        <span class="text-xs text-ink-3">{{
+                            t('cashier.bonus_max', {
+                                n: money(maxBonus),
+                                m: bonusRules.max_spend_percent,
+                            })
+                        }}</span>
+                    </div>
+                    <div
+                        v-if="maxBonus > 0"
+                        class="grid grid-cols-[minmax(0,1fr)_auto] gap-2"
+                    >
+                        <MoneyInput
+                            id="k-bonus"
+                            v-model="form.bonus_amount"
+                            :aria-label="t('cashier.bonus_spend')"
+                            :placeholder="t('cashier.bonus_spend')"
+                            :invalid="
+                                bonusTooMuch ||
+                                Boolean(form.errors.bonus_amount)
+                            "
+                            :disabled="Number(form.discount_percent) > 0"
+                        />
+                        <Btn
+                            variant="secondary"
+                            :disabled="Number(form.discount_percent) > 0"
+                            @click="useMaxBonus"
+                            >{{ t('cashier.bonus_all') }}</Btn
+                        >
+                    </div>
+                    <p
+                        v-if="Number(form.discount_percent) > 0 && maxBonus > 0"
+                        class="text-xs text-ink-3"
+                    >
+                        {{ t('cashier.bonus_or_discount') }}
+                    </p>
+                    <p
+                        v-if="form.errors.bonus_amount"
+                        class="text-xs text-danger"
+                        role="alert"
+                    >
+                        {{ form.errors.bonus_amount }}
+                    </p>
+                    <p v-if="accrual > 0" class="text-xs text-ok">
+                        {{ t('cashier.bonus_accrual', { n: money(accrual) }) }}
+                    </p>
                 </div>
 
                 <!-- Чаевые: не входят в выручку и в сумму счёта -->
