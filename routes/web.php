@@ -233,5 +233,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}/receipt', [CashierController::class, 'receipt'])->name('receipt');
         Route::post('/payments/{payment}/cancel', [CashierController::class, 'cancel'])->name('cancel');
         Route::post('/couriers/{user}/cash', [CashierController::class, 'receiveCash'])->name('courier-cash');
+        Route::get('/guest', [CashierController::class, 'guest'])->name('guest');
     });
 });

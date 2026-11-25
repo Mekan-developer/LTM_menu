@@ -31,6 +31,8 @@ class ActionLogger
 
     public const STOCK_INVENTORY = 'stock_inventory';
 
+    public const BONUS_SPENT = 'bonus_spent';
+
     public const TABLE_TRANSFERRED = 'table_transferred';
 
     public const TABLE_MOVED = 'table_moved';

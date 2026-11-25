@@ -10,9 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Payment extends Model
 {
     protected $fillable = [
-        'order_id', 'cashier_id', 'method', 'cash_amount', 'card_amount', 'total',
+        'order_id', 'cashier_id', 'method', 'cash_amount', 'card_amount', 'bonus_amount', 'bonus_accrued', 'total',
         'cancelled_at', 'cancelled_by', 'cancel_reason',
     ];
+
+    protected $attributes = ['bonus_amount' => 0, 'bonus_accrued' => 0];
 
     protected function casts(): array
     {
@@ -20,6 +22,8 @@ class Payment extends Model
             'method' => PaymentMethod::class,
             'cash_amount' => 'integer',
             'card_amount' => 'integer',
+            'bonus_amount' => 'integer',
+            'bonus_accrued' => 'integer',
             'total' => 'integer',
             'cancelled_at' => 'datetime',
         ];

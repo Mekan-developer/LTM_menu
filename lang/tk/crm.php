@@ -182,6 +182,12 @@ return [
         'write_off_saved' => 'Hasapdan çykarmak ýatda saklandy',
         'inventory_saved' => 'Inwentarizasiýa geçirildi',
     ],
+    'bonus' => [
+        'disabled' => 'Bonus programmasy sazlamalarda öçürilen.',
+        'guest_required' => 'Bonus ulanmak üçin myhmanyň telefonyny görkeziň.',
+        'no_combine' => 'Arzanladyş we bonus jemlenmeýär — birini saýlaň.',
+        'too_much' => ':max TMT-den köp ulanyp bolmaýar.',
+    ],
     'delivery' => [
         'created' => '№:n sargyt kabul edildi',
         'saved' => 'Sargyt täzelendi',

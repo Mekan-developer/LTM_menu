@@ -12,13 +12,17 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use App\Repositories\DeliveryRepository;
+use App\Repositories\GuestRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BonusService;
 use App\Services\CashierService;
 use App\Services\DeliveryService;
 use App\Services\ReviewService;
 use App\Services\SettingsService;
 use App\Support\Money;
+use App\Support\Phone;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -34,6 +38,8 @@ class CashierController extends Controller
         private readonly ReviewService $reviews,
         private readonly DeliveryRepository $deliveries,
         private readonly DeliveryService $deliveryService,
+        private readonly BonusService $bonuses,
+        private readonly GuestRepository $guests,
     ) {}
 
     public function index(Request $request): Response
@@ -57,8 +63,18 @@ class CashierController extends Controller
                 'can_discount' => $user->hasPermission(Permission::DiscountUpToK) || $user->hasPermission(Permission::DiscountUnlimited),
                 'can_discount_unlimited' => $user->hasPermission(Permission::DiscountUnlimited),
                 'can_cancel' => $user->hasPermission(Permission::CancelPayment),
+                'bonus' => $this->bonuses->rules(),
             ],
         ]);
+    }
+
+    /** Гость по телефону: имя и бонусный баланс — кассир видит, сколько можно списать. */
+    public function guest(Request $request): JsonResponse
+    {
+        $phone = Phone::normalize($request->string('phone')->value());
+        $guest = $phone ? $this->guests->findByPhone($phone) : null;
+
+        return response()->json($guest ? ['name' => $guest->name, 'balance' => $guest->bonus_balance] : null);
     }
 
     /** Курьер сдал наличные за доставку — кассир отмечает (ТЗ 2.6). */

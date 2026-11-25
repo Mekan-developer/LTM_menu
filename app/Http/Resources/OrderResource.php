@@ -24,6 +24,12 @@ class OrderResource extends JsonResource
                 'name' => $this->waiter->name,
             ] : null),
             'waiter_id' => $this->waiter_id,
+            // Гость счёта (доставка, бронь или уже назван кассиру) — телефон и бонусы на кассе.
+            'guest' => $this->whenLoaded('guest', fn () => $this->guest ? [
+                'name' => $this->guest->name,
+                'phone' => $this->guest->phone,
+                'bonus_balance' => $this->guest->bonus_balance,
+            ] : null),
             'source' => $this->source->value,
             'channel' => $this->channel->value,
             'status' => $this->status->value,

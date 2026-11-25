@@ -78,7 +78,7 @@ const creating = ref(false);
             <div
                 class="overflow-x-auto rounded-lg border border-line bg-surface"
             >
-                <table class="w-full min-w-[760px] text-sm">
+                <table class="w-full min-w-[860px] text-sm">
                     <thead
                         class="bg-surface-2 text-left text-xs font-medium text-ink-2"
                     >
@@ -93,6 +93,9 @@ const creating = ref(false);
                             </th>
                             <th class="px-4 py-2.5 text-right">
                                 {{ t('guests.spent') }}
+                            </th>
+                            <th class="px-4 py-2.5 text-right">
+                                {{ t('guests.bonus_balance') }}
                             </th>
                             <th class="px-4 py-2.5 text-right">
                                 {{ t('guests.last_visit') }}
@@ -124,13 +127,29 @@ const creating = ref(false);
                             <td class="px-4 text-right font-mono num">
                                 {{ money(g.spent) }}
                             </td>
+                            <td
+                                class="px-4 text-right font-mono num"
+                                :class="
+                                    g.bonus_balance < 0
+                                        ? 'text-danger'
+                                        : g.bonus_balance
+                                          ? ''
+                                          : 'text-ink-3'
+                                "
+                            >
+                                {{
+                                    g.bonus_balance
+                                        ? money(g.bonus_balance)
+                                        : '—'
+                                }}
+                            </td>
                             <td class="px-4 text-right font-mono text-ink-2">
                                 {{ g.last_visit ? date(g.last_visit) : '—' }}
                             </td>
                         </tr>
                         <tr v-if="!guests.data.length">
                             <td
-                                colspan="6"
+                                colspan="7"
                                 class="px-4 py-10 text-center text-ink-3"
                             >
                                 {{

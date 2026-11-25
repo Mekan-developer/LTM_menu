@@ -11,6 +11,7 @@ use App\Enums\Permission;
 use App\Events\CashierQueueChanged;
 use App\Events\DeliveriesChanged;
 use App\Events\KitchenBoardChanged;
+use App\Models\Guest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -35,13 +36,14 @@ class CashierService
         private readonly GuestService $guests,
         private readonly DeliveryRepository $deliveries,
         private readonly StockService $stock,
+        private readonly BonusService $bonuses,
     ) {}
 
     /**
      * Оплата на кассе. Доставку оплачивает курьер при вручении (DeliveryService::complete),
      * самовывоз — здесь же, когда заказ готов: после оплаты он сразу «выдан» (ТЗ 2.6).
      *
-     * @param  array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null}  $data
+     * @param  array{method:string, discount_percent?:int|null, cash_amount?:string|null, bonus_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null}  $data
      */
     public function pay(Order $order, array $data, User $cashier): Payment
     {
@@ -79,7 +81,7 @@ class CashierService
      * Провести оплату заказа: скидка, способ оплаты, чаевые, гость, ссылка на отзыв.
      * Общая для кассы и курьера. Чаевые — официанту счёта или курьеру ($tipUserId).
      *
-     * @param  array{method:string, discount_percent?:int|null, cash_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null}  $data
+     * @param  array{method:string, discount_percent?:int|null, cash_amount?:string|null, bonus_amount?:string|null, tip_amount?:string|null, tip_method?:string|null, guest_phone?:string|null, guest_name?:string|null}  $data
      */
     public function settle(Order $order, array $data, User $cashier, ?int $tipUserId = null): Payment
     {
@@ -115,11 +117,24 @@ class CashierService
                 throw ValidationException::withMessages(['order' => __('crm.cashier.empty')]);
             }
 
+            // Гость назвал телефон — счёт попадает в его историю (ТЗ 2.1). Иначе — гость из доставки или брони.
+            $guest = filled($guestPhone)
+                ? $this->guests->attachToOrder($order, (string) $guestPhone, $data['guest_name'] ?? null, $cashier)
+                : ($order->guest_id ? Guest::query()->find($order->guest_id) : null);
+
+            // Часть счёта бонусами (ТЗ 2.8): остальное — деньгами.
+            $bonus = Money::toMinor($data['bonus_amount'] ?? 0);
+            if ($bonus > 0) {
+                $this->bonuses->assertCanSpend($guest, $bonus, $total, $percent);
+            }
+            $money = $total - $bonus;
+
             $method = PaymentMethod::from($data['method']);
-            [$cash, $card] = match ($method) {
-                PaymentMethod::Cash => [$total, 0],
-                PaymentMethod::Card => [0, $total],
-                PaymentMethod::Mixed => $this->splitMixed($total, Money::toMinor($data['cash_amount'] ?? 0)),
+            [$cash, $card] = match (true) {
+                $money === 0 => [0, 0], // весь счёт бонусами
+                $method === PaymentMethod::Cash => [$money, 0],
+                $method === PaymentMethod::Card => [0, $money],
+                default => $this->splitMixed($money, Money::toMinor($data['cash_amount'] ?? 0)),
             };
 
             $payment = $this->payments->create([
@@ -128,11 +143,13 @@ class CashierService
                 'method' => $method->value,
                 'cash_amount' => $cash,
                 'card_amount' => $card,
-                'total' => $total,
+                'bonus_amount' => $bonus,
+                'total' => $money,
             ]);
 
             $order->forceFill([
                 'status' => OrderStatus::Paid->value,
+                'bonus_paid' => $bonus,
                 'paid_at' => now(),
                 'closed_at' => now(),
             ])->save();
@@ -140,9 +157,11 @@ class CashierService
             // Продукты списываются со склада по составу блюд (ТЗ 2.3).
             $this->stock->consumeOrder($order, $cashier);
 
-            // Гость назвал телефон — счёт попадает в его историю (ТЗ 2.1).
-            if (filled($guestPhone)) {
-                $this->guests->attachToOrder($order, (string) $guestPhone, $data['guest_name'] ?? null, $cashier);
+            if ($guest !== null) {
+                if ($bonus > 0) {
+                    $this->bonuses->spend($guest, $order, $payment, $bonus, $cashier);
+                }
+                $payment->forceFill(['bonus_accrued' => $this->bonuses->accrue($guest, $order, $payment, $cashier)])->save();
             }
 
             // Одноразовая ссылка на отзыв (ТЗ 2.9).
@@ -196,6 +215,8 @@ class CashierService
             $payment->order()->update(['status' => OrderStatus::Refunded->value]);
             // Списанное по счёту возвращается на склад; испорченное — ручным списанием.
             $this->stock->restoreOrder($payment->order, $user);
+            // Начисленные бонусы снимаются, списанные — возвращаются гостю (ТЗ 2.8).
+            $this->bonuses->reversePayment($payment, $user);
 
             $this->logger->log(ActionLogger::PAYMENT_CANCELLED, $payment, [
                 'order_id' => $payment->order_id, 'total' => $payment->total, 'reason' => $reason,

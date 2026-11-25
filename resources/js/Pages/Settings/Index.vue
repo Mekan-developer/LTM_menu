@@ -22,6 +22,7 @@ const form = useForm({
     reviews_enabled: Boolean(props.settings.reviews_enabled),
     online_booking: Boolean(props.settings.online_booking),
     online_delivery: Boolean(props.settings.online_delivery),
+    bonus_enabled: Boolean(props.settings.bonus_enabled),
     // Стоимость доставки хранится в тенге, в форме — TMT.
     delivery_fee: money(props.settings.delivery_fee ?? 0),
 });
@@ -206,6 +207,60 @@ const submit = () =>
                         }}</span></span
                     >
                 </label>
+            </section>
+
+            <section
+                class="flex flex-col gap-4 rounded-lg border border-line bg-surface p-5"
+            >
+                <h2 class="text-lg font-semibold">
+                    {{ t('settings.bonuses') }}
+                </h2>
+                <label class="flex items-start gap-3">
+                    <input
+                        v-model="form.bonus_enabled"
+                        type="checkbox"
+                        class="mt-0.5 size-[18px] accent-[var(--color-brand)]"
+                    />
+                    <span class="flex flex-col"
+                        ><span class="text-sm font-medium">{{
+                            t('settings.bonus_enabled')
+                        }}</span
+                        ><span class="text-xs text-ink-3">{{
+                            t('settings.bonus_enabled_hint')
+                        }}</span></span
+                    >
+                </label>
+                <div
+                    v-if="form.bonus_enabled"
+                    class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                >
+                    <Field
+                        :label="t('settings.bonus_accrual')"
+                        for="s-bn"
+                        :hint="t('settings.bonus_accrual_hint')"
+                        :error="form.errors.bonus_accrual_percent"
+                        ><TextInput
+                            id="s-bn"
+                            v-model="form.bonus_accrual_percent"
+                            type="number"
+                            mono
+                            placeholder="5"
+                            inputmode="numeric"
+                    /></Field>
+                    <Field
+                        :label="t('settings.bonus_max_spend')"
+                        for="s-bm2"
+                        :hint="t('settings.bonus_max_spend_hint')"
+                        :error="form.errors.bonus_max_spend_percent"
+                        ><TextInput
+                            id="s-bm2"
+                            v-model="form.bonus_max_spend_percent"
+                            type="number"
+                            mono
+                            placeholder="50"
+                            inputmode="numeric"
+                    /></Field>
+                </div>
             </section>
 
             <section

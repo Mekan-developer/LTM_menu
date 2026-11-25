@@ -79,7 +79,7 @@ class OrderRepository
     public function loadForScreen(Order $order): Order
     {
         return $order->load([
-            'table', 'waiter:id,name', 'activePayment', 'delivery',
+            'table', 'waiter:id,name', 'activePayment', 'delivery', 'guest:id,name,phone,bonus_balance',
             'items' => fn ($q) => $q->orderBy('batch')->orderBy('id'),
         ]);
     }

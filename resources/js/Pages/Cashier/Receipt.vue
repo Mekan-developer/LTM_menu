@@ -109,6 +109,14 @@ onMounted(async () => {
                     <span>{{ t('pay.card') }}</span
                     ><span>{{ money(paid.card_amount) }}</span>
                 </p>
+                <p v-if="paid.bonus_amount" class="flex justify-between">
+                    <span>{{ t('cashier.paid_bonus') }}</span
+                    ><span>{{ money(paid.bonus_amount) }}</span>
+                </p>
+                <p v-if="paid.bonus_accrued" class="flex justify-between">
+                    <span>{{ t('receipt.bonus_accrued') }}</span
+                    ><span>+{{ money(paid.bonus_accrued) }}</span>
+                </p>
             </template>
             <p class="my-1.5 border-t border-dashed border-black" />
             <div

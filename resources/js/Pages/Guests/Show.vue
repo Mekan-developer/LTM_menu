@@ -23,6 +23,7 @@ const props = defineProps({
     orders: { type: Array, default: () => [] },
     reviews: { type: Array, default: () => [] },
     bookings: { type: Array, default: () => [] },
+    bonuses: { type: Array, default: () => [] },
 });
 const { t } = useI18n();
 
@@ -43,6 +44,11 @@ const tiles = computed(() => [
     {
         label: t('guests.last_visit'),
         value: props.guest.last_visit ? date(props.guest.last_visit) : '—',
+    },
+    {
+        label: t('guests.bonus_balance'),
+        value: money(props.guest.bonus_balance ?? 0),
+        unit: 'TMT',
     },
 ]);
 const avgRating = computed(() =>
@@ -259,6 +265,50 @@ const avgRating = computed(() =>
                         >
                             {{ t('guests.no_bookings') }}
                         </p>
+                    </section>
+
+                    <!-- Бонусы -->
+                    <section
+                        v-if="bonuses.length"
+                        class="rounded-lg border border-line bg-surface"
+                    >
+                        <h2
+                            class="border-b border-line px-4 py-3 text-base font-semibold"
+                        >
+                            {{ t('guests.bonuses') }}
+                        </h2>
+                        <div
+                            v-for="b in bonuses"
+                            :key="b.id"
+                            class="grid grid-cols-[1fr_auto] gap-x-3 border-t border-line px-4 py-2 text-sm first:border-t-0"
+                        >
+                            <span
+                                >{{ t(`guests.bonus_${b.type}`) }}
+                                <span
+                                    v-if="b.order_id"
+                                    class="font-mono text-xs text-ink-3"
+                                    >№{{ b.order_id }}</span
+                                ></span
+                            >
+                            <span
+                                class="text-right font-mono num"
+                                :class="
+                                    b.amount < 0 ? 'text-danger' : 'text-ok'
+                                "
+                                >{{ b.amount > 0 ? '+' : ''
+                                }}{{ money(b.amount) }}</span
+                            >
+                            <span class="font-mono text-xs text-ink-3"
+                                >{{ date(b.created_at) }}
+                                <template v-if="b.user"
+                                    >· {{ b.user }}</template
+                                ></span
+                            >
+                            <span
+                                class="text-right font-mono text-xs text-ink-3"
+                                >= {{ money(b.balance_after) }}</span
+                            >
+                        </div>
                     </section>
 
                     <!-- Отзывы -->

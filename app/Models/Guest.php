@@ -17,7 +17,13 @@ class Guest extends Model
 
     protected function casts(): array
     {
-        return ['birthday' => 'date'];
+        return ['birthday' => 'date', 'bonus_balance' => 'integer'];
+    }
+
+    /** @return HasMany<BonusTransaction, $this> */
+    public function bonusTransactions(): HasMany
+    {
+        return $this->hasMany(BonusTransaction::class);
     }
 
     /** @return HasMany<Order, $this> */

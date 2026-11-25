@@ -25,6 +25,7 @@ const actions = [
     'stock_receipt',
     'stock_write_off',
     'stock_inventory',
+    'bonus_spent',
     'table_transferred',
     'table_moved',
     'hall_layout_saved',
@@ -71,6 +72,8 @@ function details(log) {
             return `${money(p.total, true)}${p.note ? ` · ${p.note}` : ''}`;
         case 'stock_write_off':
             return `${t(`stock.reason_${p.reason}`)} · ${money(-p.total, true)}${p.note ? ` · ${p.note}` : ''}`;
+        case 'bonus_spent':
+            return `${p.guest} · ${money(p.amount, true)}`;
         case 'stock_inventory':
             return `${t('stock.shortage')} ${money(p.shortage, true)} · ${t('stock.surplus')} ${money(p.surplus, true)}`;
         case 'sale_changed':

@@ -15,7 +15,7 @@ class Order extends Model
 {
     protected $fillable = [
         'public_token', 'dining_table_id', 'waiter_id', 'guest_id', 'source', 'channel', 'status', 'guest_comment',
-        'discount_percent', 'subtotal', 'discount_amount', 'delivery_fee', 'total', 'batch_counter',
+        'discount_percent', 'subtotal', 'discount_amount', 'bonus_paid', 'delivery_fee', 'total', 'batch_counter',
         'opened_at', 'bill_requested_at', 'paid_at', 'closed_at',
     ];
 
@@ -24,6 +24,7 @@ class Order extends Model
         'discount_percent' => 0,
         'subtotal' => 0,
         'discount_amount' => 0,
+        'bonus_paid' => 0,
         'delivery_fee' => 0,
         'total' => 0,
         'channel' => 'hall',
@@ -39,6 +40,7 @@ class Order extends Model
             'discount_percent' => 'integer',
             'subtotal' => 'integer',
             'discount_amount' => 'integer',
+            'bonus_paid' => 'integer',
             'delivery_fee' => 'integer',
             'total' => 'integer',
             'batch_counter' => 'integer',
