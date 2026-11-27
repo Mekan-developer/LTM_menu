@@ -120,6 +120,7 @@ return [
         'overlap' => ':a we :b stollar biri-birine düşýär',
         'number_taken' => ':n belgili stol eýýäm bar',
         'foreign_table' => 'Bu stol başga zala degişli',
+        'stale' => 'Shema başga ýerde üýtgedildi. Üýtgeşmeleri ýatyryp, gaýtadan düzediň',
         'no_space' => 'Zalda boş ýer ýok — shemany giňeldiň ýa-da başga zal saýlaň',
     ],
 

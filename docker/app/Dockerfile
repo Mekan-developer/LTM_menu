@@ -25,12 +25,24 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+
+# Адрес Reverb для браузера вшивается в бандл при сборке (docker-compose.prod.yml → build.args)
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT
+ARG VITE_REVERB_SCHEME
+
 RUN composer dump-autoload --no-dev --optimize --ignore-platform-req=ext-* \
  && npm run build
 
+############################################
+# Nginx для продакшена: статика и конфиг внутри образа
+############################################
+FROM nginx:alpine AS web
 
- 
-
+COPY --from=frontend /app/public /var/www/public
+RUN ln -s ../storage/app/public /var/www/public/storage
+COPY docker/nginx/prod.conf /etc/nginx/conf.d/default.conf
 
 ############################################
 # Этап 2: продакшен PHP-FPM
@@ -39,7 +51,8 @@ FROM php:8.3-fpm-alpine AS app
 
 # Runtime-библиотеки — остаются в образе
 # postgresql17-client — pg_dump для резервных копий (ТЗ 3.1), версия как у сервера postgres:17
-RUN apk add --no-cache libpq libpng libjpeg-turbo libwebp freetype icu-libs unzip postgresql17-client
+# su-exec — запуск artisan-процессов от www-data (docker/entrypoint.sh)
+RUN apk add --no-cache libpq libpng libjpeg-turbo libwebp freetype icu-libs unzip postgresql17-client su-exec
 
 # Build-зависимости ставятся во временный пакет и удаляются в том же слое
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
@@ -84,6 +97,7 @@ COPY --from=frontend /app/public/build ./public/build
 
 # dump-autoload запустит package:discover из post-autoload-dump
 RUN composer dump-autoload --no-dev --optimize \
+ && ln -s ../storage/app/public public/storage \
  && chown -R www-data:www-data storage bootstrap/cache
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh

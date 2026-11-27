@@ -59,7 +59,9 @@ function goHall(id) {
 
 // ===================== Режим «Работа» =====================
 const selectedId = ref(Number(query.get('table')) || null);
-const picking = ref(false);
+// Перенос помнит заказ: пока выбирают стол, можно перейти в другой зал.
+const moving = ref(null); // { orderId, number } | null
+const picking = computed(() => moving.value !== null);
 
 const counts = computed(() => {
     const c = { free: 0, occupied: 0, bill: 0, reserved: 0, qr: 0 };
@@ -98,7 +100,7 @@ function onSelect(tb) {
     loadDetail(selectedId.value === tb.id ? null : tb.id);
 }
 const close = () => {
-    picking.value = false;
+    moving.value = null;
     loadDetail(null);
 };
 
@@ -131,14 +133,20 @@ const requestBill = () =>
     );
 
 const moveTarget = ref(null);
+function toggleMove() {
+    moveTarget.value = null;
+    moving.value = picking.value
+        ? null
+        : { orderId: order.value.id, number: selected.value.number };
+}
 function moveTo(tableId) {
     router.post(
-        route('waiter.move', order.value.id),
+        route('waiter.move', moving.value.orderId),
         { table_id: tableId },
         {
             preserveScroll: true,
             onSuccess: () => {
-                picking.value = false;
+                moving.value = null;
                 moveTarget.value = null;
                 loadDetail(tableId);
             },
@@ -169,6 +177,8 @@ watch(selectedId, () => (qrImage.value = null));
 
 // ===================== Режим «Редактор» =====================
 let seq = 0;
+// За столом открыт заказ — убрать его со схемы нельзя. Бронь удалению не мешает.
+const isBusy = (tb) => ['occupied', 'bill'].includes(tb.status);
 const toDraft = () => ({
     tables: props.board.tables.map((tb) => ({
         key: `t${tb.id}`,
@@ -181,13 +191,15 @@ const toDraft = () => ({
         width: tb.width,
         height: tb.height,
         rotation: tb.rotation,
-        busy: tb.status !== 'free',
+        busy: isBusy(tb),
         qr_url: tb.qr_url,
     })),
     elements: props.board.elements.map((e) => ({ ...e, key: `e${e.id}` })),
 });
 const draft = reactive(toDraft());
 const snapshot = ref('');
+// Версия схемы, с которой начата правка: сервер не даст затереть более новую.
+const baseRevision = ref('');
 const sel = ref(null);
 const editError = ref('');
 const serverErrors = ref({});
@@ -196,26 +208,46 @@ const payload = () => ({
     tables: draft.tables.map(({ key, busy, qr_url, ...rest }) => rest),
     elements: draft.elements.map(({ key, ...rest }) => rest),
 });
-function resetDraft() {
+const find = (key) =>
+    draft.tables.find((x) => x.key === key) ??
+    draft.elements.find((x) => x.key === key);
+// Берёт схему с сервера; выделение остаётся, пока объект на месте.
+function syncDraft() {
     const d = toDraft();
     draft.tables = d.tables;
     draft.elements = d.elements;
     snapshot.value = JSON.stringify(payload());
+    baseRevision.value = props.board.revision;
+    if (sel.value && !find(sel.value)) sel.value = null;
+}
+function resetDraft() {
+    syncDraft();
     sel.value = null;
     editError.value = '';
     serverErrors.value = {};
 }
 resetDraft();
 watch(() => props.hallId, resetDraft);
-// После сохранения сервер присылает новую доску — снимок обновляем.
+// Новая доска с сервера: без правок берём её целиком, с правками обновляем
+// только то, что в редакторе не меняется, — занятость и ссылку QR.
 watch(
     () => props.board,
     () => {
-        if (!dirty.value) resetDraft();
+        if (!dirty.value) {
+            syncDraft();
+            return;
+        }
+        for (const row of draft.tables) {
+            const tb = props.board.tables.find((x) => x.id === row.id);
+            if (tb) Object.assign(row, { busy: isBusy(tb), qr_url: tb.qr_url });
+        }
     },
 );
 
 const dirty = computed(() => JSON.stringify(payload()) !== snapshot.value);
+const stale = computed(
+    () => dirty.value && props.board.revision !== baseRevision.value,
+);
 
 // Пересекающиеся столы подсвечиваются красным, сохранить нельзя.
 const conflicts = computed(() => {
@@ -230,9 +262,6 @@ const conflicts = computed(() => {
     return set;
 });
 
-const find = (key) =>
-    draft.tables.find((x) => x.key === key) ??
-    draft.elements.find((x) => x.key === key);
 const selTable = computed(() => draft.tables.find((x) => x.key === sel.value));
 const selElement = computed(() =>
     draft.elements.find((x) => x.key === sel.value),
@@ -379,19 +408,23 @@ function save() {
     saving = true;
     savingNow.value = true;
     serverErrors.value = {};
-    router.put(route('halls.layout', props.hallId), payload(), {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-            snapshot.value = '';
-            resetDraft();
+    router.put(
+        route('halls.layout', props.hallId),
+        { ...payload(), revision: baseRevision.value },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                snapshot.value = '';
+                resetDraft();
+            },
+            onError: (errors) => (serverErrors.value = errors),
+            onFinish: () => {
+                saving = false;
+                savingNow.value = false;
+            },
         },
-        onError: (errors) => (serverErrors.value = errors),
-        onFinish: () => {
-            saving = false;
-            savingNow.value = false;
-        },
-    });
+    );
 }
 const serverErrorList = computed(() => [
     ...new Set(Object.values(serverErrors.value)),
@@ -406,7 +439,7 @@ function setMode(m) {
     )
         return;
     if (m === 'edit') resetDraft();
-    picking.value = false;
+    moving.value = null;
     mode.value = m;
     const url = new URL(window.location.href);
     if (m === 'edit') url.searchParams.set('mode', 'edit');
@@ -416,14 +449,17 @@ function setMode(m) {
 
 // QR выбранного стола в редакторе
 const editQr = ref(null);
-watch(sel, async () => {
-    editQr.value = null;
-    if (selTable.value?.qr_url)
-        editQr.value = await QRCode.toDataURL(selTable.value.qr_url, {
-            margin: 1,
-            width: 600,
-        });
-});
+watch(
+    () => selTable.value?.qr_url,
+    async (url) => {
+        editQr.value = null;
+        if (url)
+            editQr.value = await QRCode.toDataURL(url, {
+                margin: 1,
+                width: 600,
+            });
+    },
+);
 function downloadQr() {
     const a = document.createElement('a');
     a.href = editQr.value;
@@ -628,8 +664,8 @@ function deleteHall() {
                     class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-brand bg-brand-soft px-3 py-2 text-sm"
                     role="status"
                 >
-                    {{ t('hall.pick_free', { n: selected?.number }) }}
-                    <Btn variant="ghost" size="sm" @click="picking = false">{{
+                    {{ t('hall.pick_free', { n: moving.number }) }}
+                    <Btn variant="ghost" size="sm" @click="moving = null">{{
                         t('common.cancel')
                     }}</Btn>
                 </p>
@@ -794,8 +830,11 @@ function deleteHall() {
                                     >
                                     <Btn
                                         variant="secondary"
-                                        :disabled="!freeTables.length"
-                                        @click="picking = !picking"
+                                        :disabled="
+                                            !freeTables.length &&
+                                            halls.length < 2
+                                        "
+                                        @click="toggleMove"
                                         >{{ t('hall.move') }}</Btn
                                     >
                                 </div>
@@ -952,7 +991,13 @@ function deleteHall() {
                     </button>
                     <span class="mx-1 h-6 w-px bg-line" />
                     <button
-                        v-for="k in ['bar', 'entrance', 'window', 'label']"
+                        v-for="k in [
+                            'bar',
+                            'entrance',
+                            'window',
+                            'wall',
+                            'label',
+                        ]"
                         :key="k"
                         type="button"
                         class="inline-flex h-9 items-center rounded-md border border-line bg-paper px-3 text-[13px] hover:bg-surface-2"
@@ -1135,7 +1180,9 @@ function deleteHall() {
                             <Btn
                                 size="lg"
                                 block
-                                :disabled="!dirty || conflicts.size > 0"
+                                :disabled="
+                                    !dirty || stale || conflicts.size > 0
+                                "
                                 :loading="savingNow"
                                 @click="save"
                                 >{{ t('hall.save') }}</Btn
@@ -1146,6 +1193,12 @@ function deleteHall() {
                                 :disabled="!dirty"
                                 @click="resetDraft"
                                 >{{ t('hall.discard') }}</Btn
+                            >
+                            <span
+                                v-if="stale"
+                                class="text-xs text-danger"
+                                role="alert"
+                                >{{ t('hall.stale') }}</span
                             >
                             <span
                                 v-if="conflicts.size"

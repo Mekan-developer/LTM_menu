@@ -9,6 +9,7 @@ use App\Models\DiningTable;
 use App\Models\Guest;
 use App\Models\Hall;
 use App\Models\Order;
+use App\Services\HallService;
 use Illuminate\Support\Str;
 
 function orderOn(DiningTable $table, OrderStatus $status = OrderStatus::Paid): Order
@@ -101,6 +102,7 @@ it('стол, убранный со схемы зала, удаляется мя
     orderOn($gone);
 
     $this->put(route('halls.layout', $this->hall), [
+        'revision' => app(HallService::class)->board($this->hall, auth()->user())['revision'],
         'tables' => [[
             'id' => $kept->id, 'number' => $kept->number, 'seats' => $kept->seats, 'shape' => $kept->shape->value,
             'pos_x' => $kept->pos_x, 'pos_y' => $kept->pos_y, 'width' => $kept->width, 'height' => $kept->height,

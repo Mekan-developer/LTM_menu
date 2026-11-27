@@ -46,7 +46,7 @@ class HallService
      * Столы зала со статусами — фиксированное число запросов при любом количестве столов:
      * столы + активные заказы + официанты одним JOIN, позиции одним GROUP BY, объекты зала.
      *
-     * @return array{tables: array<int, array<string, mixed>>, elements: array<int, array<string, mixed>>}
+     * @return array{tables: array<int, array<string, mixed>>, elements: array<int, array<string, mixed>>, revision: string}
      */
     public function board(Hall $hall, User $viewer): array
     {
@@ -113,7 +113,26 @@ class HallService
 
         $elements = $this->halls->elements($hall)->map(fn (HallElement $e) => self::elementData($e))->values()->all();
 
-        return ['tables' => $tables, 'elements' => $elements];
+        return ['tables' => $tables, 'elements' => $elements, 'revision' => self::revision($tables, $elements)];
+    }
+
+    /**
+     * Версия раскладки: меняется при правке столов или объектов зала, но не при заказах и бронях.
+     * Редактор присылает её при сохранении, чтобы не затереть чужие изменения.
+     *
+     * @param  array<int, array<string, mixed>>  $tables
+     * @param  array<int, array<string, mixed>>  $elements
+     */
+    private static function revision(array $tables, array $elements): string
+    {
+        $pick = fn (array $items, array $keys) => collect($items)->sortBy('id')->values()
+            ->map(fn (array $item) => array_map(fn (string $key) => (string) $item[$key], $keys))
+            ->all();
+
+        return md5((string) json_encode([
+            $pick($tables, ['id', 'number', 'seats', 'shape', 'pos_x', 'pos_y', 'width', 'height', 'rotation']),
+            $pick($elements, ['id', 'type', 'label_tm', 'label_ru', 'pos_x', 'pos_y', 'width', 'height']),
+        ]));
     }
 
     /**
@@ -164,17 +183,29 @@ class HallService
 
     /**
      * Сохранение схемы одним запросом (ТЗ 2.2): столы и объекты целиком.
-     * Проверяет границы полотна, пересечения столов и уникальность номеров.
+     * Проверяет, что схему не изменили после начала правки, затем границы полотна,
+     * пересечения столов и уникальность номеров.
      *
      * @param  list<array<string, mixed>>  $tables
      * @param  list<array<string, mixed>>  $elements
      */
-    public function saveLayout(Hall $hall, array $tables, array $elements, User $user): void
+    public function saveLayout(Hall $hall, string $revision, array $tables, array $elements, User $user): void
     {
-        $this->assertLayoutValid($hall, $tables, $elements);
-
-        DB::transaction(function () use ($hall, $tables, $elements, $user) {
+        DB::transaction(function () use ($hall, $revision, $tables, $elements, $user) {
+            $this->halls->lock($hall);
             $existing = $this->halls->activeTables($hall)->keyBy('id');
+
+            $current = self::revision(
+                $existing->toArray(),
+                $this->halls->elements($hall)->map(fn (HallElement $e) => self::elementData($e))->all(),
+            );
+
+            if ($revision !== $current) {
+                throw ValidationException::withMessages(['revision' => __('crm.hall.stale')]);
+            }
+
+            $this->assertLayoutValid($hall, $tables, $elements);
+
             $keep = collect($tables)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
             $busy = $this->halls->busyTableIds($hall);
 
@@ -273,14 +304,17 @@ class HallService
         return $hall;
     }
 
-    /** Удалить можно только пустой зал — без столов, в том числе выключенных с историей. */
+    /**
+     * Удалить можно только зал без столов, считая выключенные. Если в нём остались удалённые
+     * столы с историей, зал удаляется мягко, иначе насовсем.
+     */
     public function deleteHall(Hall $hall): void
     {
         if ($hall->tables()->exists()) {
             throw ValidationException::withMessages(['hall' => __('crm.hall.not_empty')]);
         }
 
-        $hall->delete();
+        $hall->tables()->withTrashed()->exists() ? $hall->delete() : $hall->forceDelete();
     }
 
     /**
@@ -290,12 +324,13 @@ class HallService
      */
     public function freeSpot(Hall $hall, int $width, int $height): ?array
     {
-        $boxes = $this->halls->activeTables($hall)->map(fn (DiningTable $t) => self::box($t->toArray()))->all();
+        $boxes = $this->halls->placedTables($hall)->map(fn (DiningTable $t) => self::box($t->toArray()))
+            ->concat($this->halls->elements($hall)->map(fn (HallElement $e) => self::box($e->toArray())));
 
         for ($y = self::GRID * 2; $y + $height <= $hall->height; $y += self::GRID) {
             for ($x = self::GRID * 2; $x + $width <= $hall->width; $x += self::GRID) {
                 $candidate = [$x, $y, $width, $height];
-                $clear = collect($boxes)->every(fn ($b) => ! self::overlaps($candidate, $b, self::GRID));
+                $clear = $boxes->every(fn ($b) => ! self::overlaps($candidate, $b, self::GRID));
 
                 if ($clear) {
                     return [$x, $y];

@@ -46,6 +46,11 @@ function layoutTable(DiningTable $t, array $override = []): array
     ], $override);
 }
 
+function boardRevision(Hall $hall): string
+{
+    return app(HallService::class)->board($hall, staff(SystemRole::Owner))['revision'];
+}
+
 it('миграция переносит столы из текстового поля hall в залы без пересечений', function () {
     $migration = require database_path('migrations/2026_11_26_000002_add_layout_to_dining_tables.php');
     $migration->down();
@@ -93,18 +98,23 @@ it('схема с пересечением столов или выходом з
     $b = DiningTable::factory()->create(['hall_id' => $hall->id, 'pos_x' => 200, 'pos_y' => 40]);
     $this->actingAs(staff(SystemRole::Owner));
 
+    $revision = boardRevision($hall);
+
     $this->put(route('halls.layout', $hall), [
+        'revision' => $revision,
         'tables' => [layoutTable($a), layoutTable($b, ['pos_x' => 60, 'pos_y' => 60])],
         'elements' => [],
     ])->assertSessionHasErrors('tables.1.pos_x');
 
     $this->put(route('halls.layout', $hall), [
+        'revision' => $revision,
         'tables' => [layoutTable($a), layoutTable($b, ['pos_x' => 960])],
         'elements' => [],
     ])->assertSessionHasErrors('tables.1.pos_x');
 
     // Повёрнутый длинный стол занимает 80×160 — с поворотом выходит за нижний край.
     $this->put(route('halls.layout', $hall), [
+        'revision' => $revision,
         'tables' => [layoutTable($a), layoutTable($b, ['width' => 160, 'pos_y' => 520, 'rotation' => 90])],
         'elements' => [],
     ])->assertSessionHasErrors('tables.1.pos_x');
@@ -119,6 +129,7 @@ it('схема сохраняется целиком: перемещение, н
     $drop = DiningTable::factory()->create(['hall_id' => $hall->id, 'pos_x' => 200, 'pos_y' => 40]);
 
     $this->actingAs(staff(SystemRole::Owner))->put(route('halls.layout', $hall), [
+        'revision' => boardRevision($hall),
         'tables' => [
             layoutTable($keep, ['pos_x' => 400, 'pos_y' => 300, 'rotation' => 90]),
             ['id' => null, 'number' => 'T-50', 'seats' => 6, 'shape' => 'rect', 'pos_x' => 40, 'pos_y' => 400, 'width' => 160, 'height' => 80, 'rotation' => 0],
@@ -146,7 +157,7 @@ it('стол с активным заказом со схемы удалить �
     $busy = tableWithOrder($hall, staff(SystemRole::Waiter));
 
     $this->actingAs(staff(SystemRole::Owner))
-        ->put(route('halls.layout', $hall), ['tables' => [], 'elements' => []])
+        ->put(route('halls.layout', $hall), ['revision' => boardRevision($hall), 'tables' => [], 'elements' => []])
         ->assertSessionHasErrors('tables');
 
     expect(DiningTable::find($busy->id))->not->toBeNull();
@@ -276,4 +287,73 @@ it('пустой зал удаляется, зал со столами — не�
     $this->delete(route('halls.destroy', $empty))->assertSessionHasNoErrors();
 
     expect(Hall::find($empty->id))->toBeNull()->and(Hall::find($full->id))->not->toBeNull();
+});
+
+it('зал, где остались только удалённые столы с историей, удаляется, а в истории сохраняется', function () {
+    $hall = Hall::factory()->create();
+    $table = tableWithOrder($hall, null, OrderStatus::Paid->value);
+    $this->actingAs(staff(SystemRole::Owner))->delete(route('tables.destroy', $table));
+
+    $this->delete(route('halls.destroy', $hall))->assertSessionHasNoErrors();
+
+    expect(Hall::find($hall->id))->toBeNull()
+        ->and(Order::sole()->table?->hall?->id)->toBe($hall->id);
+
+    // В удалённый зал новый стол не добавить.
+    $this->post(route('tables.store'), ['number' => '77', 'hall_id' => $hall->id, 'seats' => 4])
+        ->assertSessionHasErrors('hall_id');
+});
+
+it('устаревшая схема не сохраняется и не стирает стол, добавленный после начала правки', function () {
+    $hall = Hall::factory()->create();
+    $table = DiningTable::factory()->create(['hall_id' => $hall->id, 'pos_x' => 40, 'pos_y' => 40]);
+    $this->actingAs(staff(SystemRole::Owner));
+    $revision = boardRevision($hall);
+
+    $added = DiningTable::factory()->create(['hall_id' => $hall->id, 'pos_x' => 400, 'pos_y' => 40]);
+
+    $this->put(route('halls.layout', $hall), [
+        'revision' => $revision,
+        'tables' => [layoutTable($table, ['pos_x' => 200])],
+        'elements' => [],
+    ])->assertSessionHasErrors('revision');
+
+    expect(DiningTable::find($added->id))->not->toBeNull()
+        ->and($table->fresh()->pos_x)->toBe(40);
+});
+
+it('заказы за столами не мешают сохранить схему с объектами', function () {
+    $hall = Hall::factory()->create();
+    $hall->elements()->create(['type' => 'wall', 'pos_x' => 600, 'pos_y' => 400, 'width' => 200, 'height' => 20]);
+    $table = DiningTable::factory()->create(['hall_id' => $hall->id, 'pos_x' => 40, 'pos_y' => 40]);
+    $this->actingAs(staff(SystemRole::Owner));
+    $revision = boardRevision($hall);
+
+    $this->post(route('waiter.open', $table));
+
+    $this->put(route('halls.layout', $hall), [
+        'revision' => $revision,
+        'tables' => [layoutTable($table, ['pos_x' => 200])],
+        'elements' => [],
+    ])->assertSessionHasNoErrors();
+
+    expect($table->fresh()->pos_x)->toBe(200)
+        ->and($table->activeOrder()->exists())->toBeTrue();
+});
+
+it('новый стол из списка не встаёт на объект схемы и на выключенный стол', function () {
+    $hall = Hall::factory()->create();
+    $hall->elements()->create(['type' => 'bar', 'pos_x' => 0, 'pos_y' => 0, 'width' => 400, 'height' => 140]);
+    $off = DiningTable::factory()->create([
+        'hall_id' => $hall->id, 'is_active' => false, 'pos_x' => 420, 'pos_y' => 40, 'width' => 80, 'height' => 80,
+    ]);
+
+    $this->actingAs(staff(SystemRole::Owner))
+        ->post(route('tables.store'), ['number' => '55', 'hall_id' => $hall->id, 'seats' => 4])
+        ->assertSessionHasNoErrors();
+
+    $box = HallService::box(DiningTable::where('number', '55')->sole()->toArray());
+
+    expect(HallService::overlaps($box, [0, 0, 400, 140]))->toBeFalse()
+        ->and(HallService::overlaps($box, HallService::box($off->toArray())))->toBeFalse();
 });

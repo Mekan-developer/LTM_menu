@@ -1,34 +1,128 @@
+# Продакшен по домену без сертификата (HTTP). Настройки — в .env по образцу .env.production.example:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Код и фронтенд берутся из образа; на сервере лежат только данные: тома БД и storage, папка копий.
+# Наружу открыт один порт 80: сайт и WebSocket (Nginx проксирует /app/ в Reverb).
+
+x-logging: &logging
+    driver: json-file
+    options:
+        max-size: 10m
+        max-file: '5'
+
+# Один и тот же набор для всех образов: фронтенд в app и в nginx должен совпадать.
+x-build: &build
+    context: .
+    dockerfile: docker/app/Dockerfile
+    args:
+        VITE_REVERB_APP_KEY: ${REVERB_APP_KEY:?задайте REVERB_APP_KEY в .env}
+        # Пустой хост — браузер подключается к тому же домену, с которого открыл сайт.
+        VITE_REVERB_HOST: ''
+        VITE_REVERB_PORT: '80'
+        VITE_REVERB_SCHEME: http
+
+x-environment: &environment
+    APP_ENV: production
+    APP_DEBUG: 'false'
+    APP_KEY: ${APP_KEY:?задайте APP_KEY в .env}
+    APP_URL: ${APP_URL:?задайте APP_URL в .env, например http://example.com}
+    OWNER_PASSWORD: ${OWNER_PASSWORD:?задайте OWNER_PASSWORD в .env}
+    LOG_CHANNEL: stderr
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: '5432'
+    BROADCAST_CONNECTION: reverb
+    # Куда приложение публикует события — внутри сети compose.
+    REVERB_HOST: reverb
+    REVERB_PORT: '8080'
+    REVERB_SCHEME: http
+    REVERB_APP_SECRET: ${REVERB_APP_SECRET:?задайте REVERB_APP_SECRET в .env}
+
+x-app: &app
+    build: *build
+    restart: always
+    env_file: .env
+    logging: *logging
+
 services:
+    app:
+        <<: *app
+        environment:
+            <<: *environment
+            # Миграции выполняет только этот контейнер.
+            RUN_MIGRATIONS: 'true'
+            BACKUP_PATH: /backups
+        volumes:
+            - storage:/var/www/storage
+            # app видит копии для статуса в «Настройках», scheduler их создаёт.
+            - ${BACKUP_HOST_DIR:-/var/backups/restoran}:/backups
+        depends_on:
+            postgres:
+                condition: service_healthy
+        # PHP-FPM слушает порт только после миграций — тогда стартуют остальные.
+        healthcheck:
+            test: ['CMD', 'php', '-r', "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+            interval: 5s
+            retries: 30
+
+    queue:
+        <<: *app
+        environment: *environment
+        volumes:
+            - storage:/var/www/storage
+        depends_on:
+            app:
+                condition: service_healthy
+
+    reverb:
+        <<: *app
+        environment: *environment
+        volumes:
+            - storage:/var/www/storage
+        depends_on:
+            app:
+                condition: service_healthy
+
+    scheduler:
+        <<: *app
+        environment:
+            <<: *environment
+            BACKUP_PATH: /backups
+        # Резервные копии — на отдельный диск (ТЗ 3.1). BACKUP_HOST_DIR — папка на этом диске.
+        volumes:
+            - storage:/var/www/storage
+            - ${BACKUP_HOST_DIR:-/var/backups/restoran}:/backups
+        depends_on:
+            app:
+                condition: service_healthy
+
     nginx:
+        build:
+            <<: *build
+            target: web
+        restart: always
+        logging: *logging
         ports:
-            - '80:80'
-            - '443:443'
+            - '${HTTP_PORT:-80}:80'
+        volumes:
+            - storage:/var/www/storage:ro
+        depends_on:
+            app:
+                condition: service_healthy
 
     postgres:
         restart: always
+        logging: *logging
+        healthcheck:
+            # Проверка по TCP: во время первой инициализации сервер доступен только по сокету.
+            test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+            interval: 5s
+            retries: 30
 
     redis:
         restart: always
+        logging: *logging
 
-    queue:
-        restart: always
-
-    reverb:
-        restart: always
-        ports:
-            - '8080:8080'
-
-    # Резервные копии — на отдельный диск (ТЗ 3.1). BACKUP_HOST_DIR — папка на этом диске.
-    # app видит копии для статуса в «Настройках», scheduler их создаёт.
-    app:
-        environment:
-            BACKUP_PATH: /backups
-        volumes:
-            - ${BACKUP_HOST_DIR:-/var/backups/restoran}:/backups
-
-    scheduler:
-        restart: always
-        environment:
-            BACKUP_PATH: /backups
-        volumes:
-            - ${BACKUP_HOST_DIR:-/var/backups/restoran}:/backups
+volumes:
+    storage:
+        driver: local

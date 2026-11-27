@@ -64,6 +64,12 @@ class HallRepository
             ->get();
     }
 
+    /** Блокирует строку зала до конца транзакции: сохранения одной схемы идут по очереди. */
+    public function lock(Hall $hall): void
+    {
+        Hall::query()->whereKey($hall->id)->lockForUpdate()->first();
+    }
+
     /** @return Collection<int, HallElement> */
     public function elements(Hall $hall): Collection
     {
@@ -74,6 +80,16 @@ class HallRepository
     public function activeTables(Hall $hall): Collection
     {
         return $hall->tables()->where('is_active', true)->orderBy('sort')->orderBy('id')->get();
+    }
+
+    /**
+     * Все неудалённые столы зала, включая выключенные: их место на схеме тоже занято.
+     *
+     * @return Collection<int, DiningTable>
+     */
+    public function placedTables(Hall $hall): Collection
+    {
+        return $hall->tables()->get();
     }
 
     /**

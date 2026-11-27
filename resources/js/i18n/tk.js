@@ -701,6 +701,7 @@ export default {
         width: 'Giňligi, px',
         height: 'Beýikligi, px',
         bookings_today: 'Şu günki bronlar',
+        stale: 'Shema başga ýerde üýtgedildi. Üýtgeşmeleri ýatyryp, gaýtadan düzediň.',
     },
     guests: {
         bonus_balance: 'Bonuslar',

@@ -22,6 +22,9 @@ class HallLayoutRequest extends FormRequest
         $min = HallService::MIN_SIZE;
 
         return [
+            // Версия схемы, с которой начали правку (HallService::saveLayout).
+            'revision' => ['required', 'string'],
+
             'tables' => ['present', 'array', 'max:300'],
             'tables.*.id' => ['nullable', 'integer'],
             'tables.*.number' => ['required', 'string', 'max:16', 'distinct'],
