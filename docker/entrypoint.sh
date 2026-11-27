@@ -20,4 +20,16 @@ fi
 
 chown -R www-data:www-data storage bootstrap/cache
 
+if [ "$APP_ENV" = "production" ]; then
+    # Папку копий Docker создаёт от root — отдаём её приложению
+    if [ -n "$BACKUP_PATH" ] && [ -d "$BACKUP_PATH" ]; then
+        chown www-data:www-data "$BACKUP_PATH"
+    fi
+
+    # queue, reverb и scheduler работают от www-data, как и PHP-FPM: общие файлы доступны всем
+    if [ "$1" = "php" ]; then
+        exec su-exec www-data "$@"
+    fi
+fi
+
 exec "$@"

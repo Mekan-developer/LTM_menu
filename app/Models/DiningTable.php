@@ -39,7 +39,7 @@ class DiningTable extends Model
     /** @return BelongsTo<Hall, $this> */
     public function hall(): BelongsTo
     {
-        return $this->belongsTo(Hall::class);
+        return $this->belongsTo(Hall::class)->withTrashed();
     }
 
     /** @return HasMany<Order, $this> */

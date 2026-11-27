@@ -41,7 +41,7 @@ class HallController extends Controller
                 'tables_count' => (int) $h->getAttribute('tables_count'),
             ])->values(),
             'hallId' => $hall?->id,
-            'board' => fn () => $hall ? $this->service->board($hall, $user) : ['tables' => [], 'elements' => []],
+            'board' => fn () => $hall ? $this->service->board($hall, $user) : ['tables' => [], 'elements' => [], 'revision' => ''],
             // Панель выбранного стола грузится частичной перезагрузкой (?table=ID).
             'detail' => fn () => $this->detail($hall, $tableId, $user),
             'waiters' => fn () => $user->hasPermission(Permission::TransferTables)
@@ -59,7 +59,13 @@ class HallController extends Controller
 
     public function layout(HallLayoutRequest $request, Hall $hall): RedirectResponse
     {
-        $this->service->saveLayout($hall, $request->validated('tables'), $request->validated('elements'), $request->user());
+        $this->service->saveLayout(
+            $hall,
+            $request->validated('revision'),
+            $request->validated('tables'),
+            $request->validated('elements'),
+            $request->user(),
+        );
 
         return back()->with('success', __('crm.hall.saved'));
     }

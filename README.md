@@ -266,26 +266,34 @@ GitHub Actions ([.github/workflows/tests.yml](.github/workflows/tests.yml)) на
 
 ## Продакшен
 
+Запуск по домену без сертификата (HTTP). На сервере нужны Docker и Docker Compose v2, домен должен указывать на IP сервера (A-запись), порт `80` открыт.
+
+> Без HTTPS пароли и PIN идут по сети открытым текстом. Это временный вариант до установки сертификата.
+
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+git clone <адрес репозитория> restoran && cd restoran
+
+cp .env.production.example .env                 # заполните домен, ключи и пароли
+cp docker/.env.data.example docker/.env.data    # те же имя базы, пользователь и пароль, что в .env
+
+docker compose up -d --build                    # COMPOSE_FILE в .env выбирает продакшен-конфигурацию
+docker compose exec -u www-data app php artisan db:seed --force    # один раз: роли и владелец
 ```
 
-`docker-compose.prod.yml` открывает порты `80` / `443` для Nginx и `8080` для Reverb, включает `restart: always` для PostgreSQL, Redis, очереди и Reverb.
+Обновление: `git pull && docker compose up -d --build`. Миграции выполняются сами при старте `app`. Логи: `docker compose logs -f app`.
+
+Как устроено (`docker-compose.prod.yml`):
+
+- код и фронтенд берутся из образа, исходники с сервера не монтируются;
+- наружу открыт только порт `80`: сайт и WebSocket (`/app/` проксируется в Reverb);
+- фото и прочие файлы — в томе `storage`, резервные копии — в `BACKUP_HOST_DIR`;
+- команда `docker compose down -v` **удаляет базу и фото**, обычная остановка — `docker compose down`.
 
 Как собирается образ (`docker/app/Dockerfile`):
 
 1. **Этап `frontend`**: PHP 8.3 CLI + Node 22 ставят зависимости composer и npm и собирают фронтенд (Ziggy импортируется из `vendor/`).
-2. **Этап `app`**: PHP 8.3-FPM Alpine с расширениями `pdo_pgsql`, `pgsql`, `redis`, `gd` (JPEG + WebP), `intl`, `bcmath`, `exif`, `pcntl`, `opcache`, `php.ini-production`, зависимости без dev и готовый `public/build`.
-
-Чек-лист перед деплоем:
-
-- [ ] `APP_ENV=production`, `APP_DEBUG=false`, сгенерирован `APP_KEY`
-- [ ] `APP_URL` — реальный домен с `https://`
-- [ ] сменён пароль владельца (`OWNER_PASSWORD` или `crm:owner-password`), надёжный пароль в `docker/.env.data`
-- [ ] свои `REVERB_APP_KEY` / `REVERB_APP_SECRET`; `VITE_REVERB_HOST` / `VITE_REVERB_PORT` / `VITE_REVERB_SCHEME=https` — публичный адрес Reverb
-- [ ] `RUN_MIGRATIONS=true` задан только для одного контейнера (не для `queue` / `reverb`)
-- [ ] в продакшене исходники **не** монтируются томом `.:/var/www`, иначе они перекрывают `vendor` и `public/build` из образа
-- [ ] настроен HTTPS в Nginx (сейчас в `docker/nginx/conf.d/default.conf` только `listen 80`)
+2. **Этап `web`**: Nginx со статикой и конфигом `docker/nginx/prod.conf`.
+3. **Этап `app`**: PHP 8.3-FPM Alpine с расширениями `pdo_pgsql`, `pgsql`, `redis`, `gd` (JPEG + WebP), `intl`, `bcmath`, `exif`, `pcntl`, `opcache`, `php.ini-production`, зависимости без dev и готовый `public/build`.
 
 В продакшене `AppServiceProvider` запрещает опасные команды БД (`migrate:fresh`, `db:wipe` и т.п.).
 

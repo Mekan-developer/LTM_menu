@@ -700,6 +700,7 @@ export default {
         width: 'Ширина, px',
         height: 'Высота, px',
         bookings_today: 'Брони на сегодня',
+        stale: 'Схему изменили в другом месте. Отмените изменения и повторите правку.',
     },
     guests: {
         bonus_balance: 'Бонусы',
